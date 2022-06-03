@@ -1,0 +1,7 @@
+*.o
+data/*.h
+data/sol
+data/worlds.tsv
+db/dbtool
+game
+testdb/
