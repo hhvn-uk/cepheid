@@ -1,4 +1,6 @@
 #!/bin/awk -f
+# This script attempts to generate usable data
+# A lot of assumptions, extrapolations and simplifications are made: chiefly the lack of elliptical orbits.
 
 BEGIN {
 	FS = "\t"
@@ -103,7 +105,15 @@ BEGIN {
 		orbdays = orbdays * 365.25 # good enough
 	}
 
+	if (maxorb ~ /^[-?0]/)
+		maxorb = minorb
+
 	if (name != "Sol" && (radius ~ /^[-?0]$/ || maxorb ~ /^[-?0]$/ || mass ~ /^[-?0]$/ || orbdays ~ /^[-?0]$/))
+		next
+
+	added[name] = 1
+
+	if (added[parent] != 1)
 		next
 
 	file = sprintf("sol/%s", name)

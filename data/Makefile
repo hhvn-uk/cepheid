@@ -3,7 +3,7 @@ HEADERS	= $(FONTS:.ttf=.h)
 
 all: $(HEADERS) sol
 
-sol: worlds.tsv
+sol: worlds.tsv worlds-parse.awk
 	rm -rf sol
 	./worlds-parse.awk < $<
 	printf "main\tsol\n" > sol/index
@@ -11,7 +11,8 @@ sol: worlds.tsv
 # Thanks Jonathan
 worlds.tsv:
 	curl https://planet4589.org/space/gcat/tsv/worlds/worlds.tsv | \
-		sed 's/ *\t/\t/g' > $@
+		sed 's/ *\t/\t/g' | \
+		./worlds-order.awk > $@
 
 .ttf.h:
 	xxd -i < $< > $@
