@@ -8,6 +8,9 @@
  */
 
 /* Set *ret to a list of groups, and return the length of the list.
+ * The _f variant accepts a filter function (zero = ignore entry):
+ *  dblistgroups(..., ...) is equivalent to dblistgroups_f(..., ..., NULL, NULL)
+ *  The pointer fdata is passed to the filter function.
  * On failure, set *ret to NULL, and return 0;
  * The data returned by this function must be free'd using dblistfree()
  * Errors may be those of scandir(3) or:
@@ -15,8 +18,12 @@
  * 	ENOMEM	allocation function failed
  */
 size_t dblistgroups(char ***ret, char *dir);
+size_t dblistgroups_f(char ***ret, char *dir, int (*filter)(void *data, char *path), void *fdata);
 
 /* Set *ret to a list of keys, and return the length of the list.
+ * The _f variant accepts a filter function (zero = ignore entry):
+ *  dblistkeys(..., ...) is equivalent to dblistkeys_f(..., ..., NULL, NULL)
+ *  The pointer fdata is passed to the filter function.
  * On failure, set *ret to NULL, and return 0;
  * The data returned by this function must be free'd using dblistfree()
  * Errors:
@@ -25,6 +32,7 @@ size_t dblistgroups(char ***ret, char *dir);
  * 	ENOMEM	allocation function failed
  */
 size_t dblistkeys(char ***ret, char *dir, char *group);
+size_t dblistkeys_f(char ***ret, char *dir, char *group, int (*filter)(void *data, char *path), void *fdata);
 
 /* Returns a duplicated list, or NULL for failure.
  * The data returned by this function must be free'd using dblistfree()

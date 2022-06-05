@@ -45,10 +45,10 @@ static int track(dbGroup *group);
 static int untrack(dbGroup *group);
 static dbGroup *gettracked(char *dir, char *group);
 
-static int dirlist(struct Dirlist **list, char *dir);
+static int dirlist(struct Dirlist **list, char *dir, int (*filter)(void *data, char *path), void *fdata);
 
 static dbGroup *dbinitgroup_p(char *dir, char *group);
-static size_t dblistkeys_p(char ***ret, dbGroup *group);
+static size_t dblistkeys_p(char ***ret, dbGroup *group, int (*filter)(void *data, char *path), void *fdata);
 static dbGroup *dbgetgroup_p(char *dir, char *group, int init);
 static dbPair *dbgetpair_p(dbGroup *group, char *key);
 static int dbset_p(dbPair *pair, char *val);
@@ -257,12 +257,17 @@ dbloadgroup_p(char *dir, char *group) {
  * List
  */
 static int
-dirlist(struct Dirlist **list, char *dir) {
+dirlist(struct Dirlist **list, char *dir, int (*filter)(void *data, char *path), void *fdata) {
 	struct dirent **dirent;
 	struct stat st;
 	struct Dirlist *p, *prev;
 	char path[PATH_MAX];
 	int n, i;
+
+	/* Theoretically, a function could wrap around filter() so that it
+	 * could be passed to scandir(), however, it would be difficult for that
+	 * function to access filter() without global variables. Therefore,
+	 * this function calls the filter on data returned by scandir(). */
 
 	n = scandir(dir, &dirent, 0, alphasort);
 	if (n < 0) {
@@ -274,8 +279,8 @@ dirlist(struct Dirlist **list, char *dir) {
 					strcmp(dirent[i]->d_name, ".") != 0 &&
 					stat(path, &st) != -1) {
 				if (S_ISDIR(st.st_mode)) {
-					dirlist(list, path);
-				} else {
+					dirlist(list, path, filter, fdata);
+				} else if (!filter || filter(fdata, path)) {
 					if (!(p = malloc(sizeof(struct Dirlist))) || !(p->path = strdup(path))) {
 						free(p);
 						for (prev = NULL; p; p = p->next) {
@@ -294,12 +299,18 @@ dirlist(struct Dirlist **list, char *dir) {
 		}
 		free(dirent);
 	}
+
+	if (!*list) {
+		errno = ENOENT;
+		return -1;
+	}
+
 	return 0;
 }
 
 size_t
-dblistgroups(char ***ret, char *dir) {
-	struct Dirlist *res, *p, *prev;
+dblistgroups_f(char ***ret, char *dir, int (*filter)(void *data, char *path), void *fdata) {
+	struct Dirlist *res = NULL, *p, *prev;
 	size_t len, i;
 
 	if (!ret || !dir) {
@@ -307,7 +318,7 @@ dblistgroups(char ***ret, char *dir) {
 		if (ret) *ret = NULL;
 		return 0;
 	}
-	if (dirlist(&res, dir) == -1) {
+	if (dirlist(&res, dir, filter, fdata) == -1) {
 		*ret = NULL;
 		return 0;
 	}
@@ -327,8 +338,13 @@ dblistgroups(char ***ret, char *dir) {
 	return len;
 }
 
+size_t
+dblistgroups(char ***ret, char *dir) {
+	return dblistgroups_f(ret, dir, NULL, NULL);
+}
+
 static size_t
-dblistkeys_p(char ***ret, dbGroup *group) {
+dblistkeys_p(char ***ret, dbGroup *group, int (*filter)(void *data, char *path), void *fdata) {
 	size_t i = 0;
 	size_t len;
 	dbPair *p;
@@ -340,7 +356,8 @@ dblistkeys_p(char ***ret, dbGroup *group) {
 	}
 
 	for (p = group->pairs, len = 0; p; p = p->next)
-		len++;
+		if (!filter || filter(fdata, p->key))
+			len++;
 
 	*ret = malloc(len * sizeof(char *));
 	if (!*ret) {
@@ -348,18 +365,24 @@ dblistkeys_p(char ***ret, dbGroup *group) {
 		return 0;
 	}
 	for (p = group->pairs; p && i < len; p = p->next)
-		*((*ret) + i++) = p->key ? strdup(p->key) : NULL;
+		if (!filter || filter(fdata, p->key))
+			*((*ret) + i++) = p->key ? strdup(p->key) : NULL;
 	return len;
 }
 
 size_t
-dblistkeys(char ***ret, char *dir, char *group) {
+dblistkeys_f(char ***ret, char *dir, char *group, int (*filter)(void *data, char *path), void *fdata) {
 	dbGroup *p;
 	if (!(p = dbgetgroup_p(dir, group, 0))) {
 		*ret = NULL;
 		return 0;
 	}
-	return dblistkeys_p(ret, p);
+	return dblistkeys_p(ret, p, filter, fdata);
+}
+
+size_t
+dblistkeys(char ***ret, char *dir, char *group) {
+	return dblistkeys_f(ret, dir, group, NULL, NULL);
 }
 
 /*
