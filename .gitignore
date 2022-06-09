@@ -5,3 +5,4 @@ data/worlds.tsv
 db/dbtool
 game
 testdb/
+core.*

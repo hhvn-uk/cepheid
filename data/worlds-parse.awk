@@ -44,7 +44,7 @@ BEGIN {
 
 	if (type == "*")  nicetype = "Star"
 	if (type == "A")  nicetype = "Asteroid"
-	if (type == "AS") nicetype = "Asteroid moon"
+	if (type == "AS") nicetype = "Moon"
 	if (type == "M")  nicetype = "Moon"
 	if (type == "P")  nicetype = "Planet"
 
@@ -132,9 +132,10 @@ BEGIN {
 		printf("mindist\t%d\n", minorb) > file
 		printf("maxdist\t%d\n", maxorb) > file
 		printf("curdist\t%d\n", (rand() * (maxorb - minorb)) + minorb) > file
+		printf("theta\t%d\n", rand() * 360) > file
 	} else {
 		printf("dist\t%d\n", (minorb + maxorb) / 2) > file
+		printf("curtheta\t%d\n", rand() * 360) > file
 	}
 
-	printf("curtheta\t%d\n", rand() * 360) > file
 }

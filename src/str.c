@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
+#include <limits.h>
+#include <errno.h>
+#include <math.h>
+#include "main.h"
 
 char *
 vsmprintf(char *fmt, va_list args) {
@@ -36,24 +41,77 @@ smprintf(char *fmt, ...) {
 }
 
 char *
-vsbprintf(char *fmt, va_list args) {
+nstrdup(char *str) {
+	if (!str) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return strdup(str);
+}
+
+char *
+strkmdist(float km) {
 	static char *ret = NULL;
-	va_list ap;
 
 	free(ret);
-	va_copy(ap, args);
-	ret = vsmprintf(fmt, args);
-	va_end(ap);
+
+	if (km > GIGA)
+		ret = smprintf("%.2fb km", km / GIGA);
+	else if (km > MEGA)
+		ret = smprintf("%.2fm km", km / MEGA);
+	else if (km > KILO)
+		ret = smprintf("%.2fk km", km / KILO);
+	else
+		ret = smprintf("%.2f km", km);
+
 	return ret;
 }
 
 char *
-sbprintf(char *fmt, ...) {
-	va_list ap;
-	char *ret;
+strlightdist(float km) {
+	static char *ret = NULL;
+	float ls = km * KILO / C_MS;
 
-	va_start(ap, fmt);
-	ret = vsbprintf(fmt, ap);
-	va_end(ap);
+	free(ret);
+
+	if (ls > YEAR_LEN)
+		ret = smprintf("%.2f ly", ls / YEAR_LEN);
+	else if (ls > DAY_LEN)
+		ret = smprintf("%.2f ld", ls / DAY_LEN);
+	else if (ls > HOUR_LEN)
+		ret = smprintf("%.2f lh", ls / HOUR_LEN);
+	else if (ls > MIN_LEN)
+		ret = smprintf("%.2f lm", ls / MIN_LEN);
+	else
+		ret = smprintf("%.2f ls", ls);
+
 	return ret;
+}
+
+int
+streq(char *s1, char *s2) {
+	if (s1 == s2)
+		return 1;
+	else if (!s1 || !s2)
+		return 0;
+	else if (strcmp(s1, s2) == 0)
+		return 1;
+	else
+		return 0;
+}
+
+int
+strlistpos(char *str, char **list, size_t len) {
+	int i;
+
+	for (i = 0; i < INT_MAX && i < len; i++)
+		if (streq(str, *(list + i)))
+			return i;
+	return -1;
+}
+
+float
+strnum(char *str) {
+	if (!str) return 0;
+	return strtof(str, NULL);
 }

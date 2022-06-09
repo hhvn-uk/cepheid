@@ -8,19 +8,21 @@ OBJ	= $(SRC:.c=.o)
 BIN	= game
 RAYLIB	= -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 LDFLAGS	= $(RAYLIB) $(DBLIB)
-CFLAGS	= -g3 -O0
+CFLAGS	= -Wall -g3 -O0
 
 all: db data $(BIN)
 
-$(BIN): $(OBJ)
+$(OBJ): src/struct.h
+$(BIN): $(OBJ) $(DBLIB)
 	$(CC) $(LDFLAGS) -o $(BIN) $(OBJ)
 
 clean: db-clean
 	rm -f $(BIN) $(OBJ)
 
-db:
+db: $(DBLIB)
+$(DBLIB):
 	@echo $(DBDIR): make $(DBLIB)
-	@cd $(DBDIR); make `basename $(DBLIB)`
+	@cd $(DBDIR); make CFLAGS="$(CFLAGS)" `basename $(DBLIB)`
 db-clean:
 	@echo $(DBDIR): make clean
 	@cd $(DBDIR); make clean

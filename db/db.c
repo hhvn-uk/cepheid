@@ -329,8 +329,8 @@ dblistgroups_f(char ***ret, char *dir, int (*filter)(void *data, char *path), vo
 		*ret = NULL;
 		return 0; /* malloc sets errno */
 	}
-	for (p = res, prev = NULL; p; p = p->next) {
-		*((*ret) + i++) = strdup(p->path + strlen(dir) + 1);
+	for (i = 0, p = res, prev = NULL; p; p = p->next, i++) {
+		*((*ret) + i) = strdup(p->path + strlen(dir) + 1);
 		free(p->path);
 		free(prev);
 		prev = p;

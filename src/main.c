@@ -29,10 +29,12 @@ main(void) {
 			else if (IsKeyPressed(KEY_SIX)) view_tabs.sel = 5;
 		}
 
+		view_handlers[view_tabs.sel]();
+
 		BeginDrawing();
 		ClearBackground(COL_BG);
-		ui_draw_views();
 		view_drawers[view_tabs.sel]();
+		ui_draw_views();
 		EndDrawing();
 	}
 

@@ -13,5 +13,6 @@ save_init(char *dir) {
 	ret->races = smprintf("%s/Races", dir);
 	ret->systems = smprintf("%s/Systems", dir);
 	ret->fleets = smprintf("%s/Fleets", dir);
+	memset(&ret->cache, 0, sizeof(ret->cache));
 	return ret;
 };
