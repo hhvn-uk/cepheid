@@ -18,6 +18,8 @@ char *	nstrdup(char *str); /* NULL-safe */
 char *	strkmdist(float km);
 char *	strlightdist(float km);
 int	streq(char *s1, char *s2); /* NULL-safe, no `== 0` required */
+int	strprefix(char *str, char *prefix);
+char *	strsuffix(char *str, char *suffix);
 int	strlistpos(char *str, char **list, size_t len);
 float	strnum(char *str);
 
@@ -58,6 +60,8 @@ void	ui_draw_view_systems(void);
 void	ui_draw_view_settings(void);
 
 /* system.c */
+int	bodytype_enumify(char *name);
+char *	bodytype_strify(Body *body);
 Vector2	system_vectorize(Polar polar);
 Vector2 system_vectorize_around(Vector2 around, Polar polar);
 Polar	system_polarize(Vector2 vector);

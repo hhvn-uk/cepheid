@@ -4,7 +4,7 @@
 #include "raylib.h"
 #include "main.h"
 
-char *body_names[BODY_LAST] = {
+char *bodytype_names[BODY_LAST] = {
 	[BODY_STAR] = "Star",
 	[BODY_PLANET] = "Planet",
 	[BODY_DWARF] = "Dwarf planet",
@@ -16,6 +16,30 @@ char *body_names[BODY_LAST] = {
 	[BODY_ASTEROID + BODY_MOON] = "Asteroid moon",
 	[BODY_COMET + BODY_MOON] = "Comet moon",
 };
+
+int
+bodytype_enumify(char *name) {
+	if (strsuffix(name, "moon") || streq(name, "Moon"))
+		return BODY_MOON;
+	else if (streq(name, "Star"))
+		return BODY_STAR;
+	else if (streq(name, "Planet"))
+		return BODY_PLANET;
+	else if (streq(name, "Dwarf planet"))
+		return BODY_DWARF;
+	else if (streq(name, "Asteroid"))
+		return BODY_ASTEROID;
+	else if (streq(name, "Comet"))
+		return BODY_COMET;
+	else
+		return -1;
+}
+
+char *
+bodytype_strify(Body *body) {
+	return bodytype_names[body->type +
+		body->parent ? body->parent->type : 0];
+}
 
 Vector2
 system_vectorize(Polar polar) {
@@ -86,7 +110,7 @@ System *
 system_init(char *name) {
 	System *ret = malloc(sizeof(System));
 	if (!ret) return NULL;
-	ret->name = strdup(name);
+	ret->name = nstrdup(name);
 	ret->bodies = NULL;
 	ret->bodies_len = 0;
 	return ret;
@@ -115,7 +139,7 @@ system_load(System *s, char *name) {
 	if (!s) s = system_init(name);
 
 	dir = smprintf("%s/", s->name);
-	s->bodies_len = blen = dblistgroups_f(&bname, save->systems, &filter_bodyinsystem, dir);
+	s->bodies_len = blen = dblistgroups_f(&bname, save->db.systems, &filter_bodyinsystem, dir);
 	if (!bname) return NULL;
 	bparent = malloc(sizeof(char *) * blen);
 	s->bodies = malloc(sizeof(Body *) * blen);
@@ -127,35 +151,24 @@ system_load(System *s, char *name) {
 	for (i = 0; i < blen; i++) {
 		s->bodies[i] = malloc(sizeof(Body));
 		s->bodies[i]->name = nstrdup(bname[i] + strlen(dir));
-		bparent[i] = dbget(save->systems, bname[i], "parent");
+		bparent[i] = nstrdup(dbget(save->db.systems, bname[i], "parent"));
 
-		tmp = dbget(save->systems, bname[i], "type");
-		if (streq(tmp, "Star"))
-			s->bodies[i]->type = BODY_STAR;
-		else if (streq(tmp, "Planet"))
-			s->bodies[i]->type = BODY_PLANET;
-		else if (streq(tmp, "Dwarf planet"))
-			s->bodies[i]->type = BODY_DWARF;
-		else if (streq(tmp, "Asteroid"))
-			s->bodies[i]->type = BODY_ASTEROID;
-		else if (streq(tmp, "Comet"))
-			s->bodies[i]->type = BODY_COMET;
-		else if (streq(tmp, "Moon"))
-			s->bodies[i]->type = BODY_MOON;
+		tmp = dbget(save->db.systems, bname[i], "type");
+		s->bodies[i]->type = bodytype_enumify(tmp);
 
-		s->bodies[i]->radius = strnum(dbget(save->systems, bname[i], "radius"));
-		s->bodies[i]->mass = strnum(dbget(save->systems, bname[i], "mass"));
-		s->bodies[i]->orbdays = strnum(dbget(save->systems, bname[i], "orbdays"));
+		s->bodies[i]->radius = strnum(dbget(save->db.systems, bname[i], "radius"));
+		s->bodies[i]->mass = strnum(dbget(save->db.systems, bname[i], "mass"));
+		s->bodies[i]->orbdays = strnum(dbget(save->db.systems, bname[i], "orbdays"));
 		if (s->bodies[i]->type == BODY_COMET) {
 			/* mindist is on opposite side of parent */
-			s->bodies[i]->mindist = 0 - strnum(dbget(save->systems, bname[i], "mindist"));
-			s->bodies[i]->maxdist = strnum(dbget(save->systems, bname[i], "maxdist"));
-			s->bodies[i]->curdist = strnum(dbget(save->systems, bname[i], "curdist"));
-			s->bodies[i]->theta = strnum(dbget(save->systems, bname[i], "theta"));
-			s->bodies[i]->inward = strnum(dbget(save->systems, bname[i], "inward"));
+			s->bodies[i]->mindist = 0 - strnum(dbget(save->db.systems, bname[i], "mindist"));
+			s->bodies[i]->maxdist = strnum(dbget(save->db.systems, bname[i], "maxdist"));
+			s->bodies[i]->curdist = strnum(dbget(save->db.systems, bname[i], "curdist"));
+			s->bodies[i]->theta = strnum(dbget(save->db.systems, bname[i], "theta"));
+			s->bodies[i]->inward = strnum(dbget(save->db.systems, bname[i], "inward"));
 		} else {
-			s->bodies[i]->dist = strnum(dbget(save->systems, bname[i], "dist"));
-			s->bodies[i]->curtheta = strnum(dbget(save->systems, bname[i], "curtheta"));
+			s->bodies[i]->dist = strnum(dbget(save->db.systems, bname[i], "dist"));
+			s->bodies[i]->curtheta = strnum(dbget(save->db.systems, bname[i], "curtheta"));
 		}
 
 		/* so system_get_polar() knows if it's usable */

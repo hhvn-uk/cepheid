@@ -9,7 +9,7 @@ typedef struct {
 /* body->type + body->parent->type == complex type
  *
  * Ex. for orbiting a star:
- *   BODY_PLANET + BODY_STAR == BODY_PLANET
+ *   BODY_PLANET + BODY_STAR == BODY_PLANET (still body->type)
  *
  * Ex. for a moon orbiting a body:
  *   BODY_MOON + BODY_PLANET is unique
@@ -29,6 +29,7 @@ struct Body {
 	Body *parent;
 	Polar polar;
 	Vector2 vector;
+	Vector2 pxloc; /* used by ui functions */
 	char *name;
 	enum BodyType type;
 	float radius;
@@ -59,15 +60,13 @@ typedef struct {
 
 /* save.c */
 typedef struct {
-	/* db locator strings.
-	 * dir the base, everything else is "dir/var" */
-	char *dir;
-	char *races;
-	char *systems;
-	char *fleets;
 	struct {
-		System *system;
-	} cache;
+		char *dir;
+		char *races;
+		char *systems;
+		char *fleets;
+	} db;
+	System *system;
 } Save;
 
 /* ui.c */

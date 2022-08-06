@@ -9,10 +9,18 @@ save_init(char *dir) {
 	if (!dir || !(ret = malloc(sizeof(Save))))
 		return NULL;
 
-	ret->dir = strdup(dir);
-	ret->races = smprintf("%s/Races", dir);
-	ret->systems = smprintf("%s/Systems", dir);
-	ret->fleets = smprintf("%s/Fleets", dir);
-	memset(&ret->cache, 0, sizeof(ret->cache));
+	dbdeclare(dir);
+	ret->db.dir = nstrdup(dir);
+	ret->db.races = smprintf("%s/Races", dir);
+	ret->db.systems = smprintf("%s/Systems", dir);
+	ret->db.fleets = smprintf("%s/Fleets", dir);
+	ret->system = NULL;
 	return ret;
 };
+
+void
+save_write(Save *s) {
+	if (s->system && s->system->name)
+		dbset(save->db.dir, "index", "selsystem", s->system->name);
+	dbwrite(s->db.dir);
+}

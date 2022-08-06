@@ -1,7 +1,20 @@
 #include <stddef.h>
 
-#define MAXGROUPS 256
-#define TODO
+#define MAXGROUPS 256 /* groups in a DB */
+
+/* -----
+ * Declaration
+ */
+
+/* Declare a db to be contained in a dir. Any access to data within this dir
+ * are correlated with it for operations such as dbwrite() and dbfree().
+ *
+ * Declaring a db with a path inside another db will result in weird behaviour.
+ *
+ * Returns 0 on success and -1 on failure. Errors may be:
+ * 	ENOMEM	allocation functions failed
+ */
+int dbdeclare(char *dir);
 
 /* -----
  * List functions
@@ -97,26 +110,26 @@ int dbdelpair(char *dir, char *group, char *key);
 
 /* Write a group to file.
  * Returns 0 for success or -1 for failure.
- * Errors are that of mkdir(3), fopen(3), or:
+ * Errors are that of mkdir(3), fopen(3), strdup(3), or:
  * 	EINVAL	dir or group are NULL
  * 	ENOENT	no such group
  */
 int dbwritegroup(char *dir, char *group);
 
-/* Writes all groups in a directory to file.
+/* Writes all groups in a db to file.
  * Returns 0 for success or -1 for failure.
  * Every write is attempted even if one fails.
  * Errors are that of mkdir(3), fopen(3), or:
  * 	EINVAL	dir is NULL
  */
-int dbwrite(char *dir);
+int dbwrite(char *db);
 
 /* -----
  * Cleanup
  */
 
-/* Discards and frees the content of groups in a directory. */
-void dbfree(char *dir);
+/* Discards and frees a db. */
+void dbfree(char *db);
 
 /* Discards and frees the content of a group. */
 void dbfreegroup(char *dir, char *group);

@@ -19,8 +19,7 @@ $(BIN): $(OBJ) $(DBLIB)
 clean: db-clean
 	rm -f $(BIN) $(OBJ)
 
-db: $(DBLIB)
-$(DBLIB):
+db:
 	@echo $(DBDIR): make $(DBLIB)
 	@cd $(DBDIR); make CFLAGS="$(CFLAGS)" `basename $(DBLIB)`
 db-clean:

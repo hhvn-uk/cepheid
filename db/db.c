@@ -5,24 +5,34 @@
 #include <unistd.h>
 #include <limits.h>
 #include <dirent.h>
+#include <libgen.h>
 #include <sys/stat.h>
 #include "db.h"
 
-typedef struct dbGroup dbGroup;
-typedef struct dbPair dbPair;
+typedef struct DB DB;
+typedef struct Group Group;
+typedef struct Pair Pair;
 
-struct dbGroup {
+struct DB {
+	DB *prev;
+	char *dir;
+	struct Group *tracked[MAXGROUPS];
+	DB *next;
+};
+
+struct Group {
+	struct DB *db;
 	char *dir;
 	char *name;
 	char *path;
-	dbPair *pairs;
+	Pair *pairs;
 };
 
-struct dbPair {
-	dbPair *prev;
+struct Pair {
+	Pair *prev;
 	char *key;
 	char *val;
-	dbPair *next;
+	Pair *next;
 };
 
 /* produced only by dirlist()
@@ -34,41 +44,108 @@ struct dbPair {
  *
  * A possible alternative would be to have a dirlist_backend() function that
  * returns the files/dirs in a dir. The frontend would then append the files to
- * its return list, and append the dirs to another list: it keeps calling the
- * backend for each element in this list until none remain. */
+ * its return list, and append the dirs to a dir list: it keeps calling the
+ * backend for each element in the dir list until none remain, and the return
+ * list is filled. */
 struct Dirlist {
 	char *path;
 	struct Dirlist *next;
 };
 
-static int track(dbGroup *group);
-static int untrack(dbGroup *group);
-static dbGroup *gettracked(char *dir, char *group);
+static int subdir(char *d1, char *d2);
+static DB *getdb(char *db);
+static DB *getdbfor(char *path);
+
+static int track(Group *group);
+static int untrack(Group *group);
+static Group *gettracked(char *dir, char *group);
 
 static int dirlist(struct Dirlist **list, char *dir, int (*filter)(void *data, char *path), void *fdata);
 
-static dbGroup *dbinitgroup_p(char *dir, char *group);
-static size_t dblistkeys_p(char ***ret, dbGroup *group, int (*filter)(void *data, char *path), void *fdata);
-static dbGroup *dbgetgroup_p(char *dir, char *group, int init);
-static dbPair *dbgetpair_p(dbGroup *group, char *key);
-static int dbset_p(dbPair *pair, char *val);
-static int dbdelgroup_p(dbGroup *group);
-static void dbdelpair_p(dbGroup *group, dbPair *pair);
-static int dbwritegroup_p(dbGroup *group);
-static void dbfreegroup_p(dbGroup *group);
+static Group *initgroup(char *dir, char *group);
+static size_t dblistkeys_p(char ***ret, Group *group, int (*filter)(void *data, char *path), void *fdata);
+static Group *getgroup(char *dir, char *group, int init);
+static Pair *getpair(Group *group, char *key);
+static int dbset_p(Pair *pair, char *val);
+static int dbdelgroup_p(Group *group);
+static void dbdelpair_p(Group *group, Pair *pair);
+static int dbwritegroup_p(Group *group);
+static void dbfreegroup_p(Group *group);
 
-static dbGroup *tracked[MAXGROUPS] = {NULL};
+static DB *dbs;
+
+/*
+ * DB
+ */
+static int
+subdir(char *d1, char *d2) {
+	if (!d1 || !d2) return 0;
+	if (!((strlen(d1) > strlen(d2) && d1[strlen(d2)] == '/') ||
+				(strlen(d2) > strlen(d1) && d2[strlen(d1)] == '/')))
+		return 0;
+	else if (strncmp(d1, d2, strlen(d1)) == 0 || strncmp(d2, d1, strlen(d2)) == 0)
+		return 1;
+	else
+		return 0;
+}
+
+int
+dbdeclare(char *dir) {
+	DB *db;
+
+	if (!dir) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	db = malloc(sizeof(DB));
+	if (!db) return -1;
+	db->dir = strdup(dir);
+	if (!db->dir) return -1;
+	memset(db->tracked, 0, sizeof(db->tracked));
+
+	if (!dbs) {
+		db->prev = db->next = NULL;
+		dbs = db;
+	} else {
+		db->prev = NULL;
+		db->next = dbs;
+		dbs = db;
+	}
+
+	return 0;
+}
+
+static DB *
+getdb(char *db) {
+	DB *p;
+
+	for (p = dbs; p; p = p->next)
+		if (strcmp(p->dir, db) == 0)
+			return p;
+	return NULL;
+}
+
+static DB *
+getdbfor(char *path) {
+	DB *p;
+
+	for (p = dbs; p; p = p->next)
+		if (strcmp(p->dir, path) == 0 || subdir(p->dir, path))
+			return p;
+	return NULL;
+}
 
 /*
  * Tracking loaded groups
  */
 static int
-track(dbGroup *group) {
+track(Group *group) {
 	int i;
 	if (!group) return -1;
 	for (i = 0; i < MAXGROUPS; i++) {
-		if (!tracked[i]) {
-			tracked[i] = group;
+		if (!group->db->tracked[i]) {
+			group->db->tracked[i] = group;
 			return 0;
 		}
 	}
@@ -76,26 +153,30 @@ track(dbGroup *group) {
 }
 
 static int
-untrack(dbGroup *group) {
+untrack(Group *group) {
 	int i;
 	if (!group) return -1;
 	for (i = 0; i < MAXGROUPS; i++) {
-		if (tracked[i] == group) {
-			tracked[i] = NULL;
+		if (group->db->tracked[i] == group) {
+			group->db->tracked[i] = NULL;
 			return 0;
 		}
 	}
 	return -1;
 }
 
-static dbGroup *
+static Group *
 gettracked(char *dir, char *group) {
+	DB *db;
 	int i;
+
+	if (!(db = getdbfor(dir)))
+		return NULL;
 	for (i = 0; i < MAXGROUPS; i++)
-		if (tracked[i] &&
-				strcmp(dir, tracked[i]->dir) == 0 &&
-				strcmp(group, tracked[i]->name) == 0)
-			return tracked[i];
+		if (db->tracked[i] &&
+				strcmp(dir, db->tracked[i]->dir) == 0 &&
+				strcmp(group, db->tracked[i]->name) == 0)
+			return db->tracked[i];
 	return NULL;
 }
 
@@ -103,15 +184,15 @@ gettracked(char *dir, char *group) {
  * Various struct/data/etc handling
  */
 static int
-appendpair(dbPair **pairs, char *key, char *val) {
-	dbPair *p, *new;
+appendpair(Pair **pairs, char *key, char *val) {
+	Pair *p, *new;
 
 	if (!pairs || !key) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	new = malloc(sizeof(dbPair));
+	new = malloc(sizeof(Pair));
 	if (!new) return -1; /* ENOMEM */
 	new->key = strdup(key);
 	new->val = val ? strdup(val) : NULL;
@@ -185,7 +266,7 @@ dblisteq(char **l1, size_t s1, char **l2, size_t s2) {
 }
 
 static void
-freepair(dbPair *pair) {
+freepair(Pair *pair) {
 	if (pair) {
 		free(pair->key);
 		free(pair->val);
@@ -196,9 +277,9 @@ freepair(dbPair *pair) {
 /*
  * Init
  */
-static dbGroup *
-dbinitgroup_p(char *dir, char *group) {
-	dbGroup *ret;
+static Group *
+initgroup(char *dir, char *group) {
+	Group *ret;
 
 	if (!dir || !group) {
 		errno = EINVAL;
@@ -206,9 +287,10 @@ dbinitgroup_p(char *dir, char *group) {
 	}
 	if ((ret = gettracked(dir, group)))
 		return ret;
-	ret = malloc(sizeof(dbGroup));
+	ret = malloc(sizeof(Group));
 	if (!ret) return NULL;
 	ret->path = malloc(strlen(dir) + strlen(group) + 2);
+	ret->db = getdbfor(dir);
 	ret->dir = strdup(dir);
 	ret->name = strdup(group);
 	ret->pairs = NULL;
@@ -225,12 +307,12 @@ dbinitgroup_p(char *dir, char *group) {
 	return ret;
 }
 
-static dbGroup *
-dbloadgroup_p(char *dir, char *group) {
+static Group *
+loadgroup(char *dir, char *group) {
 	char path[PATH_MAX];
 	char buf[8192];
 	char *key, *val;
-	dbGroup *ret;
+	Group *ret;
 	FILE *fp;
 
 	if (!dir || !group) {
@@ -243,13 +325,16 @@ dbloadgroup_p(char *dir, char *group) {
 	snprintf(path, sizeof(path), "%s/%s", dir, group);
 	if (!(fp = fopen(path, "r")))
 		return NULL; /* errno set by fopen */
-	if (!(ret = dbinitgroup_p(dir, group)))
+	if (!(ret = initgroup(dir, group))) {
+		fclose(fp);
 		return NULL;
+	}
 	while (fgets(buf, sizeof(buf), fp)) {
 		buf[strlen(buf) - 1] = '\0'; /* remove \n */
 		key = strtok_r(buf, "\t", &val);
 		appendpair(&ret->pairs, key, val);
 	}
+	fclose(fp);
 	return ret;
 }
 
@@ -344,10 +429,10 @@ dblistgroups(char ***ret, char *dir) {
 }
 
 static size_t
-dblistkeys_p(char ***ret, dbGroup *group, int (*filter)(void *data, char *path), void *fdata) {
+dblistkeys_p(char ***ret, Group *group, int (*filter)(void *data, char *path), void *fdata) {
 	size_t i = 0;
 	size_t len;
-	dbPair *p;
+	Pair *p;
 
 	if (!ret || !group) {
 		errno = EINVAL;
@@ -372,8 +457,8 @@ dblistkeys_p(char ***ret, dbGroup *group, int (*filter)(void *data, char *path),
 
 size_t
 dblistkeys_f(char ***ret, char *dir, char *group, int (*filter)(void *data, char *path), void *fdata) {
-	dbGroup *p;
-	if (!(p = dbgetgroup_p(dir, group, 0))) {
+	Group *p;
+	if (!(p = getgroup(dir, group, 0))) {
 		*ret = NULL;
 		return 0;
 	}
@@ -388,9 +473,9 @@ dblistkeys(char ***ret, char *dir, char *group) {
 /*
  * Get
  */
-static dbGroup *
-dbgetgroup_p(char *dir, char *group, int init) {
-	dbGroup *p;
+static Group *
+getgroup(char *dir, char *group, int init) {
+	Group *p;
 
 	if (!dir || !group) {
 		errno = EINVAL;
@@ -398,17 +483,17 @@ dbgetgroup_p(char *dir, char *group, int init) {
 	}
 	if ((p = gettracked(dir, group)))
 		return p;
-	if ((p = dbloadgroup_p(dir, group)))
+	if ((p = loadgroup(dir, group)))
 		return p;
 	if (init)
-		return dbinitgroup_p(dir, group);
+		return initgroup(dir, group);
 	errno = ENOENT;
 	return NULL;
 }
 
-static dbPair *
-dbgetpair_p(dbGroup *group, char *key) {
-	dbPair *p;
+static Pair *
+getpair(Group *group, char *key) {
+	Pair *p;
 
 	if (!group || !key) {
 		errno = EINVAL;
@@ -423,10 +508,10 @@ dbgetpair_p(dbGroup *group, char *key) {
 
 char *
 dbget(char *dir, char *group, char *key) {
-	dbGroup *gp;
-	dbPair *pp;
-	if (!(gp = dbgetgroup_p(dir, group, 0)) ||
-			!(pp = dbgetpair_p(gp, key)))
+	Group *gp;
+	Pair *pp;
+	if (!(gp = getgroup(dir, group, 0)) ||
+			!(pp = getpair(gp, key)))
 		return NULL;
 	return pp->val;
 }
@@ -435,7 +520,7 @@ dbget(char *dir, char *group, char *key) {
  * Set
  */
 static int
-dbset_p(dbPair *pair, char *val) {
+dbset_p(Pair *pair, char *val) {
 	if (!pair) {
 		errno = EINVAL;
 		return -1;
@@ -448,11 +533,11 @@ dbset_p(dbPair *pair, char *val) {
 
 int
 dbset(char *dir, char *group, char *key, char *val) {
-	dbGroup *gp;
-	dbPair *pp;
-	if (!(gp = dbgetgroup_p(dir, group, 1)))
+	Group *gp;
+	Pair *pp;
+	if (!(gp = getgroup(dir, group, 1)))
 		return -1;
-	if (!(pp = dbgetpair_p(gp, key)))
+	if (!(pp = getpair(gp, key)))
 		return appendpair(&gp->pairs, key, val);
 	return dbset_p(pp, val);
 }
@@ -461,7 +546,7 @@ dbset(char *dir, char *group, char *key, char *val) {
  * Del
  */
 static int
-dbdelgroup_p(dbGroup *group) {
+dbdelgroup_p(Group *group) {
 	int ret = 0, serrno;
 	ret = unlink(group->path);
 	serrno = errno;
@@ -473,14 +558,14 @@ dbdelgroup_p(dbGroup *group) {
 
 int
 dbdelgroup(char *dir, char *group) {
-	dbGroup *p;
-	if (!(p = dbgetgroup_p(dir, group, 0)))
+	Group *p;
+	if (!(p = getgroup(dir, group, 0)))
 		return -1;
 	return dbdelgroup_p(p);
 }
 
 static void
-dbdelpair_p(dbGroup *group, dbPair *pair) {
+dbdelpair_p(Group *group, Pair *pair) {
 	if (!pair) return;
 	if (pair == group->pairs)
 		group->pairs = pair->next;
@@ -493,10 +578,10 @@ dbdelpair_p(dbGroup *group, dbPair *pair) {
 
 int
 dbdelpair(char *dir, char *group, char *key) {
-	dbGroup *gp;
-	dbPair *pp;
-	if (!(gp = dbgetgroup_p(dir, group, 0)) ||
-			!(pp = dbgetpair_p(gp, key)))
+	Group *gp;
+	Pair *pp;
+	if (!(gp = getgroup(dir, group, 0)) ||
+			!(pp = getpair(gp, key)))
 		return -1;
 	dbdelpair_p(gp, pp);
 	return 0;
@@ -539,43 +624,63 @@ mkdirp(char *path, mode_t mode) {
 }
 
 static int
-dbwritegroup_p(dbGroup *group) {
+dbwritegroup_p(Group *group) {
+	char *dir, *path;
 	FILE *fp;
-	dbPair *p;
+	Pair *p;
+	int serrno;
 
 	if (!group || !group->path) {
 		errno = EINVAL;
 		return -1;
 	}
-	if (mkdirp(group->dir, 0755) == -1)
-		return -1; /* errno set by mkdirp */
+
+	path = strdup(group->path);
+	if (!path) return -1;
+	dir = dirname(path);
+	if (mkdirp(dir, 0755) == -1) {
+		serrno = errno;
+		free(path);
+		errno = serrno;
+		return -1;
+	}
+	free(path);
+
 	if (!(fp = fopen(group->path, "w")))
-		return -1; /* errno set by fopen */
+		return -1;
 
 	for (p = group->pairs; p; p = p->next)
 		fprintf(fp, "%s\t%s\n", p->key, p->val);
+	fclose(fp);
 	return 0;
 }
 
 int
 dbwritegroup(char *dir, char *group) {
-	dbGroup *p;
-	if (!(p = dbgetgroup_p(dir, group, 0)))
+	Group *p;
+	if (!(p = getgroup(dir, group, 0)))
 		return -1;
 	return dbwritegroup_p(p);
 }
 
 int
-dbwrite(char *dir) {
-	int ret = 0, i;
+dbwrite(char *db) {
+	int ret, i;
+	DB *p;
 
-	if (!dir) {
+	if (!db) {
 		errno = EINVAL;
 		return -1;
 	}
-	for (i = 0; i < MAXGROUPS; i++)
-		if (tracked[i] && strcmp(dir, tracked[i]->dir) == 0)
-			if (dbwritegroup_p(tracked[i]) == -1)
+
+	if (!(p = getdb(db))) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	for (i = 0, ret = 0; i < MAXGROUPS; i++)
+		if (p->tracked[i])
+			if (dbwritegroup_p(p->tracked[i]) == -1)
 				ret = -1;
 	return ret;
 }
@@ -585,17 +690,28 @@ dbwrite(char *dir) {
  */
 
 void
-dbfree(char *dir) {
+dbfree(char *db) {
+	DB *p;
 	int i;
 
+	if (!(p = getdb(db)))
+		return;
 	for (i = 0; i < MAXGROUPS; i++)
-		if (tracked[i] && strcmp(dir, tracked[i]->dir) == 0)
-			dbfreegroup_p(tracked[i]);
+		if (p->tracked[i])
+			dbfreegroup_p(p->tracked[i]);
+	if (p == dbs)
+		dbs = p->next;
+	if (p->next)
+		p->next->prev = p->prev;
+	if (p->prev)
+		p->prev->next = p->next;
+	free(p->dir);
+	free(p);
 }
 
 static void
-dbfreegroup_p(dbGroup *group) {
-	dbPair *p, *prev;
+dbfreegroup_p(Group *group) {
+	Pair *p, *prev;
 	if (group) {
 		untrack(group);
 		prev = group->pairs;
@@ -615,16 +731,26 @@ dbfreegroup_p(dbGroup *group) {
 
 void
 dbfreegroup(char *dir, char *group) {
-	dbGroup *p;
-	if ((p = dbgetgroup_p(dir, group, 0)))
+	Group *p;
+	if ((p = getgroup(dir, group, 0)))
 		dbfreegroup_p(p);
 }
 
 void
 dbcleanup(void) {
+	DB *p, *prev;
 	int i;
 
-	for (i = 0; i < MAXGROUPS; i++)
-		if (tracked[i])
-			dbfreegroup_p(tracked[i]);
+	prev = dbs;
+	p = prev->next;
+	while (prev) {
+		for (i = 0; i < MAXGROUPS; i++)
+			if (prev->tracked[i])
+				dbfreegroup_p(prev->tracked[i]);
+		free(prev->dir);
+		free(prev);
+		prev = p;
+		if (p) p = p->next;
+	}
+	dbs = NULL;
 }

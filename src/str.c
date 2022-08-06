@@ -101,6 +101,33 @@ streq(char *s1, char *s2) {
 }
 
 int
+strprefix(char *str, char *prefix) {
+	if (str == prefix)
+		return 1;
+	else if (!str || !prefix)
+		return 0;
+	else
+		return strncmp(str, prefix, strlen(prefix)) == 0;
+}
+
+char *
+strsuffix(char *str, char *suffix) {
+	size_t len, slen;
+
+	if (str == suffix)
+		return str;
+	else if (!str || !suffix)
+		return NULL;
+	else if ((len = strlen(str)) < (slen = strlen(suffix)))
+		return NULL;
+
+	if (strcmp(str + len - slen, suffix) == 0)
+		return str + len - slen;
+	else
+		return NULL;
+}
+
+int
 strlistpos(char *str, char **list, size_t len) {
 	int i;
 

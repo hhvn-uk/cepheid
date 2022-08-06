@@ -8,13 +8,14 @@ Save *save = NULL;
 
 int
 main(void) {
-	int w, h;
+	char *system;
+
 	ui_init();
-	Tabs test = {
-		2, 0, {{"Display", 0}, {"Minerals", 0}}
-	};
 
 	save = save_init(TESTSAVE);
+	system = dbget(save->db.dir, "index", "selsystem");
+	if (!system) system = "Sol"; /* TODO: 1. selsystem, 2. player home, 3. uhh? */
+	save->system = system_load(NULL, system);
 
 	while (!WindowShouldClose()) {
 		ui_clickable_update();
@@ -39,5 +40,8 @@ main(void) {
 	}
 
 	ui_deinit();
+
+	save_write(save);
+	dbcleanup();
 	return 0;
 }

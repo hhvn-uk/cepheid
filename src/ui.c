@@ -9,6 +9,7 @@
 #define WINDOW_TAB_HEIGHT 20
 #define TARGET_FPS 60
 #define MIN_BODY_DIAM 3
+#define SCREEN_RECT() ((Rect){0, 0, GetScreenWidth(), GetScreenHeight()})
 
 static Font font;
 static Clickable clickable[CLICKABLE_MAX];
@@ -32,7 +33,9 @@ void (*view_drawers[UI_VIEW_LAST])(void) = {
 };
 
 Tabs view_tabs = {
-	UI_VIEW_LAST, 0, {{"Main", 0}, {"Colonies", 0}, {"Fleets", 0}, {"Design", 0},
+	/* Tactical is the terminology used in Aurora, so I decided to use it
+	 * in the ui; in the code it's just called 'main' for my fingers' sake */
+	UI_VIEW_LAST, 0, {{"Tactical", 0}, {"Colonies", 0}, {"Fleets", 0}, {"Design", 0},
 				{"Systems", 0}, {"Settings", 0}}
 };
 
@@ -62,6 +65,7 @@ static struct {
 		int x, y; /* real y = GetScreenHeight() - y */
 		int w, h;
 	} scale;
+	System *system;
 } view_main = {
 	.infobox = {
 		.tabs = {
@@ -95,6 +99,7 @@ static struct {
 		.w = 50,
 		.h = 3,
 	},
+	.system = NULL,
 };
 
 void
@@ -126,6 +131,25 @@ ui_print(int x, int y, Color col, char *fmt, ...) {
 	va_end(ap);
 	DrawTextEx(font, text, pos, (float)FONT_SIZE, FONT_SIZE/10, col);
 	free(text);
+}
+
+void
+ui_title(char *fmt, ...) {
+	static char *last = NULL;
+	char *title;
+	va_list ap;
+
+	va_start(ap, fmt);
+	title = vsmprintf(fmt, ap);
+	va_end(ap);
+
+	if (!streq(title, last)) {
+		SetWindowTitle(title);
+		free(last);
+		last = title;
+	} else {
+		free(title);
+	}
 }
 
 int
@@ -343,14 +367,16 @@ void
 ui_handle_view_main(void) {
 	Vector2 mouse = GetMousePosition();
 	Vector2 delta = GetMouseDelta();
-	float wheel;
+	float wheel = GetMouseWheelMove();
+	float diff;
+	int i;
 
 #define SCROLL_DIVISOR 10
-	wheel = GetMouseWheelMove();
-	if (wheel < 0)
-		view_main.kmperpx += (GetMouseWheelMove() * -1) * (view_main.kmperpx/SCROLL_DIVISOR);
-	else if (wheel > 0)
-		view_main.kmperpx -= GetMouseWheelMove() * (view_main.kmperpx/SCROLL_DIVISOR);
+	diff = wheel * (view_main.kmperpx/SCROLL_DIVISOR);
+	view_main.kmperpx -= diff;
+	view_main.kmx += (mouse.x - GetScreenWidth() / 2) * diff;
+	view_main.kmy += (mouse.y - GetScreenHeight() / 2) * diff;
+
 	if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
 		if (view_main.pan) {
 			view_main.kmx -= delta.x * view_main.kmperpx;
@@ -363,40 +389,53 @@ ui_handle_view_main(void) {
 	if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && !view_main.ruler.held &&
 			!ui_collides(view_main.infobox.geom, mouse)) {
 		view_main.ruler.held = 1;
-		view_main.ruler.origin = mouse;
+		view_main.ruler.origin = ui_pxtokm(mouse);
 	} else if (IsMouseButtonUp(MOUSE_BUTTON_RIGHT))
 		view_main.ruler.held = 0;
+
+	if (view_main.system != save->system) {
+		view_main.system = save->system;
+
+		ui_title("Tactical: %s", save->system->name);
+	}
+
 
 }
 
 void
 ui_handle_view_colonies(void) {
-
+	ui_title("Colonies");
 }
 
 void
 ui_handle_view_fleets(void) {
-
+	ui_title("Fleets");
 }
 
 void
 ui_handle_view_design(void) {
-
+	ui_title("Design");
 }
 
 void
 ui_handle_view_systems(void) {
-
+	ui_title("Systems");
 }
 
 void
 ui_handle_view_settings(void) {
-
+	ui_title("Settings");
 }
 
 int
 ui_should_draw_body(Body *body, int orbit) {
-	if (!orbit && body->type != BODY_COMET && body->dist / view_main.kmperpx < ui_textsize(body->name))
+	if (!orbit && !ui_collides(SCREEN_RECT(), body->pxloc))
+		return 0;
+	if (!orbit && body->type != BODY_STAR &&
+			(body->type == BODY_COMET ? body->maxdist : body->dist) / view_main.kmperpx < ui_textsize(body->name))
+		return 0;
+	if (!orbit && body->parent && body->type != BODY_STAR &&
+			ui_vectordist(body->vector, body->parent->vector) < MIN_BODY_DIAM * view_main.kmperpx)
 		return 0;
 	if ((body->type == BODY_DWARF || (body->parent && body->parent->type == BODY_DWARF)) &&
 			(!orbit || !view_main.infobox.orbit.dwarf.val) &&
@@ -416,7 +455,6 @@ ui_should_draw_body(Body *body, int orbit) {
 void
 ui_draw_body(Body *body) {
 	Vector2 parent;
-	Vector2 location;
 	int w;
 
 	if (body->parent) {
@@ -426,30 +464,34 @@ ui_draw_body(Body *body) {
 		parent.y = 0;
 	}
 
-	location = ui_kmtopx(body->vector);
-
 	if (ui_should_draw_body(body, 1)) {
 		if (body->parent && body->type == BODY_COMET)
-			DrawLineV(parent, location, COL_ORBIT);
+			DrawLineV(parent, body->pxloc, COL_ORBIT);
 		else if (body->parent)
-			DrawCircleLines(parent.x, parent.y, ui_vectordist(parent, location), COL_ORBIT);
+			DrawCircleLines(parent.x, parent.y,
+					ui_vectordist(parent, body->pxloc),
+					COL_ORBIT);
 	}
 	if (body->radius / view_main.kmperpx > MIN_BODY_DIAM)
 		w = body->radius / view_main.kmperpx;
 	else
 		w = MIN_BODY_DIAM;
-	DrawCircle(location.x, location.y, MIN_BODY_DIAM, COL_FG);
+	DrawCircle(body->pxloc.x, body->pxloc.y, w, COL_FG);
 	if (ui_should_draw_body(body, 0))
-		ui_print(location.x + 5, location.y + 5, COL_FG, "%s", body->name);
+		ui_print(body->pxloc.x + w + 2, body->pxloc.y + w + 2,
+				COL_FG, "%s", body->name);
 }
 
 void
 ui_draw_view_main(void) {
 	Vector2 mouse = GetMousePosition();
 	Vector2 mousekm = ui_pxtokm(mouse);
-	Vector2 v[2];
+	Vector2 ruler;
 	Vector2 km;
 	Polar polar;
+	Body *body;
+	float *massa;
+	size_t massi;
 	float dist;
 	size_t i;
 
@@ -460,17 +502,18 @@ ui_draw_view_main(void) {
 			mousekm.x, mousekm.y);
 	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 30, COL_FG, "FPS: %d (target: %d)", GetFPS(), TARGET_FPS);
 
-	/* system bodies */
-	if (!save->cache.system)
-		save->cache.system = system_load(NULL, "Sol");
-	for (i = 0; i < save->cache.system->bodies_len; i++)
-		ui_draw_body(save->cache.system->bodies[i]);
+	/* draw system bodies */
+	for (i = 0; i < save->system->bodies_len; i++) {
+		body = save->system->bodies[i];
+		body->pxloc = ui_kmtopx(body->vector);
+		ui_draw_body(body);
+	}
 
 	/* ruler */
 	if (view_main.ruler.held) {
-		DrawLineV(view_main.ruler.origin, mouse, COL_INFO);
-		km = ui_pxtokm(view_main.ruler.origin);
-		dist = ui_vectordist(km, mousekm);
+		ruler = ui_kmtopx(view_main.ruler.origin);
+		DrawLineV(ruler, mouse, COL_INFO);
+		dist = ui_vectordist(view_main.ruler.origin, mousekm);
 		ui_print(mouse.x + 10, mouse.y - 10, COL_INFO, "%s (%s)", strkmdist(dist), strlightdist(dist));
 	}
 
