@@ -11,11 +11,12 @@ main(void) {
 	char *system;
 
 	ui_init();
+	data_load();
 
 	save = save_init(TESTSAVE);
 	system = dbget(save->db.dir, "index", "selsystem");
 	if (!system) system = "Sol"; /* TODO: 1. selsystem, 2. player home, 3. uhh? */
-	save->system = system_load(NULL, system);
+	save->system = sys_load(NULL, system);
 
 	while (!WindowShouldClose()) {
 		ui_clickable_update();

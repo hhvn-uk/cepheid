@@ -50,31 +50,38 @@ void	ui_handle_view_main(void);
 void	ui_handle_view_colonies(void);
 void	ui_handle_view_fleets(void);
 void	ui_handle_view_design(void);
-void	ui_handle_view_systems(void);
+void	ui_handle_view_sys(void);
 void	ui_handle_view_settings(void);
 void	ui_draw_view_main(void);
 void	ui_draw_view_colonies(void);
 void	ui_draw_view_fleets(void);
 void	ui_draw_view_design(void);
-void	ui_draw_view_systems(void);
+void	ui_draw_view_sys(void);
 void	ui_draw_view_settings(void);
 
 /* system.c */
 int	bodytype_enumify(char *name);
 char *	bodytype_strify(Body *body);
-Vector2	system_vectorize(Polar polar);
-Vector2 system_vectorize_around(Vector2 around, Polar polar);
-Polar	system_polarize(Vector2 vector);
-Polar	system_sum_polar(Polar absolute, Polar relative);
-Vector2	system_get_vector(Body *body);
-Polar	system_get_polar(Body *body);
-System *system_init(char *name);
-System *system_load(System *s, char *name);
+Vector2	sys_vectorize(Polar polar);
+Vector2 sys_vectorize_around(Vector2 around, Polar polar);
+Polar	sys_polarize(Vector2 vector);
+Polar	sys_sum_polar(Polar absolute, Polar relative);
+Vector2	sys_get_vector(Body *body);
+Polar	sys_get_polar(Body *body);
+System *sys_init(char *name);
+System *sys_load(System *s, char *name);
 
 /* save.c */
 Save *	save_init(char *savedir);
+void	save_write(Save *s);
 
 /* data.c */
-#include <stddef.h>
-extern unsigned char DejaVuSansMono_ttf[];
-extern size_t DejaVuSansMono_ttf_size;
+extern Font font;
+extern Texture image_tactical;
+extern Texture image_colonies;
+extern Texture image_fleet;
+extern Texture image_design;
+extern Texture image_sys;
+extern Texture image_settings;
+void	data_load(void);
+void	data_unload(void);

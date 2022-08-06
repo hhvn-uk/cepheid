@@ -11,7 +11,6 @@
 #define MIN_BODY_DIAM 3
 #define SCREEN_RECT() ((Rect){0, 0, GetScreenWidth(), GetScreenHeight()})
 
-static Font font;
 static Clickable clickable[CLICKABLE_MAX];
 
 void (*view_handlers[UI_VIEW_LAST])(void) = {
@@ -19,7 +18,7 @@ void (*view_handlers[UI_VIEW_LAST])(void) = {
 	[UI_VIEW_COLONIES] = ui_handle_view_colonies,
 	[UI_VIEW_FLEETS] = ui_handle_view_fleets,
 	[UI_VIEW_DESIGN] = ui_handle_view_design,
-	[UI_VIEW_SYSTEMS] = ui_handle_view_systems,
+	[UI_VIEW_SYSTEMS] = ui_handle_view_sys,
 	[UI_VIEW_SETTINGS] = ui_handle_view_settings,
 };
 
@@ -28,15 +27,19 @@ void (*view_drawers[UI_VIEW_LAST])(void) = {
 	[UI_VIEW_COLONIES] = ui_draw_view_colonies,
 	[UI_VIEW_FLEETS] = ui_draw_view_fleets,
 	[UI_VIEW_DESIGN] = ui_draw_view_design,
-	[UI_VIEW_SYSTEMS] = ui_draw_view_systems,
+	[UI_VIEW_SYSTEMS] = ui_draw_view_sys,
 	[UI_VIEW_SETTINGS] = ui_draw_view_settings,
 };
 
 Tabs view_tabs = {
 	/* Tactical is the terminology used in Aurora, so I decided to use it
 	 * in the ui; in the code it's just called 'main' for my fingers' sake */
-	UI_VIEW_LAST, 0, {{"Tactical", 0}, {"Colonies", 0}, {"Fleets", 0}, {"Design", 0},
-				{"Systems", 0}, {"Settings", 0}}
+	UI_VIEW_LAST, 0, {{&image_tactical, "Tactical", 0},
+		{&image_colonies, "Colonies", 0},
+		{&image_fleet, "Fleets", 0},
+		{&image_design, "Design", 0},
+		{&image_sys, "Systems", 0},
+		{&image_settings, "Settings", 0}}
 };
 
 static struct {
@@ -69,7 +72,7 @@ static struct {
 } view_main = {
 	.infobox = {
 		.tabs = {
-			2, 0, {{"Display", 0}, {"Minerals", 0}}
+			2, 0, {{NULL, "Display", 0}, {NULL, "Minerals", 0}}
 		},
 		.names = {
 			.dwarf = {1, "Name: dwarf planets"},
@@ -107,10 +110,6 @@ ui_init(void) {
 	InitWindow(500, 500, "testing raylib");
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
 	SetTargetFPS(TARGET_FPS);
-
-	font = LoadFontFromMemory(".ttf",
-			DejaVuSansMono_ttf, DejaVuSansMono_ttf_size,
-			FONT_SIZE, NULL, 0);
 }
 
 void
@@ -266,6 +265,7 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	int fw, fn, ftabw;
 	int tabw;
 	int padx, pady;
+	int iw;
 	int cx, selx = -1;
 	int i;
 
@@ -288,12 +288,22 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 			tabw = ftabw;
 		else
 			tabw = tabs->tabs[i].w;
-		padx = (tabw - ui_textsize(tabs->tabs[i].name)) / 2;
+
+		if (tabs->tabs[i].icon)
+			iw = tabs->tabs[i].icon->width;
+		else
+			iw = 0;
+
+		padx = (tabw - ui_textsize(tabs->tabs[i].name) - iw) / 2;
 		if (i == tabs->sel)
 			selx = cx;
 		else
 			DrawRectangle(cx, y, tabw, h, COL_UNSELBG);
-		ui_print(cx + padx, y + pady, COL_FG, "%s", tabs->tabs[i].name);
+		ui_print(cx + padx + iw, y + pady, COL_FG, "%s", tabs->tabs[i].name);
+		if (tabs->tabs[i].icon)
+			DrawTexture(*tabs->tabs[i].icon, cx + padx / 2,
+					y + (h - tabs->tabs[i].icon->width) / 2,
+					COL_FG);
 		DrawRectangle(cx + tabw - 1, y, 1, h, COL_BORDER);
 	}
 
@@ -418,7 +428,7 @@ ui_handle_view_design(void) {
 }
 
 void
-ui_handle_view_systems(void) {
+ui_handle_view_sys(void) {
 	ui_title("Systems");
 }
 
@@ -579,7 +589,7 @@ ui_draw_view_design(void) {
 }
 
 void
-ui_draw_view_systems(void) {
+ui_draw_view_sys(void) {
 	ui_print(10, GetScreenHeight() / 2, COL_FG, "System info/settings menu");
 	ui_print(GetScreenWidth() / 2, GetScreenHeight() / 2, COL_FG, "Pannable system view");
 }

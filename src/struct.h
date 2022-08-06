@@ -81,6 +81,7 @@ typedef struct {
 	int n;
 	int sel;
 	struct {
+		Texture *icon;
 		char *name;
 		int w; /* 0 = fill */
 	} tabs[TABS_MAX];

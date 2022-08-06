@@ -1,5 +1,6 @@
 FONTS	= $(shell find . -name "*.ttf")
-HEADERS	= $(FONTS:.ttf=.h)
+ICONS	= $(shell find icons -name "*.png")
+HEADERS	= $(FONTS:.ttf=.h) $(ICONS:.png=.h)
 
 all: $(HEADERS) sol
 
@@ -16,8 +17,10 @@ worlds.tsv:
 
 .ttf.h:
 	xxd -i < $< > $@
+.png.h:
+	xxd -i < $< > $@
 
 clean:
 	rm -rf $(HEADERS) sol
 
-.SUFFIXES: .h .ttf
+.SUFFIXES: .h .ttf .png

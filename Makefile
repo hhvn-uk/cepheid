@@ -11,6 +11,7 @@ LDFLAGS	= $(RAYLIB) $(DBLIB)
 CFLAGS	= -Wall -g3 -O0
 
 all: db data $(BIN)
+src/data.o: data/icons/*
 
 $(OBJ): src/struct.h
 $(BIN): $(OBJ) $(DBLIB)

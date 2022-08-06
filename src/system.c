@@ -42,7 +42,7 @@ bodytype_strify(Body *body) {
 }
 
 Vector2
-system_vectorize(Polar polar) {
+sys_vectorize(Polar polar) {
 	return (Vector2) {
 		polar.r * cosf(polar.theta),
 		polar.r * sinf(polar.theta)
@@ -50,8 +50,8 @@ system_vectorize(Polar polar) {
 }
 
 Vector2
-system_vectorize_around(Vector2 around, Polar polar) {
-	Vector2 relative = system_vectorize(polar);
+sys_vectorize_around(Vector2 around, Polar polar) {
+	Vector2 relative = sys_vectorize(polar);
 	return (Vector2) {
 		around.x + relative.x,
 		around.y + relative.y
@@ -59,7 +59,7 @@ system_vectorize_around(Vector2 around, Polar polar) {
 }
 
 Polar
-system_polarize(Vector2 vector) {
+sys_polarize(Vector2 vector) {
 	return (Polar) {
 		hypotf(vector.x, vector.y),
 		atan2f(vector.y, vector.x)
@@ -67,17 +67,17 @@ system_polarize(Vector2 vector) {
 }
 
 Polar
-system_sum_polar(Polar absolute, Polar relative) {
-	return system_polarize(system_vectorize_around(system_vectorize(absolute), relative));
+sys_sum_polar(Polar absolute, Polar relative) {
+	return sys_polarize(sys_vectorize_around(sys_vectorize(absolute), relative));
 }
 
 Vector2
-system_get_vector(Body *body) {
-	return system_vectorize(system_get_polar(body));
+sys_get_vector(Body *body) {
+	return sys_vectorize(sys_get_polar(body));
 }
 
 Polar
-system_get_polar(Body *body) {
+sys_get_polar(Body *body) {
 	Polar polar;
 
 	if (body->polar.r != INFINITY &&
@@ -89,7 +89,7 @@ system_get_polar(Body *body) {
 			polar.r = body->curdist;
 			polar.theta = body->theta;
 		} else {
-			polar = system_sum_polar(system_get_polar(body->parent),
+			polar = sys_sum_polar(sys_get_polar(body->parent),
 					(Polar){body->curdist, body->theta});
 		}
 	} else {
@@ -97,7 +97,7 @@ system_get_polar(Body *body) {
 			polar.r = body->dist;
 			polar.theta = body->curtheta;
 		} else {
-			polar = system_sum_polar(system_get_polar(body->parent),
+			polar = sys_sum_polar(sys_get_polar(body->parent),
 					(Polar){body->dist, body->curtheta});
 		}
 	}
@@ -107,7 +107,7 @@ system_get_polar(Body *body) {
 }
 
 System *
-system_init(char *name) {
+sys_init(char *name) {
 	System *ret = malloc(sizeof(System));
 	if (!ret) return NULL;
 	ret->name = nstrdup(name);
@@ -127,16 +127,16 @@ filter_bodyinsystem(void *data, char *path) {
 }
 
 /* If s is true, ignore name and load the system.
- * If s is NULL, call system_init(name); */
+ * If s is NULL, call sys_init(name); */
 System *
-system_load(System *s, char *name) {
+sys_load(System *s, char *name) {
 	char *dir, *tmp;
 	char **bname;
 	char **bparent;
 	size_t blen, i;
 	int pos;
 
-	if (!s) s = system_init(name);
+	if (!s) s = sys_init(name);
 
 	dir = smprintf("%s/", s->name);
 	s->bodies_len = blen = dblistgroups_f(&bname, save->db.systems, &filter_bodyinsystem, dir);
@@ -171,7 +171,7 @@ system_load(System *s, char *name) {
 			s->bodies[i]->curtheta = strnum(dbget(save->db.systems, bname[i], "curtheta"));
 		}
 
-		/* so system_get_polar() knows if it's usable */
+		/* so sys_get_polar() knows if it's usable */
 		s->bodies[i]->polar = (Polar) { INFINITY, INFINITY };
 	}
 
@@ -187,9 +187,9 @@ system_load(System *s, char *name) {
 
 	/* third pass: get coords (needs parent ptr from second pass) */
 	for (i = 0; i < blen; i++) {
-		system_get_polar(s->bodies[i]); /* Builds the cache for us: this is more
+		sys_get_polar(s->bodies[i]); /* Builds the cache for us: this is more
 						   efficient as it can cache the parent too */
-		s->bodies[i]->vector = system_vectorize(s->bodies[i]->polar);
+		s->bodies[i]->vector = sys_vectorize(s->bodies[i]->polar);
 	}
 
 	for (i = 0; i < blen; i++) {
