@@ -342,7 +342,7 @@ ui_draw_ring(int x, int y, float r, Color col) {
 		return;
 
 	p = sys_polarize_around(v, screen.centre);
-	deg = p.theta * RAD2DEG;
+	deg = p.theta;
 
 	/* Draw the section of the ring (+ wriggle room) that will be onscreen
 	 * be (start/end)ing prec degrees before/after the screen's centre
@@ -661,7 +661,7 @@ ui_draw_body(Body *body) {
 	if (body->type == BODY_COMET && view_main.infobox.comettail.val &&
 			10 * view_main.kmperpx < body->curdist)
 		DrawLineV(body->pxloc, sys_vectorize_around(body->pxloc,
-					(Polar){11, body->theta} /* I have no fucking clue what is going on here. How does this end up correct, but not when I add 180? That theta isn't even pointing away from the sun!!! WHAT?!? */), COL_COMET);
+					(Polar){11, body->inward ? body->theta : body->theta + 180}), COL_COMET);
 	if (ui_should_draw_body(body, 0))
 		ui_print(body->pxloc.x + w + 2, body->pxloc.y + w + 2,
 				COL_FG, "%s", body->name);

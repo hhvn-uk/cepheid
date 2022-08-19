@@ -133,6 +133,7 @@ BEGIN {
 		printf("maxdist\t%d\n", maxorb) > file
 		printf("curdist\t%d\n", (rand() * (maxorb - minorb)) + minorb) > file
 		printf("theta\t%d\n", rand() * 360) > file
+		printf("inward\t%d\n", int(rand() * 2)) > file
 	} else {
 		printf("dist\t%d\n", (minorb + maxorb) / 2) > file
 		printf("curtheta\t%d\n", rand() * 360) > file

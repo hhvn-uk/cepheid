@@ -17,4 +17,14 @@
 #define YEAR_LEN (365.25 * DAY_LEN)
 #define MONTH_APPROX (YEAR_LEN / 12)
 
+#define DEG(n) (n * RAD2DEG)
+#define RAD(n) (n * DEG2RAD)
+
+/* eugh. raylib uses degrees, libm uses radians.
+ * Let's make everything degrees. */
+#define COSF(n) cosf(RAD(n))
+#define SINF(n) sinf(RAD(n))
+#define ATAN2F(y, x) DEG(atan2f(y, x))
+
+
 #define SQUARE(a) (a * a)

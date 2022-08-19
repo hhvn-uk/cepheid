@@ -82,7 +82,6 @@ Polar	sys_polarize_around(Vector2 around, Vector2 vector);
 Polar	sys_sum_polar(Polar absolute, Polar relative);
 Vector2	sys_get_vector(Body *body);
 Polar	sys_get_polar(Body *body);
-float	sys_add_theta(float theta, float add);
 System *sys_init(char *name);
 System *sys_load(System *s, char *name);
 System *sys_get(char *name);

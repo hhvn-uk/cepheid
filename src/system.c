@@ -44,8 +44,8 @@ bodytype_strify(Body *body) {
 Vector2
 sys_vectorize(Polar polar) {
 	return (Vector2) {
-		polar.r * cosf(polar.theta),
-		polar.r * sinf(polar.theta)
+		polar.r * COSF(polar.theta),
+		polar.r * SINF(polar.theta)
 	};
 }
 
@@ -62,7 +62,7 @@ Polar
 sys_polarize(Vector2 vector) {
 	return (Polar) {
 		hypotf(vector.x, vector.y),
-		atan2f(vector.y, vector.x)
+		ATAN2F(vector.y, vector.x)
 	};
 }
 
@@ -110,17 +110,6 @@ sys_get_polar(Body *body) {
 
 	body->polar = polar;
 	return polar;
-}
-
-float
-sys_add_theta(float theta, float add) {
-	float ret;
-	ret = theta + add;
-	while (ret > 360)
-		ret -= 360;
-	while (ret < 0)
-		ret += 360;
-	return ret;
 }
 
 System *

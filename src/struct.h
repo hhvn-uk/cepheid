@@ -132,11 +132,3 @@ typedef struct {
 } Clickable;
 
 #include "views.h" /* unique structures */
-
-/* maths.c */
-typedef struct {
-	float median;
-	float uquart;
-	float lquart;
-	size_t elems;
-} Nstats;
