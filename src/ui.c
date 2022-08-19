@@ -660,8 +660,10 @@ ui_draw_body(Body *body) {
 	DrawCircle(body->pxloc.x, body->pxloc.y, w, body_col[body->type]);
 	if (body->type == BODY_COMET && view_main.infobox.comettail.val &&
 			10 * view_main.kmperpx < body->curdist)
-		DrawLineV(body->pxloc, sys_vectorize_around(body->pxloc,
-					(Polar){11, body->inward ? body->theta : body->theta + 180}), COL_COMET);
+		DrawLineEx(body->pxloc, sys_vectorize_around(body->pxloc,
+				(Polar){w * 11 / min_body_rad[BODY_COMET],
+				body->inward ? body->theta : body->theta + 180}),
+				w / min_body_rad[BODY_COMET], COL_COMET);
 	if (ui_should_draw_body(body, 0))
 		ui_print(body->pxloc.x + w + 2, body->pxloc.y + w + 2,
 				COL_FG, "%s", body->name);
