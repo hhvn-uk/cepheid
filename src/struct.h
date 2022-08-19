@@ -56,6 +56,15 @@ typedef struct {
 	char *name;
 	Body **bodies;
 	size_t bodies_len;
+	Body *furthest_body;
+	struct {
+		int stars;
+		int planets;
+		int asteroids;
+		int comets;
+		int moons;
+	} num;
+	Vector2 lypos;
 } System;
 
 /* save.c */
@@ -66,7 +75,7 @@ typedef struct {
 		char *systems;
 		char *fleets;
 	} db;
-	System *system;
+	System *homesys;
 } Save;
 
 /* ui.c */
@@ -75,6 +84,13 @@ typedef struct {
 	int x, y;
 	int w, h;
 } Rect;
+
+typedef struct {
+	float w, h;
+	float diag;
+	Vector2 centre;
+	Rect rect; /* for passing to functions */
+} Screen;
 
 #define TABS_MAX 16
 typedef struct {
@@ -88,6 +104,7 @@ typedef struct {
 } Tabs;
 
 typedef struct {
+	int enabled;
 	int val;
 	char *label;
 } Checkbox;
@@ -113,3 +130,13 @@ typedef struct {
 	enum UiElements type;
 	void *elem;
 } Clickable;
+
+#include "views.h" /* unique structures */
+
+/* maths.c */
+typedef struct {
+	float median;
+	float uquart;
+	float lquart;
+	size_t elems;
+} Nstats;

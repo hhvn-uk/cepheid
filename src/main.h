@@ -12,6 +12,10 @@
 extern Save *save;
 
 /* str.c */
+void *	falloc(size_t size);
+void	ffree(void);
+char *	vsfprintf(char *fmt, va_list args);
+char *	sfprintf(char *fmt, ...); /* return string allocated for current frame */
 char *	vsmprintf(char *fmt, va_list args);
 char *	smprintf(char *fmt, ...); /* return allocated string */
 char *	nstrdup(char *str); /* NULL-safe */
@@ -25,18 +29,27 @@ float	strnum(char *str);
 
 /* ui.c */
 extern Tabs view_tabs;
-extern void (*view_handlers[UI_VIEW_LAST])(void);
+extern int (*view_handlers[UI_VIEW_LAST])(int);
 extern void (*view_drawers[UI_VIEW_LAST])(void);
+extern Rect screen_rect;
+extern View_main view_main;
+extern View_sys view_sys;
 void	ui_init(void);
+void	ui_update_screen(void);
 void	ui_deinit(void);
 void	ui_print(int x, int y, Color col, char *format, ...);
 int	ui_textsize(char *text);
 int	ui_collides(Rect rect, Vector2 point);
+int	ui_onscreen(Vector2 point);
+int	ui_onscreen_ring(Vector2 centre, float r);
+int	ui_onscreen_circle(Vector2 centre, float r);
 void	ui_clickable_register(int x, int y, int w, int h, enum UiElements type, void *elem);
 void	ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable);
-void	ui_clickable_update(void);
+int	ui_clickable_update(void);
+void	ui_clickable_clear(void);
 void	ui_draw_views(void);
 void	ui_draw_border(int x, int y, int w, int h, int px);
+void	ui_draw_ring(int x, int y, float r, Color col);
 void	ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs);
 void	ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs);
 void	ui_draw_checkbox(int x, int y, Checkbox *checkbox);
@@ -46,12 +59,12 @@ Vector2 ui_vectordiff(Vector2 a, Vector2 b);
 float	ui_vectordist(Vector2 a, Vector2 b);
 int	ui_should_draw_body(Body *body, int orbit);
 void	ui_draw_body(Body *body);
-void	ui_handle_view_main(void);
-void	ui_handle_view_colonies(void);
-void	ui_handle_view_fleets(void);
-void	ui_handle_view_design(void);
-void	ui_handle_view_sys(void);
-void	ui_handle_view_settings(void);
+int	ui_handle_view_main(int nowsel);
+int	ui_handle_view_colonies(int nowsel);
+int	ui_handle_view_fleets(int nowsel);
+int	ui_handle_view_design(int nowsel);
+int	ui_handle_view_sys(int nowsel);
+int	ui_handle_view_settings(int nowsel);
 void	ui_draw_view_main(void);
 void	ui_draw_view_colonies(void);
 void	ui_draw_view_fleets(void);
@@ -65,15 +78,19 @@ char *	bodytype_strify(Body *body);
 Vector2	sys_vectorize(Polar polar);
 Vector2 sys_vectorize_around(Vector2 around, Polar polar);
 Polar	sys_polarize(Vector2 vector);
+Polar	sys_polarize_around(Vector2 around, Vector2 vector);
 Polar	sys_sum_polar(Polar absolute, Polar relative);
 Vector2	sys_get_vector(Body *body);
 Polar	sys_get_polar(Body *body);
+float	sys_add_theta(float theta, float add);
 System *sys_init(char *name);
 System *sys_load(System *s, char *name);
+System *sys_get(char *name);
+System *sys_default(void);
 
 /* save.c */
-Save *	save_init(char *savedir);
-void	save_write(Save *s);
+void 	save_read(char *dir);
+void	save_write(void);
 
 /* data.c */
 extern Font font;
@@ -85,3 +102,14 @@ extern Texture image_sys;
 extern Texture image_settings;
 void	data_load(void);
 void	data_unload(void);
+
+/* db.c */
+int	vdbsetf(char *dir, char *group, char *key, char *fmt, va_list args);
+int	dbsetf(char *dir, char *group, char *key, char *fmt, ...);
+int	dbsetint(char *dir, char *group, char *key, int val);
+int	dbsetfloat(char *dir, char *group, char *key, float val);
+void	dbsetbody(System *sys, Body *body);
+int	vdbgetf(char *dir, char *group, char *key, char *fmt, va_list args);
+int	dbgetf(char *dir, char *group, char *key, char *fmt, ...);
+int	dbgetint(char *dir, char *group, char *key);
+float	dbgetfloat(char *dir, char *group, char *key);

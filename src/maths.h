@@ -16,3 +16,5 @@
 #define WEEK_LEN (7 * DAY_LEN)
 #define YEAR_LEN (365.25 * DAY_LEN)
 #define MONTH_APPROX (YEAR_LEN / 12)
+
+#define SQUARE(a) (a * a)

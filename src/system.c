@@ -4,7 +4,7 @@
 #include "raylib.h"
 #include "main.h"
 
-char *bodytype_names[BODY_LAST] = {
+static char *bodytype_names[BODY_LAST] = {
 	[BODY_STAR] = "Star",
 	[BODY_PLANET] = "Planet",
 	[BODY_DWARF] = "Dwarf planet",
@@ -67,6 +67,12 @@ sys_polarize(Vector2 vector) {
 }
 
 Polar
+sys_polarize_around(Vector2 around, Vector2 vector) {
+	Vector2 v = {vector.y - around.y, vector.x - around.x};
+	return sys_polarize(v);
+}
+
+Polar
 sys_sum_polar(Polar absolute, Polar relative) {
 	return sys_polarize(sys_vectorize_around(sys_vectorize(absolute), relative));
 }
@@ -106,6 +112,17 @@ sys_get_polar(Body *body) {
 	return polar;
 }
 
+float
+sys_add_theta(float theta, float add) {
+	float ret;
+	ret = theta + add;
+	while (ret > 360)
+		ret -= 360;
+	while (ret < 0)
+		ret += 360;
+	return ret;
+}
+
 System *
 sys_init(char *name) {
 	System *ret = malloc(sizeof(System));
@@ -113,6 +130,8 @@ sys_init(char *name) {
 	ret->name = nstrdup(name);
 	ret->bodies = NULL;
 	ret->bodies_len = 0;
+	ret->furthest_body = NULL;
+	memset(&ret->num, 0, sizeof(ret->num));
 	return ret;
 }
 
@@ -138,6 +157,9 @@ sys_load(System *s, char *name) {
 
 	if (!s) s = sys_init(name);
 
+	s->lypos.x = strnum(dbget(save->db.systems, name, "x"));
+	s->lypos.y = strnum(dbget(save->db.systems, name, "y"));
+
 	dir = smprintf("%s/", s->name);
 	s->bodies_len = blen = dblistgroups_f(&bname, save->db.systems, &filter_bodyinsystem, dir);
 	if (!bname) return NULL;
@@ -155,6 +177,14 @@ sys_load(System *s, char *name) {
 
 		tmp = dbget(save->db.systems, bname[i], "type");
 		s->bodies[i]->type = bodytype_enumify(tmp);
+
+		switch (s->bodies[i]->type) {
+		case BODY_STAR:		s->num.stars++;		break;
+		case BODY_PLANET:	s->num.planets++;	break;
+		case BODY_ASTEROID:	s->num.asteroids++;	break;
+		case BODY_COMET:	s->num.comets++;	break;
+		case BODY_MOON:		s->num.moons++;		break;
+		}
 
 		s->bodies[i]->radius = strnum(dbget(save->db.systems, bname[i], "radius"));
 		s->bodies[i]->mass = strnum(dbget(save->db.systems, bname[i], "mass"));
@@ -190,6 +220,14 @@ sys_load(System *s, char *name) {
 		sys_get_polar(s->bodies[i]); /* Builds the cache for us: this is more
 						   efficient as it can cache the parent too */
 		s->bodies[i]->vector = sys_vectorize(s->bodies[i]->polar);
+
+		/* This could deal with moons, but that's probably not useful.
+		 * What about multiple stars in a system? That may need to be
+		 * addressed in future */
+		if (s->bodies[i]->parent && s->bodies[i]->parent->type == BODY_STAR && (!s->furthest_body ||
+				(s->bodies[i]->type == BODY_COMET ? s->bodies[i]->maxdist : s->bodies[i]->dist) >
+				(s->furthest_body->type == BODY_COMET ? s->furthest_body->maxdist : s->furthest_body->dist)))
+			s->furthest_body = s->bodies[i];
 	}
 
 	for (i = 0; i < blen; i++) {
@@ -200,4 +238,21 @@ sys_load(System *s, char *name) {
 	free(dir);
 
 	return s;
+}
+
+System *
+sys_get(char *name) {
+	/* For now, call sys_load. In future, get the system via save. */
+	return sys_load(NULL, name);
+}
+
+System *
+sys_default(void) {
+	char *str;
+	if (view_main.sys)
+		return view_main.sys;
+	else if ((str = dbget(save->db.dir, "index", "selsystem")))
+		return sys_get(str);
+	else
+		return save->homesys;
 }

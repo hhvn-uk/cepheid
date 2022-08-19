@@ -1,4 +1,5 @@
 #include <math.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <raylib.h>
@@ -8,12 +9,31 @@
 #define VIEWS_HEIGHT 25
 #define WINDOW_TAB_HEIGHT 20
 #define TARGET_FPS 60
-#define MIN_BODY_DIAM 3
-#define SCREEN_RECT() ((Rect){0, 0, GetScreenWidth(), GetScreenHeight()})
+#define EXPLODE_RECT(rect) rect.x, rect.y, rect.w, rect.h
+#define RLIFY_RECT(rect) ((Rectangle){ EXPLODE_RECT(rect) })
 
 static Clickable clickable[CLICKABLE_MAX];
 
-void (*view_handlers[UI_VIEW_LAST])(void) = {
+static float min_body_rad[] = {
+	[BODY_STAR] = 4,
+	[BODY_PLANET] = 3,
+	[BODY_COMET] = 2.5,
+	[BODY_DWARF] = 2,
+	[BODY_ASTEROID] = 1,
+	[BODY_MOON] = 1,
+};
+
+static Color body_col[] = {
+	[BODY_STAR] = COL_STAR,
+	[BODY_PLANET] = COL_PLANET,
+	[BODY_COMET] = COL_COMET,
+	[BODY_DWARF] = COL_DWARF,
+	[BODY_ASTEROID] = COL_ASTEROID,
+	[BODY_MOON] = COL_MOON,
+};
+
+/* Return 1 for redraw, 0 to keep prev */
+int (*view_handlers[UI_VIEW_LAST])(int) = {
 	[UI_VIEW_MAIN] = ui_handle_view_main,
 	[UI_VIEW_COLONIES] = ui_handle_view_colonies,
 	[UI_VIEW_FLEETS] = ui_handle_view_fleets,
@@ -31,6 +51,8 @@ void (*view_drawers[UI_VIEW_LAST])(void) = {
 	[UI_VIEW_SETTINGS] = ui_draw_view_settings,
 };
 
+Screen screen = { 0 };
+
 Tabs view_tabs = {
 	/* Tactical is the terminology used in Aurora, so I decided to use it
 	 * in the ui; in the code it's just called 'main' for my fingers' sake */
@@ -42,48 +64,24 @@ Tabs view_tabs = {
 		{&image_settings, "Settings", 0}}
 };
 
-static struct {
-	struct {
-		Tabs tabs;
-		struct {
-			Checkbox dwarf;
-			Checkbox asteroid;
-			Checkbox comet;
-		} names;
-		struct {
-			Checkbox dwarf;
-			Checkbox asteroid;
-			Checkbox comet;
-		} orbit;
-		Rect geom;
-	} infobox;
-	int pan;
-	struct {
-		int held;
-		Vector2 origin;
-	} ruler;
-	float kmx, kmy;
-	float kmperpx;
-	struct {
-		int x, y; /* real y = GetScreenHeight() - y */
-		int w, h;
-	} scale;
-	System *system;
-} view_main = {
+View_main view_main = {
 	.infobox = {
 		.tabs = {
 			2, 0, {{NULL, "Display", 0}, {NULL, "Minerals", 0}}
 		},
 		.names = {
-			.dwarf = {1, "Name: dwarf planets"},
-			.asteroid = {0, "Name: asteroid"},
-			.comet = {1, "Name: comet"},
+			.dwarf = {1, 1, "Name: dwarf planets"},
+			.dwarfn = {1, 0, "Name: numbered dwarf planets"}, /* TODO */
+			.asteroid = {1, 0, "Name: asteroids"},
+			.asteroidn = {1, 0, "Name: numbered asteroids"}, /* TODO */
+			.comet = {1, 1, "Name: comets"},
 		},
 		.orbit = {
-			.dwarf = {0, "Orbit: dwarf planets"},
-			.asteroid = {0, "Orbit: asteroid"},
-			.comet = {0, "Orbit: comet"},
+			.dwarf = {1, 0, "Orbit: dwarf planets"},
+			.asteroid = {1, 0, "Orbit: asteroids"},
+			.comet = {1, 0, "Orbit: comets"},
 		},
+		.comettail = {1, 1, "Comet tails"}, /* TODO */
 		.geom = {
 			.x = 10,
 			.y = VIEWS_HEIGHT + 10,
@@ -102,14 +100,42 @@ static struct {
 		.w = 50,
 		.h = 3,
 	},
-	.system = NULL,
+	.sys = NULL,
+};
+
+View_sys view_sys = {
+	.info = {
+		.geom = {
+			.x = 0,
+			.y = VIEWS_HEIGHT,
+			.w = 300,
+			.h = 0, /* see ui_handle_view_sys() */
+		},
+	},
+	.pan = 0,
+	.off = {
+		.x = 0,
+		.y = 0,
+	},
+	.lytopx = 0.025,
+	.sel = NULL,
 };
 
 void
 ui_init(void) {
-	InitWindow(500, 500, "testing raylib");
+	InitWindow(500, 500, "");
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
 	SetTargetFPS(TARGET_FPS);
+	SetExitKey(KEY_NULL);
+}
+
+void
+ui_update_screen(void) {
+	screen.w = screen.rect.w = GetScreenWidth();
+	screen.h = screen.rect.h = GetScreenHeight();
+	screen.centre.x = screen.w / 2;
+	screen.centre.y = screen.h / 2;
+	screen.diag = sqrt(SQUARE(screen.w) + SQUARE(screen.h));
 }
 
 void
@@ -134,21 +160,14 @@ ui_print(int x, int y, Color col, char *fmt, ...) {
 
 void
 ui_title(char *fmt, ...) {
-	static char *last = NULL;
 	char *title;
 	va_list ap;
 
 	va_start(ap, fmt);
 	title = vsmprintf(fmt, ap);
 	va_end(ap);
-
-	if (!streq(title, last)) {
-		SetWindowTitle(title);
-		free(last);
-		last = title;
-	} else {
-		free(title);
-	}
+	SetWindowTitle(title);
+	free(title);
 }
 
 int
@@ -163,6 +182,43 @@ ui_collides(Rect rect, Vector2 point) {
 		return 1;
 	else
 		return 0;
+}
+
+int
+ui_onscreen(Vector2 point) {
+	return ui_collides(screen.rect, point);
+}
+
+int
+ui_ring_rect_collides(Vector2 centre, float r, Rect rect) {
+	Vector2 rcent = {rect.x + rect.w / 2, rect.y + rect.h / 2};
+	Vector2 d;
+
+	d.x = fabsf(centre.x - rcent.x);
+	d.y = fabsf(centre.y - rcent.y);
+
+	if (d.x > (rect.w / 2 + r)) return 0;
+	if (d.y > (rect.h / 2 + r)) return 0;
+
+	if (d.x <= (rect.w / 2)) return 1;
+	if (d.y <= (rect.h / 2)) return 1;
+
+	return ((d.x - rect.w / 2) * (d.x - rect.w / 2) +
+			(d.y - rect.h / 2) * (d.y - rect.h / 2)) <= r * r;
+}
+
+int
+ui_onscreen_ring(Vector2 centre, float r) {
+	float d = ui_vectordist(centre, screen.centre);
+
+	if (d + screen.diag / 2 < r)
+		return 0;
+	return CheckCollisionCircleRec(centre, r, RLIFY_RECT(screen.rect));
+}
+
+int
+ui_onscreen_circle(Vector2 centre, float r) {
+	return CheckCollisionCircleRec(centre, r, RLIFY_RECT(screen.rect));
 }
 
 void
@@ -225,11 +281,12 @@ ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable) {
 	}
 }
 
-void
+int
 ui_clickable_update(void) {
 	Vector2 mouse;
 	MouseButton button;
 	int i;
+	int ret = 0;
 
 	mouse = GetMousePosition();
 	/* I wish there was a: int GetMouseButton(void) */
@@ -239,10 +296,20 @@ ui_clickable_update(void) {
 	else button = -1;
 
 	for (i = 0; i < CLICKABLE_MAX; i++) {
-		if (clickable[i].elem && ui_collides(clickable[i].geom, mouse))
+		if (clickable[i].elem && ui_collides(clickable[i].geom, mouse)) {
 			ui_clickable_handle(mouse, button, &clickable[i]);
-		clickable[i].elem = NULL;
+			ret = 1;
+		}
 	}
+
+	return ret;
+}
+
+void
+ui_clickable_clear(void) {
+	int i;
+	for (i = 0; i < CLICKABLE_MAX; i++)
+		clickable[i].elem = NULL;
 }
 
 void
@@ -258,6 +325,42 @@ ui_draw_border(int x, int y, int w, int h, int px) {
 	DrawRectangle(x, y, px, h, COL_BORDER); /* left */
 	DrawRectangle(x, y + h - px, w, px, COL_BORDER); /* bottom */
 	DrawRectangle(x + w - px, y, px, h, COL_BORDER); /* right */
+}
+
+#define SEGMAX 2500
+
+void
+ui_draw_ring(int x, int y, float r, Color col) {
+	Vector2 v = {x, y};
+	Polar p;
+	float s;
+	float prec = screen.diag * 2 / (PI * 2 * r) * 360;
+	float sdeg = 0, edeg = 360;
+	float deg;
+
+	if (!ui_onscreen_ring(v, r))
+		return;
+
+	p = sys_polarize_around(v, screen.centre);
+	deg = p.theta * RAD2DEG;
+
+	/* Draw the section of the ring (+ wriggle room) that will be onscreen
+	 * be (start/end)ing prec degrees before/after the screen's centre
+	 * relative to the ring's centre. */
+	sdeg = deg + prec;
+	edeg = deg - prec;
+
+	if (r < 100)
+		s = r;
+	else if (r < SEGMAX)
+		s = r / log10(r);
+	else
+		s = SEGMAX;
+
+	/* Less segments are needed if there is less ring to place them in. */
+	s *= (sdeg - edeg) / 360;
+
+	DrawRing(v, r - 1, r, sdeg, edeg, s, col);
 }
 
 void
@@ -328,9 +431,11 @@ ui_draw_checkbox(int x, int y, Checkbox *box) {
 
 	w = h = FONT_SIZE;
 	ui_draw_border(x, y, w, h, 1);
-	DrawRectangle(x + 1, y + 1, w - 2, h - 2, box->val ? COL_FG : COL_BG);
+	DrawRectangle(x + 1, y + 1, w - 2, h - 2,
+			box->enabled ? (box->val ? COL_FG : COL_BG) : COL_BORDER);
 	ui_print(x + w + (w / 2), y + (h / 6), COL_FG, "%s", box->label);
-	ui_clickable_register(x, y, w + (w / 2) + ui_textsize(box->label), h, UI_CHECKBOX, box);
+	if (box->enabled)
+		ui_clickable_register(x, y, w + (w / 2) + ui_textsize(box->label), h, UI_CHECKBOX, box);
 }
 
 Vector2
@@ -373,19 +478,27 @@ ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs) {
 	ui_draw_border(x, y, w, h, 2);
 }
 
-void
-ui_handle_view_main(void) {
+int
+ui_handle_view_main(int nowsel) {
 	Vector2 mouse = GetMousePosition();
 	Vector2 delta = GetMouseDelta();
 	float wheel = GetMouseWheelMove();
 	float diff;
-	int i;
+	Body *furth;
+
+	if (view_main.sys)
+		furth = view_main.sys->furthest_body;
 
 #define SCROLL_DIVISOR 10
-	diff = wheel * (view_main.kmperpx/SCROLL_DIVISOR);
-	view_main.kmperpx -= diff;
-	view_main.kmx += (mouse.x - GetScreenWidth() / 2) * diff;
-	view_main.kmy += (mouse.y - GetScreenHeight() / 2) * diff;
+	if (wheel) {
+		diff = wheel * (view_main.kmperpx/SCROLL_DIVISOR);
+		if (diff > 0 || !furth || view_main.kmperpx * GetScreenHeight() <
+				2 * (furth->type == BODY_COMET ? furth->maxdist : furth->dist)) {
+			view_main.kmperpx -= diff;
+			view_main.kmx += (mouse.x - GetScreenWidth() / 2) * diff;
+			view_main.kmy += (mouse.y - GetScreenHeight() / 2) * diff;
+		}
+	}
 
 	if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
 		if (view_main.pan) {
@@ -394,77 +507,134 @@ ui_handle_view_main(void) {
 		} else if (!ui_collides(view_main.infobox.geom, mouse)) {
 			view_main.pan = 1;
 		}
-	} else view_main.pan = 0;
+	} else {
+		view_main.pan = 0;
+	}
 
 	if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && !view_main.ruler.held &&
 			!ui_collides(view_main.infobox.geom, mouse)) {
 		view_main.ruler.held = 1;
 		view_main.ruler.origin = ui_pxtokm(mouse);
-	} else if (IsMouseButtonUp(MOUSE_BUTTON_RIGHT))
+	} else if (IsMouseButtonUp(MOUSE_BUTTON_RIGHT)) {
 		view_main.ruler.held = 0;
-
-	if (view_main.system != save->system) {
-		view_main.system = save->system;
-
-		ui_title("Tactical: %s", save->system->name);
 	}
 
+	if (!view_main.sys) {
+		view_main.sys = sys_default();
+	}
 
+	if (nowsel)
+		ui_title("Tactical: %s", view_main.sys->name);
+
+	view_main.infobox.names.dwarfn.enabled = view_main.infobox.names.dwarf.val;
+	view_main.infobox.names.asteroidn.enabled = view_main.infobox.names.asteroid.val;
+
+	/* so that the debug stuff prints */
+	if (delta.x || delta.y)
+		return 1;
+
+	return 0;
 }
 
-void
-ui_handle_view_colonies(void) {
-	ui_title("Colonies");
+int
+ui_handle_view_colonies(int nowsel) {
+	if (nowsel)
+		ui_title("Colonies");
+	return 1;
 }
 
-void
-ui_handle_view_fleets(void) {
-	ui_title("Fleets");
+int
+ui_handle_view_fleets(int nowsel) {
+	if (nowsel)
+		ui_title("Fleets");
+	return 1;
 }
 
-void
-ui_handle_view_design(void) {
-	ui_title("Design");
+int
+ui_handle_view_design(int nowsel) {
+	if (nowsel)
+		ui_title("Design");
+	return 1;
 }
 
-void
-ui_handle_view_sys(void) {
-	ui_title("Systems");
+int
+ui_handle_view_sys(int nowsel) {
+	if (nowsel)
+		ui_title("Systems");
+	view_sys.info.geom.h = GetScreenHeight() - VIEWS_HEIGHT;
+	if (!view_sys.sel)
+		view_sys.sel = sys_default();
+	return 1;
 }
 
-void
-ui_handle_view_settings(void) {
-	ui_title("Settings");
+int
+ui_handle_view_settings(int nowsel) {
+	if (nowsel)
+		ui_title("Settings");
+	return 1;
+}
+
+static int
+ui_should_draw_body_checkbox(Body *body, int type, Checkbox *box) {
+	if ((body->type == type || (body->parent &&
+					body->parent->type == type)) &&
+			!box->val)
+		return 0;
+	return 1;
 }
 
 int
 ui_should_draw_body(Body *body, int orbit) {
-	if (!orbit && !ui_collides(SCREEN_RECT(), body->pxloc))
-		return 0;
-	if (!orbit && body->type != BODY_STAR &&
-			(body->type == BODY_COMET ? body->maxdist : body->dist) / view_main.kmperpx < ui_textsize(body->name))
-		return 0;
-	if (!orbit && body->parent && body->type != BODY_STAR &&
-			ui_vectordist(body->vector, body->parent->vector) < MIN_BODY_DIAM * view_main.kmperpx)
-		return 0;
-	if ((body->type == BODY_DWARF || (body->parent && body->parent->type == BODY_DWARF)) &&
-			(!orbit || !view_main.infobox.orbit.dwarf.val) &&
-			(orbit || !view_main.infobox.names.dwarf.val))
-		return 0;
-	if ((body->type == BODY_ASTEROID || (body->parent && body->parent->type == BODY_ASTEROID)) &&
-			(!orbit || !view_main.infobox.orbit.asteroid.val) &&
-			(orbit || !view_main.infobox.names.asteroid.val))
-		return 0;
-	if ((body->type == BODY_COMET || (body->parent && body->parent->type == BODY_COMET)) &&
-			(!orbit || !view_main.infobox.orbit.comet.val) &&
-			(orbit || !view_main.infobox.names.comet.val))
-		return 0;
+	if (orbit) {
+		if (!body->parent)
+			return 0;
+		if (orbit < min_body_rad[body->parent->type])
+			return 0;
+		if (!ui_should_draw_body_checkbox(body, BODY_DWARF,
+					&view_main.infobox.orbit.dwarf))
+			return 0;
+		if (!ui_should_draw_body_checkbox(body, BODY_ASTEROID,
+					&view_main.infobox.orbit.asteroid))
+			return 0;
+		if (!ui_should_draw_body_checkbox(body, BODY_COMET,
+					&view_main.infobox.orbit.comet))
+			return 0;
+	} else {
+		if (!ui_onscreen(body->pxloc))
+			return 0;
+		if (body->type != BODY_STAR &&
+				(body->type == BODY_COMET ? body->maxdist : body->dist)
+				/ view_main.kmperpx < ui_textsize(body->name))
+			return 0;
+		if (body->parent && body->type != BODY_STAR &&
+				ui_vectordist(body->vector, body->parent->vector) <
+				min_body_rad[body->type] * view_main.kmperpx)
+			return 0;
+		if (isdigit(*body->name) || *body->name == '(') {
+			if (!ui_should_draw_body_checkbox(body, BODY_DWARF,
+						&view_main.infobox.names.dwarfn))
+				return 0;
+			if (!ui_should_draw_body_checkbox(body, BODY_ASTEROID,
+						&view_main.infobox.names.asteroidn))
+				return 0;
+		}
+		if (!ui_should_draw_body_checkbox(body, BODY_DWARF,
+					&view_main.infobox.names.dwarf))
+			return 0;
+		if (!ui_should_draw_body_checkbox(body, BODY_ASTEROID,
+					&view_main.infobox.names.asteroid))
+			return 0;
+		if (!ui_should_draw_body_checkbox(body, BODY_COMET,
+					&view_main.infobox.names.comet))
+			return 0;
+	}
 	return 1;
 }
 
 void
 ui_draw_body(Body *body) {
 	Vector2 parent;
+	float pxrad;
 	int w;
 
 	if (body->parent) {
@@ -474,19 +644,24 @@ ui_draw_body(Body *body) {
 		parent.y = 0;
 	}
 
-	if (ui_should_draw_body(body, 1)) {
-		if (body->parent && body->type == BODY_COMET)
-			DrawLineV(parent, body->pxloc, COL_ORBIT);
-		else if (body->parent)
-			DrawCircleLines(parent.x, parent.y,
-					ui_vectordist(parent, body->pxloc),
-					COL_ORBIT);
+	if (body->parent) {
+		pxrad = ui_vectordist(parent, body->pxloc);
+		if (ui_should_draw_body(body, pxrad)) {
+			if (body->type == BODY_COMET)
+				DrawLineV(parent, body->pxloc, COL_ORBIT);
+			else
+				ui_draw_ring(parent.x, parent.y, pxrad, COL_ORBIT);
+		}
 	}
-	if (body->radius / view_main.kmperpx > MIN_BODY_DIAM)
+	if (body->radius / view_main.kmperpx > min_body_rad[body->type])
 		w = body->radius / view_main.kmperpx;
 	else
-		w = MIN_BODY_DIAM;
-	DrawCircle(body->pxloc.x, body->pxloc.y, w, COL_FG);
+		w = min_body_rad[body->type];
+	DrawCircle(body->pxloc.x, body->pxloc.y, w, body_col[body->type]);
+	if (body->type == BODY_COMET && view_main.infobox.comettail.val &&
+			10 * view_main.kmperpx < body->curdist)
+		DrawLineV(body->pxloc, sys_vectorize_around(body->pxloc,
+					(Polar){11, body->theta} /* I have no fucking clue what is going on here. How does this end up correct, but not when I add 180? That theta isn't even pointing away from the sun!!! WHAT?!? */), COL_COMET);
 	if (ui_should_draw_body(body, 0))
 		ui_print(body->pxloc.x + w + 2, body->pxloc.y + w + 2,
 				COL_FG, "%s", body->name);
@@ -497,24 +672,22 @@ ui_draw_view_main(void) {
 	Vector2 mouse = GetMousePosition();
 	Vector2 mousekm = ui_pxtokm(mouse);
 	Vector2 ruler;
-	Vector2 km;
-	Polar polar;
 	Body *body;
-	float *massa;
-	size_t massi;
 	float dist;
 	size_t i;
+	float x, y;
 
 	/* debug info */
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 10, COL_FG, "Xoff: %f | Yoff: %f | km/px: %f",
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 10, COL_FG, "W: %f | H: %f", (float)screen.w, (float)screen.h);
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 20, COL_FG, "Xoff: %f | Yoff: %f | km/px: %f",
 			view_main.kmx, view_main.kmy, view_main.kmperpx);
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 20, COL_FG, "X: %f | Y: %f",
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 30, COL_FG, "X: %f | Y: %f",
 			mousekm.x, mousekm.y);
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 30, COL_FG, "FPS: %d (target: %d)", GetFPS(), TARGET_FPS);
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 40, COL_FG, "FPS: %d (target: %d)", GetFPS(), TARGET_FPS);
 
 	/* draw system bodies */
-	for (i = 0; i < save->system->bodies_len; i++) {
-		body = save->system->bodies[i];
+	for (i = 0; i < view_main.sys->bodies_len; i++) {
+		body = view_main.sys->bodies[i];
 		body->pxloc = ui_kmtopx(body->vector);
 		ui_draw_body(body);
 	}
@@ -546,24 +719,17 @@ ui_draw_view_main(void) {
 	ui_draw_tabbed_window(view_main.infobox.geom.x, view_main.infobox.geom.y,
 			view_main.infobox.geom.w, view_main.infobox.geom.h,
 			&view_main.infobox.tabs);
-	ui_draw_checkbox(view_main.infobox.geom.x + FONT_SIZE,
-			view_main.infobox.geom.y + WINDOW_TAB_HEIGHT + FONT_SIZE*1.5,
-			&view_main.infobox.names.dwarf);
-	ui_draw_checkbox(view_main.infobox.geom.x + FONT_SIZE,
-			view_main.infobox.geom.y + WINDOW_TAB_HEIGHT + FONT_SIZE*3,
-			&view_main.infobox.names.asteroid);
-	ui_draw_checkbox(view_main.infobox.geom.x + FONT_SIZE,
-			view_main.infobox.geom.y + WINDOW_TAB_HEIGHT + FONT_SIZE*4.5,
-			&view_main.infobox.names.comet);
-	ui_draw_checkbox(view_main.infobox.geom.x + FONT_SIZE,
-			view_main.infobox.geom.y + WINDOW_TAB_HEIGHT + FONT_SIZE*6,
-			&view_main.infobox.orbit.dwarf);
-	ui_draw_checkbox(view_main.infobox.geom.x + FONT_SIZE,
-			view_main.infobox.geom.y + WINDOW_TAB_HEIGHT + FONT_SIZE*7.5,
-			&view_main.infobox.orbit.asteroid);
-	ui_draw_checkbox(view_main.infobox.geom.x + FONT_SIZE,
-			view_main.infobox.geom.y + WINDOW_TAB_HEIGHT + FONT_SIZE*9,
-			&view_main.infobox.orbit.comet);
+	x = view_main.infobox.geom.x + FONT_SIZE;
+	y = view_main.infobox.geom.y + WINDOW_TAB_HEIGHT;
+	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarf);
+	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarfn);
+	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.asteroid);
+	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.asteroidn);
+	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.comet);
+	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.dwarf);
+	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.asteroid);
+	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.comet);
+	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.comettail);
 }
 
 void
@@ -590,8 +756,32 @@ ui_draw_view_design(void) {
 
 void
 ui_draw_view_sys(void) {
-	ui_print(10, GetScreenHeight() / 2, COL_FG, "System info/settings menu");
-	ui_print(GetScreenWidth() / 2, GetScreenHeight() / 2, COL_FG, "Pannable system view");
+	int x, y;
+
+	x = view_sys.info.geom.x + view_sys.info.geom.w;
+	y = view_sys.info.geom.y;
+
+	/* draw map */
+
+	/* draw divider */
+	DrawLine(x, y, x, y + view_sys.info.geom.h, COL_BORDER);
+
+	/* draw info */
+	x = view_sys.info.geom.x + 10;
+	y += 10;
+	if (view_sys.sel) {
+		ui_print(x, y, COL_FG, "%s", view_sys.sel->name);
+		DrawLine(x, y + FONT_SIZE, x + view_sys.info.geom.w - 20,
+					y + FONT_SIZE, COL_BORDER);
+		y += 30;
+		ui_print(x, y,      COL_FG, "Stars:     %d", view_sys.sel->num.stars);
+		ui_print(x, y + 10, COL_FG, "Planets:   %d", view_sys.sel->num.planets);
+		ui_print(x, y + 20, COL_FG, "Asteroids: %d", view_sys.sel->num.asteroids);
+		ui_print(x, y + 30, COL_FG, "Comets:    %d", view_sys.sel->num.comets);
+		ui_print(x, y + 40, COL_FG, "Moons:     %d", view_sys.sel->num.moons);
+		DrawLine(x, y + 52, x + 85, y + 52, COL_FG);
+		ui_print(x, y + 55, COL_FG, "Total:     %d", view_sys.sel->bodies_len);
+	}
 }
 
 void

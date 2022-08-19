@@ -7,7 +7,9 @@ all: $(HEADERS) sol
 sol: worlds.tsv worlds-parse.awk
 	rm -rf sol
 	./worlds-parse.awk < $<
-	printf "main\tsol\n" > sol/index
+	printf "main\tSol\n" > sol/index
+	printf "x\t0\n" >> sol/index
+	printf "y\t0\n" >> sol/index
 
 # Thanks Jonathan
 worlds.tsv:

@@ -1,0 +1,18 @@
+Concessions
+===========
+
+Aurora and this game have both made many concessions when it comes to physics
+and astronomy in order to make something playable. Some of them are listed here
+(excluding fictional tech like jump points).
+
+Physics:
+ - The movement of ships solely relies on their max speed: there is no
+   acceleration, nor gravitational effect.
+
+Astronomy:
+ - Retrograde orbits are not modelled. (Where they exist in the solar system:
+   eg, Triton and Phoebe, they are modelled as prograde orbits).
+ - All system bodies are assumed to be spherical.
+ - All oribts (excluding comets) are assumed to be spherical.
+ - Comets "orbit" in a straight line extending outward from the centre of a
+   star.

@@ -2,25 +2,39 @@
 #include <string.h>
 #include "main.h"
 
-Save *
-save_init(char *dir) {
-	Save *ret;
+static void
+save_free(void) {
+	free(save->db.dir);
+	free(save->db.races);
+	free(save->db.systems);
+	free(save->db.fleets);
+	/* free systems? */
+	free(save);
+}
 
-	if (!dir || !(ret = malloc(sizeof(Save))))
-		return NULL;
+void
+save_read(char *dir) {
+	char *str;
+
+	if (save)
+		save_free();
+
+	if (!dir || !(save = malloc(sizeof(Save))))
+		return;
 
 	dbdeclare(dir);
-	ret->db.dir = nstrdup(dir);
-	ret->db.races = smprintf("%s/Races", dir);
-	ret->db.systems = smprintf("%s/Systems", dir);
-	ret->db.fleets = smprintf("%s/Fleets", dir);
-	ret->system = NULL;
-	return ret;
+	save->db.dir = nstrdup(dir);
+	save->db.races = smprintf("%s/Races", dir);
+	save->db.systems = smprintf("%s/Systems", dir);
+	save->db.fleets = smprintf("%s/Fleets", dir);
+	if ((str = dbget(save->db.dir, "index", "homesystem")))
+		save->homesys = sys_get(str);
+	return;
 };
 
 void
-save_write(Save *s) {
-	if (s->system && s->system->name)
-		dbset(save->db.dir, "index", "selsystem", s->system->name);
-	dbwrite(s->db.dir);
+save_write(void) {
+	if (view_main.sys)
+		dbset(save->db.dir, "index", "selsystem", view_main.sys->name);
+	dbwrite(save->db.dir);
 }

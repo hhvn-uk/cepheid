@@ -44,7 +44,8 @@ unsigned char settings_png[] = {
 #define IMAGE_LOAD(name) \
 	raw_image_##name = LoadImageFromMemory(".png", \
 			name##_png, sizeof(name##_png)); \
-	image_##name = LoadTextureFromImage(raw_image_##name)
+	image_##name = LoadTextureFromImage(raw_image_##name); \
+	UnloadImage(raw_image_##name)
 
 void
 data_load(void) {
@@ -59,8 +60,7 @@ data_load(void) {
 }
 
 #define IMAGE_UNLOAD(name) \
-	UnloadTexture(image_##name); \
-	UnloadImage(raw_image_##name);
+	UnloadTexture(image_##name)
 
 void
 data_unload(void) {

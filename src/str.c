@@ -7,6 +7,50 @@
 #include <math.h>
 #include "main.h"
 
+#define FMEMMAX 1024
+
+static void *fmem[FMEMMAX] = {NULL};
+static int fmemi = 0;
+
+/* allocate for a frame */
+void *
+falloc(size_t size) {
+	if (fmemi + 1 == FMEMMAX) {
+		errno = ENOMEM;
+		return NULL;
+	}
+	return (fmem[fmemi++] = malloc(size));
+}
+
+void
+ffree(void) {
+	while (fmemi--) {
+		free(fmem[fmemi]);
+		fmem[fmemi] = NULL;
+	}
+	fmemi = 0;
+}
+
+char *
+vsfprintf(char *fmt, va_list ap) {
+	if (fmemi + 1 == FMEMMAX) {
+		errno = ENOMEM;
+		return NULL;
+	}
+	return (fmem[fmemi++] = vsmprintf(fmt, ap));
+}
+
+char *
+sfprintf(char *fmt, ...) {
+	va_list ap;
+	char *ret;
+
+	va_start(ap, fmt);
+	ret = vsfprintf(fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
 char *
 vsmprintf(char *fmt, va_list args) {
 	va_list ap;
@@ -51,41 +95,30 @@ nstrdup(char *str) {
 
 char *
 strkmdist(float km) {
-	static char *ret = NULL;
-
-	free(ret);
-
 	if (km > GIGA)
-		ret = smprintf("%.2fb km", km / GIGA);
+		return sfprintf("%.2fb km", km / GIGA);
 	else if (km > MEGA)
-		ret = smprintf("%.2fm km", km / MEGA);
+		return sfprintf("%.2fm km", km / MEGA);
 	else if (km > KILO)
-		ret = smprintf("%.2fk km", km / KILO);
+		return sfprintf("%.2fk km", km / KILO);
 	else
-		ret = smprintf("%.2f km", km);
-
-	return ret;
+		return sfprintf("%.2f km", km);
 }
 
 char *
 strlightdist(float km) {
-	static char *ret = NULL;
 	float ls = km * KILO / C_MS;
 
-	free(ret);
-
 	if (ls > YEAR_LEN)
-		ret = smprintf("%.2f ly", ls / YEAR_LEN);
+		return sfprintf("%.2f ly", ls / YEAR_LEN);
 	else if (ls > DAY_LEN)
-		ret = smprintf("%.2f ld", ls / DAY_LEN);
+		return sfprintf("%.2f ld", ls / DAY_LEN);
 	else if (ls > HOUR_LEN)
-		ret = smprintf("%.2f lh", ls / HOUR_LEN);
+		return sfprintf("%.2f lh", ls / HOUR_LEN);
 	else if (ls > MIN_LEN)
-		ret = smprintf("%.2f lm", ls / MIN_LEN);
+		return sfprintf("%.2f lm", ls / MIN_LEN);
 	else
-		ret = smprintf("%.2f ls", ls);
-
-	return ret;
+		return sfprintf("%.2f ls", ls);
 }
 
 int
