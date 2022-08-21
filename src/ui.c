@@ -9,8 +9,13 @@
 #define VIEWS_HEIGHT 25
 #define WINDOW_TAB_HEIGHT 20
 #define TARGET_FPS 60
-#define EXPLODE_RECT(rect) rect.x, rect.y, rect.w, rect.h
-#define RLIFY_RECT(rect) ((Rectangle){ EXPLODE_RECT(rect) })
+#define EXPLODE_RECT(r) r.x, r.y, r.w, r.h
+#define EXPLODE_CIRCLE(c) c.centre, c.r
+#define RLIFY_RECT(r) ((Rectangle){ EXPLODE_RECT(r) })
+#define GEOMIFY_RECT(r) ((Geom){UI_RECT, .rect = r})
+#define GEOMIFY_CIRCLE(c) ((Geom){UI_CIRCLE, .circle = c})
+#define GEOM_RECT(x, y, w, h) ((Geom){UI_RECT, .rect = {x, y, w, h}})
+#define GEOM_CIRCLE(centre, r) ((Geom){UI_CIRCLE, .circle = {centre, r})
 
 static Clickable clickable[CLICKABLE_MAX];
 
@@ -83,10 +88,13 @@ View_main view_main = {
 		},
 		.comettail = {1, 1, "Comet tails"}, /* TODO */
 		.geom = {
-			.x = 10,
-			.y = VIEWS_HEIGHT + 10,
-			.w = 200,
-			.h = 400,
+			.type = UI_RECT,
+			.rect = {
+				.x = 10,
+				.y = VIEWS_HEIGHT + 10,
+				.w = 200,
+				.h = 400,
+			},
 		},
 	},
 	.pan = 0,
@@ -176,17 +184,19 @@ ui_textsize(char *text) {
 }
 
 int
-ui_collides(Rect rect, Vector2 point) {
-	if (point.x >= rect.x && point.x <= rect.x + rect.w &&
-			point.y >= rect.y && point.y <= rect.y + rect.h)
-		return 1;
-	else
-		return 0;
+ui_collides(Geom geom, Vector2 point) {
+	switch (geom.type) {
+	case UI_CIRCLE:
+		return CheckCollisionPointCircle(point,
+				EXPLODE_CIRCLE(geom.circle));
+	case UI_RECT: default: /* -Wreturn-type bitches without default */
+		return CheckCollisionPointRec(point, RLIFY_RECT(geom.rect));
+	}
 }
 
 int
 ui_onscreen(Vector2 point) {
-	return ui_collides(screen.rect, point);
+	return ui_collides(GEOMIFY_RECT(screen.rect), point);
 }
 
 int
@@ -222,15 +232,16 @@ ui_onscreen_circle(Vector2 centre, float r) {
 }
 
 void
-ui_clickable_register(int x, int y, int w, int h, enum UiElements type, void *elem) {
+ui_clickable_register(Geom geom, enum UiElements type, void *elem) {
 	int i;
 
 	for (i = 0; i < CLICKABLE_MAX; i++) {
 		if (!clickable[i].elem) {
-			clickable[i].geom.x = x;
-			clickable[i].geom.y = y;
-			clickable[i].geom.w = w;
-			clickable[i].geom.h = h;
+			clickable[i].geom.type = geom.type;
+			switch (geom.type) {
+			case UI_RECT: clickable[i].geom.rect = geom.rect; break;
+			case UI_CIRCLE: clickable[i].geom.circle = geom.circle; break;
+			}
 			clickable[i].type = type;
 			clickable[i].elem = elem;
 			return;
@@ -244,24 +255,29 @@ void
 ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable) {
 	Tabs *tabs;
 	Checkbox *checkbox;
+	Rect *rect;
+	/* Circle *circle; */
 	int ftabw, fw, fn, tabw, x;
 	int i;
+
+	rect = &clickable->geom.rect;
+	/* circle = &clickable->geom.circle; */
 
 	switch (clickable->type) {
 	case UI_TAB:
 		if (button != MOUSE_BUTTON_LEFT)
 			return;
 		tabs = clickable->elem;
-		for (fw = clickable->geom.w, fn = i = 0; i < tabs->n; i++) {
+		for (fw = rect->w, fn = i = 0; i < tabs->n; i++) {
 			if (!tabs->tabs[i].w)
 				fn++;
 			else
 				fw -= tabs->tabs[i].w;
 		}
 		ftabw = fw / fn;
-		for (i = 0, x = clickable->geom.x; i < tabs->n; x += tabw, i++) {
+		for (i = 0, x = rect->x; i < tabs->n; x += tabw, i++) {
 			if (i == tabs->n - 1)
-				tabw = clickable->geom.x + clickable->geom.w - x;
+				tabw = rect->x + rect->w - x;
 			else if (!tabs->tabs[i].w)
 				tabw = ftabw;
 			else
@@ -301,6 +317,12 @@ ui_clickable_update(void) {
 			ret = 1;
 		}
 	}
+
+	/* Handle bodies seperately for efficiency:
+	 * - body->pxloc can be used instead of a geometry passed to
+	 *   ui_clickable_register()
+	 * - bodies offscreen can't be clicked, so they can be skipped.
+	 */
 
 	return ret;
 }
@@ -422,7 +444,7 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	if (tabs->sel == 0) DrawRectangle(x, y + 1, 1, h - 1, COL_BG); /* undraw left border */
 	if (tabs->sel == tabs->n - 1) DrawRectangle(x + w - 1, y + 1, 1, h - 1, COL_BG); /* undraw right border */
 
-	ui_clickable_register(x, y, w, h, UI_TAB, tabs);
+	ui_clickable_register(GEOM_RECT(x, y, w, h), UI_TAB, tabs);
 }
 
 void
@@ -435,7 +457,9 @@ ui_draw_checkbox(int x, int y, Checkbox *box) {
 			box->enabled ? (box->val ? COL_FG : COL_BG) : COL_BORDER);
 	ui_print(x + w + (w / 2), y + (h / 6), COL_FG, "%s", box->label);
 	if (box->enabled)
-		ui_clickable_register(x, y, w + (w / 2) + ui_textsize(box->label), h, UI_CHECKBOX, box);
+		ui_clickable_register(GEOM_RECT(x, y,
+					w + (w / 2) + ui_textsize(box->label), h),
+				UI_CHECKBOX, box);
 }
 
 Vector2
@@ -718,11 +742,10 @@ ui_draw_view_main(void) {
 			COL_INFO, "%s", strkmdist(dist));
 
 	/* infobox */
-	ui_draw_tabbed_window(view_main.infobox.geom.x, view_main.infobox.geom.y,
-			view_main.infobox.geom.w, view_main.infobox.geom.h,
+	ui_draw_tabbed_window(EXPLODE_RECT(view_main.infobox.geom.rect),
 			&view_main.infobox.tabs);
-	x = view_main.infobox.geom.x + FONT_SIZE;
-	y = view_main.infobox.geom.y + WINDOW_TAB_HEIGHT;
+	x = view_main.infobox.geom.rect.x + FONT_SIZE;
+	y = view_main.infobox.geom.rect.y + WINDOW_TAB_HEIGHT;
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarf);
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarfn);
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.asteroid);

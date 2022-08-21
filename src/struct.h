@@ -75,6 +75,8 @@ typedef struct {
 		char *systems;
 		char *fleets;
 	} db;
+	System *systems;
+	size_t systems_len;
 	System *homesys;
 } Save;
 
@@ -84,6 +86,24 @@ typedef struct {
 	int x, y;
 	int w, h;
 } Rect;
+
+typedef struct {
+	Vector2 centre;
+	int r;
+} Circle;
+
+enum Geometries {
+	UI_RECT,
+	UI_CIRCLE,
+};
+
+typedef struct {
+	enum Geometries type;
+	union {
+		Rect rect;
+		Circle circle;
+	};
+} Geom;
 
 typedef struct {
 	float w, h;
@@ -126,7 +146,7 @@ enum UiElements {
 
 #define CLICKABLE_MAX 64
 typedef struct {
-	Rect geom;
+	Geom geom;
 	enum UiElements type;
 	void *elem;
 } Clickable;
