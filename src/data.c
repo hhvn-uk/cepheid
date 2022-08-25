@@ -8,6 +8,7 @@
 Font font;
 IMAGE(tactical);
 IMAGE(colonies);
+IMAGE(bodies);
 IMAGE(fleet);
 IMAGE(design);
 IMAGE(sys);
@@ -23,6 +24,10 @@ unsigned char tactical_png[] = {
 
 unsigned char colonies_png[] = {
 #include "../data/icons/colonies.h"
+};
+
+unsigned char bodies_png[] = {
+#include "../data/icons/bodies.h"
 };
 
 unsigned char fleet_png[] = {
@@ -53,6 +58,7 @@ data_load(void) {
 			sizeof(DejaVuSansMono_ttf), FONT_SIZE, NULL, 0);
 	IMAGE_LOAD(tactical);
 	IMAGE_LOAD(colonies);
+	IMAGE_LOAD(bodies);
 	IMAGE_LOAD(fleet);
 	IMAGE_LOAD(design);
 	IMAGE_LOAD(sys);
@@ -67,6 +73,7 @@ data_unload(void) {
 	UnloadFont(font);
 	IMAGE_UNLOAD(tactical);
 	IMAGE_UNLOAD(colonies);
+	IMAGE_UNLOAD(bodies);
 	IMAGE_UNLOAD(fleet);
 	IMAGE_UNLOAD(design);
 	IMAGE_UNLOAD(sys);

@@ -41,6 +41,7 @@ static Color body_col[] = {
 int (*view_handlers[UI_VIEW_LAST])(int) = {
 	[UI_VIEW_MAIN] = ui_handle_view_main,
 	[UI_VIEW_COLONIES] = ui_handle_view_colonies,
+	[UI_VIEW_BODIES] = ui_handle_view_bodies,
 	[UI_VIEW_FLEETS] = ui_handle_view_fleets,
 	[UI_VIEW_DESIGN] = ui_handle_view_design,
 	[UI_VIEW_SYSTEMS] = ui_handle_view_sys,
@@ -50,6 +51,7 @@ int (*view_handlers[UI_VIEW_LAST])(int) = {
 void (*view_drawers[UI_VIEW_LAST])(void) = {
 	[UI_VIEW_MAIN] = ui_draw_view_main,
 	[UI_VIEW_COLONIES] = ui_draw_view_colonies,
+	[UI_VIEW_BODIES] = ui_draw_view_bodies,
 	[UI_VIEW_FLEETS] = ui_draw_view_fleets,
 	[UI_VIEW_DESIGN] = ui_draw_view_design,
 	[UI_VIEW_SYSTEMS] = ui_draw_view_sys,
@@ -63,6 +65,7 @@ Tabs view_tabs = {
 	 * in the ui; in the code it's just called 'main' for my fingers' sake */
 	UI_VIEW_LAST, 0, {{&image_tactical, "Tactical", 0},
 		{&image_colonies, "Colonies", 0},
+		{&image_bodies, "Bodies", 0},
 		{&image_fleet, "Fleets", 0},
 		{&image_design, "Design", 0},
 		{&image_sys, "Systems", 0},
@@ -568,6 +571,13 @@ ui_handle_view_colonies(int nowsel) {
 }
 
 int
+ui_handle_view_bodies(int nowsel) {
+	if (nowsel)
+		ui_title("Bodies");
+	return 1;
+}
+
+int
 ui_handle_view_fleets(int nowsel) {
 	if (nowsel)
 		ui_title("Fleets");
@@ -762,6 +772,11 @@ ui_draw_view_colonies(void) {
 	ui_print(10, VIEWS_HEIGHT + 10, COL_FG, "Stars/colonies here");
 	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 10, COL_FG, "Tabs here");
 	ui_print(GetScreenWidth() / 2, GetScreenHeight() / 2, COL_FG, "Management stuff here");
+}
+
+void
+ui_draw_view_bodies(void) {
+	ui_print(10, VIEWS_HEIGHT + 10, COL_FG, "Something like the mineral overview in Aurora");
 }
 
 void
