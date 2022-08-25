@@ -90,7 +90,8 @@ System *sys_get(char *name);
 System *sys_default(void);
 
 /* save.c */
-void 	save_read(char *dir);
+#define SAVE_READ_STEPS 2
+void 	save_read(Loader *lscr, char *dir);
 void	save_write(void);
 
 /* data.c */
@@ -102,7 +103,8 @@ extern Texture image_fleet;
 extern Texture image_design;
 extern Texture image_sys;
 extern Texture image_settings;
-void	data_load(void);
+#define DATA_LOAD_STEPS (1 + 7)
+void	data_load(Loader *lscr);
 void	data_unload(void);
 
 /* db.c */
@@ -115,3 +117,8 @@ int	vdbgetf(char *dir, char *group, char *key, char *fmt, va_list args);
 int	dbgetf(char *dir, char *group, char *key, char *fmt, ...);
 int	dbgetint(char *dir, char *group, char *key);
 float	dbgetfloat(char *dir, char *group, char *key);
+
+/* loading.c */
+Loader *loading_open(int steps, char *initstr);
+void	loading_update(Loader *hand, char *str);
+void	loading_close(Loader *hand);

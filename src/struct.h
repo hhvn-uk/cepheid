@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <sys/types.h>
 
 /* system.c */
 typedef struct {
@@ -151,5 +152,13 @@ typedef struct {
 	enum UiElements type;
 	void *elem;
 } Clickable;
+
+#define LOAD_STR_MAX 512
+typedef struct {
+	char path[64];
+	pid_t pid;
+	int *step;
+	char *data;
+} Loader;
 
 #include "views.h" /* unique structures */

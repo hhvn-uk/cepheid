@@ -2,6 +2,13 @@
 #include <string.h>
 #include "main.h"
 
+/* Plan for dealing with multiple saves:
+ * - saves: linked list with all saves that have been loaded (some data pruned)
+ * - save: the current save
+ * - save_get(name): get a save from saves/disk by name and load necessary data
+ * - save_select(name): set save to save_get(name) + housekeeping
+ */
+
 static void
 save_free(void) {
 	free(save->db.dir);
@@ -13,7 +20,7 @@ save_free(void) {
 }
 
 void
-save_read(char *dir) {
+save_read(Loader *lscr, char *dir) {
 	char *str;
 
 	if (save)
@@ -22,11 +29,13 @@ save_read(char *dir) {
 	if (!dir || !(save = malloc(sizeof(Save))))
 		return;
 
+	loading_update(lscr, "Initializing DB");
 	dbdeclare(dir);
 	save->db.dir = nstrdup(dir);
 	save->db.races = smprintf("%s/Races", dir);
 	save->db.systems = smprintf("%s/Systems", dir);
 	save->db.fleets = smprintf("%s/Fleets", dir);
+	loading_update(lscr, "Loading systems");
 	if ((str = dbget(save->db.dir, "index", "homesystem")))
 		save->homesys = sys_get(str);
 	return;

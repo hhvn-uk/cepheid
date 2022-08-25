@@ -12,13 +12,25 @@ main(void) {
 	int draw;
 	int view_prev = -1;
 	time_t lastevent;
+	Loader *loader;
+
+
+	loader = loading_open(DATA_LOAD_STEPS + SAVE_READ_STEPS + 3, "Initializing UI");
 
 	ui_init();
-	data_load();
-	save_read(TESTSAVE);
+
+	data_load(loader);
+	save_read(loader, TESTSAVE);
+
+	loading_close(loader);
 
 	lastevent = time(NULL);
 
+	/* The window is hidden so that only the loading bar is shown. Hiding
+	 * and unhiding the window also has the added effect of making it
+	 * behave like a normal window in window managers, rather than having
+	 * it float in the middle of the screen. */
+	ClearWindowState(FLAG_WINDOW_HIDDEN);
 	ui_update_screen();
 
 	while (!WindowShouldClose()) {

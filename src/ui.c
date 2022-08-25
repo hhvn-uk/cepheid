@@ -134,10 +134,10 @@ View_sys view_sys = {
 
 void
 ui_init(void) {
-	InitWindow(500, 500, "");
-	SetWindowState(FLAG_WINDOW_RESIZABLE);
+	SetWindowState(FLAG_WINDOW_RESIZABLE|FLAG_WINDOW_HIDDEN);
 	SetTargetFPS(TARGET_FPS);
 	SetExitKey(KEY_NULL);
+	InitWindow(500, 500, "");
 }
 
 void
