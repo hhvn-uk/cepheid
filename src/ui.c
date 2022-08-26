@@ -617,76 +617,43 @@ ui_should_draw_body_checkbox(Body *body, int type, Checkbox *box) {
 	return 1;
 }
 
-int
-ui_should_draw_body(Body *body, int orbit) {
-	if (orbit) {
-		if (!body->parent)
-			return 0;
-		if (orbit < min_body_rad[body->parent->type])
-			return 0;
-		if (!ui_should_draw_body_checkbox(body, BODY_DWARF,
-					&view_main.infobox.orbit.dwarf))
-			return 0;
-		if (!ui_should_draw_body_checkbox(body, BODY_ASTEROID,
-					&view_main.infobox.orbit.asteroid))
-			return 0;
-		if (!ui_should_draw_body_checkbox(body, BODY_COMET,
-					&view_main.infobox.orbit.comet))
-			return 0;
-	} else {
-		if (!ui_onscreen(body->pxloc))
-			return 0;
-		if (body->type != BODY_STAR &&
-				(body->type == BODY_COMET ? body->maxdist : body->dist)
-				/ view_main.kmperpx < ui_textsize(body->name))
-			return 0;
-		if (body->parent && body->type != BODY_STAR &&
-				ui_vectordist(body->vector, body->parent->vector) <
-				min_body_rad[body->type] * view_main.kmperpx)
-			return 0;
-		if (isdigit(*body->name) || *body->name == '(') {
-			if (!ui_should_draw_body_checkbox(body, BODY_DWARF,
-						&view_main.infobox.names.dwarfn))
-				return 0;
-			if (!ui_should_draw_body_checkbox(body, BODY_ASTEROID,
-						&view_main.infobox.names.asteroidn))
-				return 0;
-		}
-		if (!ui_should_draw_body_checkbox(body, BODY_DWARF,
-					&view_main.infobox.names.dwarf))
-			return 0;
-		if (!ui_should_draw_body_checkbox(body, BODY_ASTEROID,
-					&view_main.infobox.names.asteroid))
-			return 0;
-		if (!ui_should_draw_body_checkbox(body, BODY_COMET,
-					&view_main.infobox.names.comet))
-			return 0;
-	}
-	return 1;
+void
+ui_draw_orbit(Body *body) {
+	Vector2 parent;
+	float pxrad;
+
+	if (!body->parent)
+		return;
+	if (!ui_should_draw_body_checkbox(body, BODY_DWARF,
+				&view_main.infobox.orbit.dwarf))
+		return;
+	if (!ui_should_draw_body_checkbox(body, BODY_ASTEROID,
+				&view_main.infobox.orbit.asteroid))
+		return;
+	if (!ui_should_draw_body_checkbox(body, BODY_COMET,
+				&view_main.infobox.orbit.comet))
+		return;
+
+	parent = ui_kmtopx(body->parent->vector);
+	pxrad = ui_vectordist(parent, body->pxloc);
+
+	if (pxrad < min_body_rad[body->parent->type])
+		return;
+
+	if (body->type == BODY_COMET)
+		DrawLineV(parent, body->pxloc, COL_ORBIT);
+	else
+		ui_draw_ring(parent.x, parent.y, pxrad, COL_ORBIT);
 }
 
 void
 ui_draw_body(Body *body) {
-	Vector2 parent;
-	float pxrad;
-	int w;
+	float w;
 
-	if (body->parent) {
-		parent = ui_kmtopx(body->parent->vector);
-	} else {
-		parent.x = 0;
-		parent.y = 0;
-	}
+	if (!ui_onscreen(body->pxloc))
+		return;
 
-	if (body->parent) {
-		pxrad = ui_vectordist(parent, body->pxloc);
-		if (ui_should_draw_body(body, pxrad)) {
-			if (body->type == BODY_COMET)
-				DrawLineV(parent, body->pxloc, COL_ORBIT);
-			else
-				ui_draw_ring(parent.x, parent.y, pxrad, COL_ORBIT);
-		}
-	}
+	/* body */
 	if (body->radius / view_main.kmperpx > min_body_rad[body->type])
 		w = body->radius / view_main.kmperpx;
 	else
@@ -698,9 +665,36 @@ ui_draw_body(Body *body) {
 				(Polar){w * 11 / min_body_rad[BODY_COMET],
 				body->inward ? body->theta : body->theta + 180}),
 				w / min_body_rad[BODY_COMET], COL_COMET);
-	if (ui_should_draw_body(body, 0))
-		ui_print(body->pxloc.x + w + 2, body->pxloc.y + w + 2,
-				COL_FG, "%s", body->name);
+
+	/* name */
+	if (body->type != BODY_STAR &&
+			(body->type == BODY_COMET ? body->maxdist : body->dist)
+			/ view_main.kmperpx < ui_textsize(body->name))
+		return;
+	if (body->parent && body->type != BODY_STAR &&
+			ui_vectordist(body->vector, body->parent->vector) <
+			min_body_rad[body->type] * view_main.kmperpx)
+		return;
+	if (isdigit(*body->name) || *body->name == '(') {
+		if (!ui_should_draw_body_checkbox(body, BODY_DWARF,
+					&view_main.infobox.names.dwarfn))
+			return;
+		if (!ui_should_draw_body_checkbox(body, BODY_ASTEROID,
+					&view_main.infobox.names.asteroidn))
+			return;
+	}
+	if (!ui_should_draw_body_checkbox(body, BODY_DWARF,
+				&view_main.infobox.names.dwarf))
+		return;
+	if (!ui_should_draw_body_checkbox(body, BODY_ASTEROID,
+				&view_main.infobox.names.asteroid))
+		return;
+	if (!ui_should_draw_body_checkbox(body, BODY_COMET,
+				&view_main.infobox.names.comet))
+		return;
+
+	ui_print(body->pxloc.x + w + 2, body->pxloc.y + w + 2,
+			COL_FG, "%s", body->name);
 }
 
 void
@@ -725,6 +719,10 @@ ui_draw_view_main(void) {
 	for (i = 0; i < view_main.sys->bodies_len; i++) {
 		body = view_main.sys->bodies[i];
 		body->pxloc = ui_kmtopx(body->vector);
+		ui_draw_orbit(body);
+	}
+	for (i = 0; i < view_main.sys->bodies_len; i++) {
+		body = view_main.sys->bodies[i];
 		ui_draw_body(body);
 	}
 

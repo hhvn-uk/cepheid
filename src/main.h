@@ -57,7 +57,7 @@ Vector2	ui_kmtopx(Vector2 km);
 Vector2	ui_pxtokm(Vector2 vector);
 Vector2 ui_vectordiff(Vector2 a, Vector2 b);
 float	ui_vectordist(Vector2 a, Vector2 b);
-int	ui_should_draw_body(Body *body, int orbit);
+void	ui_draw_orbit(Body *body);
 void	ui_draw_body(Body *body);
 int	ui_handle_view_main(int nowsel);
 int	ui_handle_view_colonies(int nowsel);
