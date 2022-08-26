@@ -22,19 +22,10 @@ static Clickable clickable[CLICKABLE_MAX];
 static float min_body_rad[] = {
 	[BODY_STAR] = 4,
 	[BODY_PLANET] = 3,
-	[BODY_COMET] = 2.5,
+	[BODY_COMET] = 2,
 	[BODY_DWARF] = 2,
 	[BODY_ASTEROID] = 1,
 	[BODY_MOON] = 1,
-};
-
-static Color body_col[] = {
-	[BODY_STAR] = COL_STAR,
-	[BODY_PLANET] = COL_PLANET,
-	[BODY_COMET] = COL_COMET,
-	[BODY_DWARF] = COL_DWARF,
-	[BODY_ASTEROID] = COL_ASTEROID,
-	[BODY_MOON] = COL_MOON,
 };
 
 /* Return 1 for redraw, 0 to keep prev */
@@ -346,10 +337,10 @@ ui_draw_views(void) {
 
 void
 ui_draw_border(int x, int y, int w, int h, int px) {
-	DrawRectangle(x, y, w, px, COL_BORDER); /* top */
-	DrawRectangle(x, y, px, h, COL_BORDER); /* left */
-	DrawRectangle(x, y + h - px, w, px, COL_BORDER); /* bottom */
-	DrawRectangle(x + w - px, y, px, h, COL_BORDER); /* right */
+	DrawRectangle(x, y, w, px, col_border); /* top */
+	DrawRectangle(x, y, px, h, col_border); /* left */
+	DrawRectangle(x, y + h - px, w, px, col_border); /* bottom */
+	DrawRectangle(x + w - px, y, px, h, col_border); /* right */
 }
 
 #define SEGMAX 2500
@@ -397,7 +388,7 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	int cx, selx = -1;
 	int i;
 
-	DrawRectangle(x, y, w, h, COL_BG);
+	DrawRectangle(x, y, w, h, col_bg);
 
 	for (fw = w, fn = i = 0; i < tabs->n; i++) {
 		if (!tabs->tabs[i].w)
@@ -426,13 +417,13 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 		if (i == tabs->sel)
 			selx = cx;
 		else
-			DrawRectangle(cx, y, tabw, h, COL_UNSELBG);
-		ui_print(cx + padx + iw, y + pady, COL_FG, "%s", tabs->tabs[i].name);
+			DrawRectangle(cx, y, tabw, h, col_unselbg);
+		ui_print(cx + padx + iw, y + pady, col_fg, "%s", tabs->tabs[i].name);
 		if (tabs->tabs[i].icon)
 			DrawTexture(*tabs->tabs[i].icon, cx + padx / 2,
 					y + (h - tabs->tabs[i].icon->width) / 2,
-					COL_FG);
-		DrawRectangle(cx + tabw - 1, y, 1, h, COL_BORDER);
+					NO_TINT);
+		DrawRectangle(cx + tabw - 1, y, 1, h, col_border);
 	}
 
 	if (tabs->sel != tabs->n - 1) {
@@ -443,9 +434,9 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	}
 
 	ui_draw_border(x, y, w, h, 1);
-	if (selx != -1) DrawRectangle(selx - 1, y + h - 1, tabw + 1, 1, COL_BG); /* undraw bottom border */
-	if (tabs->sel == 0) DrawRectangle(x, y + 1, 1, h - 1, COL_BG); /* undraw left border */
-	if (tabs->sel == tabs->n - 1) DrawRectangle(x + w - 1, y + 1, 1, h - 1, COL_BG); /* undraw right border */
+	if (selx != -1) DrawRectangle(selx - 1, y + h - 1, tabw + 1, 1, col_bg); /* undraw bottom border */
+	if (tabs->sel == 0) DrawRectangle(x, y + 1, 1, h - 1, col_bg); /* undraw left border */
+	if (tabs->sel == tabs->n - 1) DrawRectangle(x + w - 1, y + 1, 1, h - 1, col_bg); /* undraw right border */
 
 	ui_clickable_register(GEOM_RECT(x, y, w, h), UI_TAB, tabs);
 }
@@ -457,8 +448,8 @@ ui_draw_checkbox(int x, int y, Checkbox *box) {
 	w = h = FONT_SIZE;
 	ui_draw_border(x, y, w, h, 1);
 	DrawRectangle(x + 1, y + 1, w - 2, h - 2,
-			box->enabled ? (box->val ? COL_FG : COL_BG) : COL_BORDER);
-	ui_print(x + w + (w / 2), y + (h / 6), COL_FG, "%s", box->label);
+			box->enabled ? (box->val ? col_fg : col_bg) : col_border);
+	ui_print(x + w + (w / 2), y + (h / 6), col_fg, "%s", box->label);
 	if (box->enabled)
 		ui_clickable_register(GEOM_RECT(x, y,
 					w + (w / 2) + ui_textsize(box->label), h),
@@ -500,7 +491,7 @@ ui_vectordist(Vector2 a, Vector2 b) {
 
 void
 ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs) {
-	DrawRectangle(x, y, w, h, COL_BG);
+	DrawRectangle(x, y, w, h, col_bg);
 	ui_draw_tabs(x, y, w, WINDOW_TAB_HEIGHT, tabs);
 	ui_draw_border(x, y, w, h, 2);
 }
@@ -641,9 +632,9 @@ ui_draw_orbit(Body *body) {
 		return;
 
 	if (body->type == BODY_COMET)
-		DrawLineV(parent, body->pxloc, COL_ORBIT);
+		DrawLineV(parent, body->pxloc, col_orbit);
 	else
-		ui_draw_ring(parent.x, parent.y, pxrad, COL_ORBIT);
+		ui_draw_ring(parent.x, parent.y, pxrad, col_orbit);
 }
 
 void
@@ -658,13 +649,13 @@ ui_draw_body(Body *body) {
 		w = body->radius / view_main.kmperpx;
 	else
 		w = min_body_rad[body->type];
-	DrawCircle(body->pxloc.x, body->pxloc.y, w, body_col[body->type]);
+	DrawCircle(body->pxloc.x, body->pxloc.y, w, col_body[body->type]);
 	if (body->type == BODY_COMET && view_main.infobox.comettail.val &&
 			10 * view_main.kmperpx < body->curdist)
 		DrawLineEx(body->pxloc, sys_vectorize_around(body->pxloc,
 				(Polar){w * 11 / min_body_rad[BODY_COMET],
 				body->inward ? body->theta : body->theta + 180}),
-				w / min_body_rad[BODY_COMET], COL_COMET);
+				w / min_body_rad[BODY_COMET], col_body[BODY_COMET]);
 
 	/* name */
 	if (body->type != BODY_STAR &&
@@ -694,7 +685,7 @@ ui_draw_body(Body *body) {
 		return;
 
 	ui_print(body->pxloc.x + w + 2, body->pxloc.y + w + 2,
-			COL_FG, "%s", body->name);
+			col_fg, "%s", body->name);
 }
 
 void
@@ -708,12 +699,12 @@ ui_draw_view_main(void) {
 	float x, y;
 
 	/* debug info */
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 10, COL_FG, "W: %f | H: %f", (float)screen.w, (float)screen.h);
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 20, COL_FG, "Xoff: %f | Yoff: %f | km/px: %f",
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 10, col_fg, "W: %f | H: %f", (float)screen.w, (float)screen.h);
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 20, col_fg, "Xoff: %f | Yoff: %f | km/px: %f",
 			view_main.kmx, view_main.kmy, view_main.kmperpx);
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 30, COL_FG, "X: %f | Y: %f",
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 30, col_fg, "X: %f | Y: %f",
 			mousekm.x, mousekm.y);
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 40, COL_FG, "FPS: %d (target: %d)", GetFPS(), TARGET_FPS);
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 40, col_fg, "FPS: %d (target: %d)", GetFPS(), TARGET_FPS);
 
 	/* draw system bodies */
 	for (i = 0; i < view_main.sys->bodies_len; i++) {
@@ -729,25 +720,25 @@ ui_draw_view_main(void) {
 	/* ruler */
 	if (view_main.ruler.held) {
 		ruler = ui_kmtopx(view_main.ruler.origin);
-		DrawLineV(ruler, mouse, COL_INFO);
+		DrawLineV(ruler, mouse, col_info);
 		dist = ui_vectordist(view_main.ruler.origin, mousekm);
-		ui_print(mouse.x + 10, mouse.y - 10, COL_INFO, "%s (%s)", strkmdist(dist), strlightdist(dist));
+		ui_print(mouse.x + 10, mouse.y - 10, col_info, "%s (%s)", strkmdist(dist), strlightdist(dist));
 	}
 
 	/* scale */
 	DrawRectangle(view_main.scale.x,
 			GetScreenHeight() - view_main.scale.y,
-			view_main.scale.w, 1, COL_INFO); /* horizontal */
+			view_main.scale.w, 1, col_info); /* horizontal */
 	DrawRectangle(view_main.scale.x,
 			GetScreenHeight() - view_main.scale.y - view_main.scale.h,
-			1, view_main.scale.h, COL_INFO); /* left vertical */
+			1, view_main.scale.h, col_info); /* left vertical */
 	DrawRectangle(view_main.scale.x + view_main.scale.w,
 			GetScreenHeight() - view_main.scale.y - view_main.scale.h,
-			1, view_main.scale.h, COL_INFO); /* right vertical */
+			1, view_main.scale.h, col_info); /* right vertical */
 	dist = view_main.scale.w * view_main.kmperpx;
 	ui_print(view_main.scale.x + view_main.scale.w + FONT_SIZE / 3,
 			GetScreenHeight() - view_main.scale.y - FONT_SIZE / 2,
-			COL_INFO, "%s", strkmdist(dist));
+			col_info, "%s", strkmdist(dist));
 
 	/* infobox */
 	ui_draw_tabbed_window(EXPLODE_RECT(view_main.infobox.geom.rect),
@@ -767,29 +758,29 @@ ui_draw_view_main(void) {
 
 void
 ui_draw_view_colonies(void) {
-	ui_print(10, VIEWS_HEIGHT + 10, COL_FG, "Stars/colonies here");
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 10, COL_FG, "Tabs here");
-	ui_print(GetScreenWidth() / 2, GetScreenHeight() / 2, COL_FG, "Management stuff here");
+	ui_print(10, VIEWS_HEIGHT + 10, col_fg, "Stars/colonies here");
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 10, col_fg, "Tabs here");
+	ui_print(GetScreenWidth() / 2, GetScreenHeight() / 2, col_fg, "Management stuff here");
 }
 
 void
 ui_draw_view_bodies(void) {
-	ui_print(10, VIEWS_HEIGHT + 10, COL_FG, "Something like the mineral overview in Aurora");
+	ui_print(10, VIEWS_HEIGHT + 10, col_fg, "Something like the mineral overview in Aurora");
 }
 
 void
 ui_draw_view_fleets(void) {
-	ui_print(10, VIEWS_HEIGHT + 10, COL_FG, "Groups/fleets/subfleets/ships here");
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 10, COL_FG, "Tabs here");
-	ui_print(GetScreenWidth() / 2, GetScreenHeight() / 2, COL_FG, "Management stuff here");
+	ui_print(10, VIEWS_HEIGHT + 10, col_fg, "Groups/fleets/subfleets/ships here");
+	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + 10, col_fg, "Tabs here");
+	ui_print(GetScreenWidth() / 2, GetScreenHeight() / 2, col_fg, "Management stuff here");
 }
 
 void
 ui_draw_view_design(void) {
-	ui_print(10, VIEWS_HEIGHT + 10, COL_FG, "Designations/classes here");
-	ui_print(GetScreenWidth() / 4, VIEWS_HEIGHT + 10, COL_FG, "Selectable components here");
-	ui_print((GetScreenWidth() / 4) * 2, VIEWS_HEIGHT + 10, COL_FG, "Selected components");
-	ui_print((GetScreenWidth() / 4) * 3, VIEWS_HEIGHT + 10, COL_FG, "Class info");
+	ui_print(10, VIEWS_HEIGHT + 10, col_fg, "Designations/classes here");
+	ui_print(GetScreenWidth() / 4, VIEWS_HEIGHT + 10, col_fg, "Selectable components here");
+	ui_print((GetScreenWidth() / 4) * 2, VIEWS_HEIGHT + 10, col_fg, "Selected components");
+	ui_print((GetScreenWidth() / 4) * 3, VIEWS_HEIGHT + 10, col_fg, "Class info");
 }
 
 void
@@ -802,27 +793,27 @@ ui_draw_view_sys(void) {
 	/* draw map */
 
 	/* draw divider */
-	DrawLine(x, y, x, y + view_sys.info.geom.h, COL_BORDER);
+	DrawLine(x, y, x, y + view_sys.info.geom.h, col_border);
 
 	/* draw info */
 	x = view_sys.info.geom.x + 10;
 	y += 10;
 	if (view_sys.sel) {
-		ui_print(x, y, COL_FG, "%s", view_sys.sel->name);
+		ui_print(x, y, col_fg, "%s", view_sys.sel->name);
 		DrawLine(x, y + FONT_SIZE, x + view_sys.info.geom.w - 20,
-					y + FONT_SIZE, COL_BORDER);
+					y + FONT_SIZE, col_border);
 		y += 30;
-		ui_print(x, y,      COL_FG, "Stars:     %d", view_sys.sel->num.stars);
-		ui_print(x, y + 10, COL_FG, "Planets:   %d", view_sys.sel->num.planets);
-		ui_print(x, y + 20, COL_FG, "Asteroids: %d", view_sys.sel->num.asteroids);
-		ui_print(x, y + 30, COL_FG, "Comets:    %d", view_sys.sel->num.comets);
-		ui_print(x, y + 40, COL_FG, "Moons:     %d", view_sys.sel->num.moons);
-		DrawLine(x, y + 52, x + 85, y + 52, COL_FG);
-		ui_print(x, y + 55, COL_FG, "Total:     %d", view_sys.sel->bodies_len);
+		ui_print(x, y,      col_fg, "Stars:     %d", view_sys.sel->num.stars);
+		ui_print(x, y + 10, col_fg, "Planets:   %d", view_sys.sel->num.planets);
+		ui_print(x, y + 20, col_fg, "Asteroids: %d", view_sys.sel->num.asteroids);
+		ui_print(x, y + 30, col_fg, "Comets:    %d", view_sys.sel->num.comets);
+		ui_print(x, y + 40, col_fg, "Moons:     %d", view_sys.sel->num.moons);
+		DrawLine(x, y + 52, x + 85, y + 52, col_fg);
+		ui_print(x, y + 55, col_fg, "Total:     %d", view_sys.sel->bodies_len);
 	}
 }
 
 void
 ui_draw_view_settings(void) {
-	ui_print(10, VIEWS_HEIGHT + 10, COL_FG, "Settings here");
+	ui_print(10, VIEWS_HEIGHT + 10, col_fg, "Settings here");
 }

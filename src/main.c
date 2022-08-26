@@ -66,7 +66,7 @@ main(void) {
 
 		BeginDrawing();
 		if (draw) {
-			ClearBackground(COL_BG);
+			ClearBackground(col_bg);
 			ui_clickable_clear();
 			view_drawers[view_tabs.sel]();
 		}

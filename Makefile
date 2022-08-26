@@ -3,12 +3,13 @@ DBDIR	= db
 DBLIB	= $(DBDIR)/db.o
 DBTOOL	= $(DBDIR)/dbtool
 SRCDIR	= src
-SRC	= $(shell find $(SRCDIR) -name "*.c")
+SRC	= $(shell find $(SRCDIR) -name "*.c") styles/$(STYLE).c
 OBJ	= $(SRC:.c=.o)
 BIN	= game
 RAYLIB	= -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 LDFLAGS	= $(RAYLIB) $(DBLIB)
-CFLAGS	= -Wall -g3 -O0
+
+include config.mk
 
 all: db data $(BIN)
 src/data.o: data/icons/*
