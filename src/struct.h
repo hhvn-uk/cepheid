@@ -161,4 +161,13 @@ typedef struct {
 	char *data;
 } Loader;
 
-#include "views.h" /* unique structures */
+/* pane.c */
+typedef struct {
+	Rect *geom;
+	int scroll;
+	int max;
+	int off;
+} Pane;
+
+/* unique structures */
+#include "views.h"

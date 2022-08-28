@@ -15,6 +15,7 @@ typedef struct {
 		} orbit;
 		Checkbox comettail;
 		Geom geom;
+		Pane pane;
 	} infobox;
 	int pan;
 	struct {

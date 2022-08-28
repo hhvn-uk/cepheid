@@ -28,6 +28,13 @@ int	strlistpos(char *str, char **list, size_t len);
 float	strnum(char *str);
 
 /* ui.c */
+#define EXPLODE_RECT(r) r.x, r.y, r.w, r.h
+#define EXPLODE_CIRCLE(c) c.centre, c.r
+#define RLIFY_RECT(r) ((Rectangle){ EXPLODE_RECT(r) })
+#define GEOMIFY_RECT(r) ((Geom){UI_RECT, .rect = r})
+#define GEOMIFY_CIRCLE(c) ((Geom){UI_CIRCLE, .circle = c})
+#define GEOM_RECT(x, y, w, h) ((Geom){UI_RECT, .rect = {x, y, w, h}})
+#define GEOM_CIRCLE(centre, r) ((Geom){UI_CIRCLE, .circle = {centre, r})
 extern Tabs view_tabs;
 extern int (*view_handlers[UI_VIEW_LAST])(int);
 extern void (*view_drawers[UI_VIEW_LAST])(void);
@@ -48,8 +55,13 @@ void	ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable
 int	ui_clickable_update(void);
 void	ui_clickable_clear(void);
 void	ui_draw_views(void);
+void	ui_draw_rectangle(int x, int y, int w, int h, Color col);
 void	ui_draw_border(int x, int y, int w, int h, int px);
 void	ui_draw_ring(int x, int y, float r, Color col);
+void	ui_draw_texture(Texture2D texture, int x, int y);
+void	ui_draw_circle(int x, int y, float r, Color col);
+void	ui_draw_line(int sx, int sy, int ex, int ey, float thick, Color col);
+void	ui_draw_line_v(Vector2 start, Vector2 end, float thick, Color col);
 void	ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs);
 void	ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs);
 void	ui_draw_checkbox(int x, int y, Checkbox *checkbox);
@@ -73,6 +85,14 @@ void	ui_draw_view_fleets(void);
 void	ui_draw_view_design(void);
 void	ui_draw_view_sys(void);
 void	ui_draw_view_settings(void);
+
+/* pane.c */
+void	pane_begin(Pane *f);
+void	pane_end(void);
+int	pane_visible(float miny, float maxy); /* calls pane_max automatically */
+float	pane_max(float y); /* returns original y */
+float	pane_y(float y);
+Vector2	pane_v(Vector2 v);
 
 /* system.c */
 int	bodytype_enumify(char *name);

@@ -38,6 +38,9 @@ data-clean:
 	@echo $(DATADIR): make clean
 	@cd $(DATADIR); make clean
 
+tags:
+	ctags -R .
+
 # ignore generated headers
 sloccount:
 	sloccount $(SRC) $(DBDIR)

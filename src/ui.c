@@ -9,13 +9,7 @@
 #define VIEWS_HEIGHT 25
 #define WINDOW_TAB_HEIGHT 20
 #define TARGET_FPS 60
-#define EXPLODE_RECT(r) r.x, r.y, r.w, r.h
-#define EXPLODE_CIRCLE(c) c.centre, c.r
-#define RLIFY_RECT(r) ((Rectangle){ EXPLODE_RECT(r) })
-#define GEOMIFY_RECT(r) ((Geom){UI_RECT, .rect = r})
-#define GEOMIFY_CIRCLE(c) ((Geom){UI_CIRCLE, .circle = c})
-#define GEOM_RECT(x, y, w, h) ((Geom){UI_RECT, .rect = {x, y, w, h}})
-#define GEOM_CIRCLE(centre, r) ((Geom){UI_CIRCLE, .circle = {centre, r})
+#define WINDOW_BORDER 2
 
 static Clickable clickable[CLICKABLE_MAX];
 
@@ -90,6 +84,12 @@ View_main view_main = {
 				.h = 400,
 			},
 		},
+		.pane = {
+			.geom = NULL,
+			.scroll = 1,
+			.max = 0,
+			.off = 0,
+		},
 	},
 	.pan = 0,
 	.ruler = {.held = 0},
@@ -152,7 +152,7 @@ ui_print(int x, int y, Color col, char *fmt, ...) {
 	char *text;
 
 	pos.x = x;
-	pos.y = y;
+	pos.y = pane_y(y);
 	va_start(ap, fmt);
 	text = vsmprintf(fmt, ap);
 	va_end(ap);
@@ -190,30 +190,19 @@ ui_collides(Geom geom, Vector2 point) {
 
 int
 ui_onscreen(Vector2 point) {
+	if (!pane_visible(point.y, point.y))
+		return 0;
+	point.y = pane_y(point.y);
 	return ui_collides(GEOMIFY_RECT(screen.rect), point);
-}
-
-int
-ui_ring_rect_collides(Vector2 centre, float r, Rect rect) {
-	Vector2 rcent = {rect.x + rect.w / 2, rect.y + rect.h / 2};
-	Vector2 d;
-
-	d.x = fabsf(centre.x - rcent.x);
-	d.y = fabsf(centre.y - rcent.y);
-
-	if (d.x > (rect.w / 2 + r)) return 0;
-	if (d.y > (rect.h / 2 + r)) return 0;
-
-	if (d.x <= (rect.w / 2)) return 1;
-	if (d.y <= (rect.h / 2)) return 1;
-
-	return ((d.x - rect.w / 2) * (d.x - rect.w / 2) +
-			(d.y - rect.h / 2) * (d.y - rect.h / 2)) <= r * r;
 }
 
 int
 ui_onscreen_ring(Vector2 centre, float r) {
 	float d = ui_vectordist(centre, screen.centre);
+
+	if (!pane_visible(centre.y - r, centre.y + r))
+		return 0;
+	centre.y = pane_y(centre.y);
 
 	if (d + screen.diag / 2 < r)
 		return 0;
@@ -222,6 +211,9 @@ ui_onscreen_ring(Vector2 centre, float r) {
 
 int
 ui_onscreen_circle(Vector2 centre, float r) {
+	if (!pane_visible(centre.y - r, centre.y + r))
+		return 0;
+	centre.y = pane_y(centre.y);
 	return CheckCollisionCircleRec(centre, r, RLIFY_RECT(screen.rect));
 }
 
@@ -233,8 +225,15 @@ ui_clickable_register(Geom geom, enum UiElements type, void *elem) {
 		if (!clickable[i].elem) {
 			clickable[i].geom.type = geom.type;
 			switch (geom.type) {
-			case UI_RECT: clickable[i].geom.rect = geom.rect; break;
-			case UI_CIRCLE: clickable[i].geom.circle = geom.circle; break;
+			case UI_RECT:
+				clickable[i].geom.rect = geom.rect;
+				clickable[i].geom.rect.y = pane_y(geom.rect.y);
+				break;
+			case UI_CIRCLE:
+				clickable[i].geom.circle = geom.circle;
+				clickable[i].geom.circle.centre.y =
+					pane_y(geom.circle.centre.y);
+				break;
 			}
 			clickable[i].type = type;
 			clickable[i].elem = elem;
@@ -336,12 +335,11 @@ ui_draw_views(void) {
 }
 
 void
-ui_draw_border(int x, int y, int w, int h, int px) {
-	DrawRectangle(x, y, w, px, col_border); /* top */
-	DrawRectangle(x, y, px, h, col_border); /* left */
-	DrawRectangle(x, y + h - px, w, px, col_border); /* bottom */
-	DrawRectangle(x + w - px, y, px, h, col_border); /* right */
+ui_draw_rectangle(int x, int y, int w, int h, Color col) {
+	if (pane_visible(y, y + h))
+		DrawRectangle(x, pane_y(y), w, h, col);
 }
+
 
 #define SEGMAX 2500
 
@@ -355,6 +353,9 @@ ui_draw_ring(int x, int y, float r, Color col) {
 	float deg;
 
 	if (!ui_onscreen_ring(v, r))
+		return;
+
+	if (!pane_visible(v.y - r, v.y + r))
 		return;
 
 	p = sys_polarize_around(v, screen.centre);
@@ -376,7 +377,34 @@ ui_draw_ring(int x, int y, float r, Color col) {
 	/* Less segments are needed if there is less ring to place them in. */
 	s *= (sdeg - edeg) / 360;
 
+	v.y = pane_y(v.y);
 	DrawRing(v, r - 1, r, sdeg, edeg, s, col);
+}
+
+void
+ui_draw_texture(Texture2D texture, int x, int y) {
+	if (!pane_visible(y, y + texture.height))
+		return;
+	DrawTexture(texture, x, pane_y(y), NO_TINT);
+}
+
+void
+ui_draw_circle(int x, int y, float r, Color col) {
+	if (!pane_visible(y - r, y + r))
+		return;
+	DrawCircle(x, pane_y(y), r, col);
+}
+
+void
+ui_draw_line(int sx, int sy, int ex, int ey, float thick, Color col) {
+	Vector2 s = {sx, sy};
+	Vector2 e = {ex, ey};
+	ui_draw_line_v(s, e, thick, col);
+}
+
+void
+ui_draw_line_v(Vector2 start, Vector2 end, float thick, Color col) {
+	DrawLineEx(pane_v(start), pane_v(end), thick, col);
 }
 
 void
@@ -388,7 +416,7 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	int cx, selx = -1;
 	int i;
 
-	DrawRectangle(x, y, w, h, col_bg);
+	ui_draw_rectangle(x, y, w, h, col_bg);
 
 	for (fw = w, fn = i = 0; i < tabs->n; i++) {
 		if (!tabs->tabs[i].w)
@@ -417,13 +445,12 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 		if (i == tabs->sel)
 			selx = cx;
 		else
-			DrawRectangle(cx, y, tabw, h, col_unselbg);
+			ui_draw_rectangle(cx, y, tabw, h, col_unselbg);
 		ui_print(cx + padx + iw, y + pady, col_fg, "%s", tabs->tabs[i].name);
 		if (tabs->tabs[i].icon)
-			DrawTexture(*tabs->tabs[i].icon, cx + padx / 2,
-					y + (h - tabs->tabs[i].icon->width) / 2,
-					NO_TINT);
-		DrawRectangle(cx + tabw - 1, y, 1, h, col_border);
+			ui_draw_texture(*tabs->tabs[i].icon, cx + padx / 2,
+					y + (h - tabs->tabs[i].icon->width) / 2);
+		ui_draw_rectangle(cx + tabw - 1, y, 1, h, col_border);
 	}
 
 	if (tabs->sel != tabs->n - 1) {
@@ -434,11 +461,19 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	}
 
 	ui_draw_border(x, y, w, h, 1);
-	if (selx != -1) DrawRectangle(selx - 1, y + h - 1, tabw + 1, 1, col_bg); /* undraw bottom border */
-	if (tabs->sel == 0) DrawRectangle(x, y + 1, 1, h - 1, col_bg); /* undraw left border */
-	if (tabs->sel == tabs->n - 1) DrawRectangle(x + w - 1, y + 1, 1, h - 1, col_bg); /* undraw right border */
+	if (selx != -1) ui_draw_rectangle(selx - 1, y + h - 1, tabw + 1, 1, col_bg); /* undraw bottom border */
+	if (tabs->sel == 0) ui_draw_rectangle(x, y + 1, 1, h - 1, col_bg); /* undraw left border */
+	if (tabs->sel == tabs->n - 1) ui_draw_rectangle(x + w - 1, y + 1, 1, h - 1, col_bg); /* undraw right border */
 
 	ui_clickable_register(GEOM_RECT(x, y, w, h), UI_TAB, tabs);
+}
+
+void
+ui_draw_border(int x, int y, int w, int h, int px) {
+	ui_draw_rectangle(x, y, w, px, col_border); /* top */
+	ui_draw_rectangle(x, y, px, h, col_border); /* left */
+	ui_draw_rectangle(x, y + h - px, w, px, col_border); /* bottom */
+	ui_draw_rectangle(x + w - px, y, px, h, col_border); /* right */
 }
 
 void
@@ -447,7 +482,7 @@ ui_draw_checkbox(int x, int y, Checkbox *box) {
 
 	w = h = FONT_SIZE;
 	ui_draw_border(x, y, w, h, 1);
-	DrawRectangle(x + 1, y + 1, w - 2, h - 2,
+	ui_draw_rectangle(x + 1, y + 1, w - 2, h - 2,
 			box->enabled ? (box->val ? col_fg : col_bg) : col_border);
 	ui_print(x + w + (w / 2), y + (h / 6), col_fg, "%s", box->label);
 	if (box->enabled)
@@ -491,9 +526,9 @@ ui_vectordist(Vector2 a, Vector2 b) {
 
 void
 ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs) {
-	DrawRectangle(x, y, w, h, col_bg);
+	ui_draw_rectangle(x, y, w, h, col_bg);
 	ui_draw_tabs(x, y, w, WINDOW_TAB_HEIGHT, tabs);
-	ui_draw_border(x, y, w, h, 2);
+	ui_draw_border(x, y, w, h, WINDOW_BORDER);
 }
 
 int
@@ -508,33 +543,34 @@ ui_handle_view_main(int nowsel) {
 		furth = view_main.sys->furthest_body;
 
 #define SCROLL_DIVISOR 10
-	if (wheel) {
-		diff = wheel * (view_main.kmperpx/SCROLL_DIVISOR);
-		if (diff > 0 || !furth || view_main.kmperpx * GetScreenHeight() <
-				2 * (furth->type == BODY_COMET ? furth->maxdist : furth->dist)) {
-			view_main.kmperpx -= diff;
-			view_main.kmx += (mouse.x - GetScreenWidth() / 2) * diff;
-			view_main.kmy += (mouse.y - GetScreenHeight() / 2) * diff;
+	if (!ui_collides(view_main.infobox.geom, mouse)) {
+		if (wheel) {
+			diff = wheel * (view_main.kmperpx/SCROLL_DIVISOR);
+			if (diff > 0 || !furth || view_main.kmperpx * GetScreenHeight() <
+					2 * (furth->type == BODY_COMET ? furth->maxdist : furth->dist)) {
+				view_main.kmperpx -= diff;
+				view_main.kmx += (mouse.x - GetScreenWidth() / 2) * diff;
+				view_main.kmy += (mouse.y - GetScreenHeight() / 2) * diff;
+			}
 		}
-	}
 
-	if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-		if (view_main.pan) {
-			view_main.kmx -= delta.x * view_main.kmperpx;
-			view_main.kmy -= delta.y * view_main.kmperpx;
-		} else if (!ui_collides(view_main.infobox.geom, mouse)) {
-			view_main.pan = 1;
+		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+			if (view_main.pan) {
+				view_main.kmx -= delta.x * view_main.kmperpx;
+				view_main.kmy -= delta.y * view_main.kmperpx;
+			} else if (!ui_collides(view_main.infobox.geom, mouse)) {
+				view_main.pan = 1;
+			}
+		} else {
+			view_main.pan = 0;
 		}
-	} else {
-		view_main.pan = 0;
-	}
 
-	if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && !view_main.ruler.held &&
-			!ui_collides(view_main.infobox.geom, mouse)) {
-		view_main.ruler.held = 1;
-		view_main.ruler.origin = ui_pxtokm(mouse);
-	} else if (IsMouseButtonUp(MOUSE_BUTTON_RIGHT)) {
-		view_main.ruler.held = 0;
+		if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && !view_main.ruler.held) {
+			view_main.ruler.held = 1;
+			view_main.ruler.origin = ui_pxtokm(mouse);
+		} else if (IsMouseButtonUp(MOUSE_BUTTON_RIGHT)) {
+			view_main.ruler.held = 0;
+		}
 	}
 
 	if (!view_main.sys) {
@@ -632,7 +668,7 @@ ui_draw_orbit(Body *body) {
 		return;
 
 	if (body->type == BODY_COMET)
-		DrawLineV(parent, body->pxloc, col_orbit);
+		ui_draw_line_v(parent, body->pxloc, 1, col_orbit);
 	else
 		ui_draw_ring(parent.x, parent.y, pxrad, col_orbit);
 }
@@ -649,10 +685,10 @@ ui_draw_body(Body *body) {
 		w = body->radius / view_main.kmperpx;
 	else
 		w = min_body_rad[body->type];
-	DrawCircle(body->pxloc.x, body->pxloc.y, w, col_body[body->type]);
+	ui_draw_circle(body->pxloc.x, body->pxloc.y, w, col_body[body->type]);
 	if (body->type == BODY_COMET && view_main.infobox.comettail.val &&
 			10 * view_main.kmperpx < body->curdist)
-		DrawLineEx(body->pxloc, sys_vectorize_around(body->pxloc,
+		ui_draw_line_v(body->pxloc, sys_vectorize_around(body->pxloc,
 				(Polar){w * 11 / min_body_rad[BODY_COMET],
 				body->inward ? body->theta : body->theta + 180}),
 				w / min_body_rad[BODY_COMET], col_body[BODY_COMET]);
@@ -693,6 +729,7 @@ ui_draw_view_main(void) {
 	Vector2 mouse = GetMousePosition();
 	Vector2 mousekm = ui_pxtokm(mouse);
 	Vector2 ruler;
+	Rect rect;
 	Body *body;
 	float dist;
 	size_t i;
@@ -720,19 +757,19 @@ ui_draw_view_main(void) {
 	/* ruler */
 	if (view_main.ruler.held) {
 		ruler = ui_kmtopx(view_main.ruler.origin);
-		DrawLineV(ruler, mouse, col_info);
+		ui_draw_line_v(ruler, mouse, 1, col_info);
 		dist = ui_vectordist(view_main.ruler.origin, mousekm);
 		ui_print(mouse.x + 10, mouse.y - 10, col_info, "%s (%s)", strkmdist(dist), strlightdist(dist));
 	}
 
 	/* scale */
-	DrawRectangle(view_main.scale.x,
+	ui_draw_rectangle(view_main.scale.x,
 			GetScreenHeight() - view_main.scale.y,
 			view_main.scale.w, 1, col_info); /* horizontal */
-	DrawRectangle(view_main.scale.x,
+	ui_draw_rectangle(view_main.scale.x,
 			GetScreenHeight() - view_main.scale.y - view_main.scale.h,
 			1, view_main.scale.h, col_info); /* left vertical */
-	DrawRectangle(view_main.scale.x + view_main.scale.w,
+	ui_draw_rectangle(view_main.scale.x + view_main.scale.w,
 			GetScreenHeight() - view_main.scale.y - view_main.scale.h,
 			1, view_main.scale.h, col_info); /* right vertical */
 	dist = view_main.scale.w * view_main.kmperpx;
@@ -745,6 +782,13 @@ ui_draw_view_main(void) {
 			&view_main.infobox.tabs);
 	x = view_main.infobox.geom.rect.x + FONT_SIZE;
 	y = view_main.infobox.geom.rect.y + WINDOW_TAB_HEIGHT;
+	rect.x = x - FONT_SIZE;
+	rect.y = y;
+	rect.w = view_main.infobox.geom.rect.w - WINDOW_BORDER;
+	rect.h = view_main.infobox.geom.rect.h - WINDOW_TAB_HEIGHT - WINDOW_BORDER;
+	view_main.infobox.pane.geom = &rect;
+
+	pane_begin(&view_main.infobox.pane);
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarf);
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarfn);
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.asteroid);
@@ -754,6 +798,7 @@ ui_draw_view_main(void) {
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.asteroid);
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.comet);
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.comettail);
+	pane_end();
 }
 
 void
@@ -793,22 +838,22 @@ ui_draw_view_sys(void) {
 	/* draw map */
 
 	/* draw divider */
-	DrawLine(x, y, x, y + view_sys.info.geom.h, col_border);
+	ui_draw_line(x, y, x, y + view_sys.info.geom.h, 1, col_border);
 
 	/* draw info */
 	x = view_sys.info.geom.x + 10;
 	y += 10;
 	if (view_sys.sel) {
 		ui_print(x, y, col_fg, "%s", view_sys.sel->name);
-		DrawLine(x, y + FONT_SIZE, x + view_sys.info.geom.w - 20,
-					y + FONT_SIZE, col_border);
+		ui_draw_line(x, y + FONT_SIZE, x + view_sys.info.geom.w - 20,
+					y + FONT_SIZE, 1, col_border);
 		y += 30;
 		ui_print(x, y,      col_fg, "Stars:     %d", view_sys.sel->num.stars);
 		ui_print(x, y + 10, col_fg, "Planets:   %d", view_sys.sel->num.planets);
 		ui_print(x, y + 20, col_fg, "Asteroids: %d", view_sys.sel->num.asteroids);
 		ui_print(x, y + 30, col_fg, "Comets:    %d", view_sys.sel->num.comets);
 		ui_print(x, y + 40, col_fg, "Moons:     %d", view_sys.sel->num.moons);
-		DrawLine(x, y + 52, x + 85, y + 52, col_fg);
+		ui_draw_line(x, y + 52, x + 85, y + 52, 1, col_fg);
 		ui_print(x, y + 55, col_fg, "Total:     %d", view_sys.sel->bodies_len);
 	}
 }
