@@ -32,6 +32,21 @@ typedef struct {
 } View_main;
 
 typedef struct {
+	System *sys;
+	Body *sel;
+	struct {
+		Checkbox planet;
+		Checkbox moon;
+		Checkbox dwarf;
+		Checkbox asteroid;
+		Checkbox comet;
+		Checkbox nomineral;
+	} show;
+	Pane stars;
+	Pane bodies;
+} View_bodies;
+
+typedef struct {
 	struct {
 		Rect geom;
 	} info;

@@ -2,7 +2,7 @@
 #include "main.h"
 
 #define SCROLLBAR_W 4
-#define SCROLL_MULT 10
+#define SCROLL_MULT 50
 
 static Pane *pane = NULL;
 

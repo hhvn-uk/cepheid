@@ -130,6 +130,34 @@ typedef struct {
 	char *label;
 } Checkbox;
 
+typedef struct {
+	char *name;
+	void (*func)(int);
+	int arg;
+} Button;
+
+#define INPUT_MAX 512
+typedef struct {
+	char str[INPUT_MAX];
+	void (*onenter)(char *, int);
+	int arg;
+} Input;
+
+#define DROPDOWN_MAX 64
+typedef struct {
+	int n;
+	int sel; /* -1 for none */
+	char *val[DROPDOWN_MAX];
+} Dropdown;
+
+enum UiElements {
+	UI_TAB,
+	UI_CHECKBOX,
+	UI_BODY,
+	UI_BUTTON,
+	UI_INPUT,
+};
+
 enum UiViews {
 	UI_VIEW_MAIN,
 	UI_VIEW_COLONIES,
@@ -139,11 +167,6 @@ enum UiViews {
 	UI_VIEW_SYSTEMS,
 	UI_VIEW_SETTINGS,
 	UI_VIEW_LAST
-};
-
-enum UiElements {
-	UI_TAB,
-	UI_CHECKBOX,
 };
 
 #define CLICKABLE_MAX 64
@@ -162,12 +185,11 @@ typedef struct {
 } Loader;
 
 /* pane.c */
+#define PANESCROLL {NULL, 1, 0, 0}
+#define PANENOSCROLL {NULL, 0, 0, 0}
 typedef struct {
 	Rect *geom;
 	int scroll;
 	int max;
 	int off;
 } Pane;
-
-/* unique structures */
-#include "views.h"

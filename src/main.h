@@ -2,11 +2,14 @@
 #include <stdarg.h>
 #include <raylib.h>
 #include "struct.h"
+#include "ui/struct.h"
 #include "style.h"
 #include "maths.h"
 #include "../db/db.h"
 
 #define ELEMS(array) (sizeof(array)/sizeof(array[0]))
+#define MAX(a, b) (a > b ? a : b)
+#define MIN(a, b) (a < b ? a : b)
 
 /* main.c */
 extern Save *save;
@@ -28,6 +31,12 @@ int	strlistpos(char *str, char **list, size_t len);
 float	strnum(char *str);
 
 /* ui.c */
+#define VIEWS_MAX_WIDTH (UI_VIEW_LAST*100)
+#define VIEWS_HEIGHT 25
+#define WINDOW_TAB_HEIGHT 20
+#define TARGET_FPS 60
+#define WINDOW_BORDER 2
+#define PAD 10
 #define EXPLODE_RECT(r) r.x, r.y, r.w, r.h
 #define EXPLODE_CIRCLE(c) c.centre, c.r
 #define RLIFY_RECT(r) ((Rectangle){ EXPLODE_RECT(r) })
@@ -36,16 +45,17 @@ float	strnum(char *str);
 #define GEOM_RECT(x, y, w, h) ((Geom){UI_RECT, .rect = {x, y, w, h}})
 #define GEOM_CIRCLE(centre, r) ((Geom){UI_CIRCLE, .circle = {centre, r})
 extern Tabs view_tabs;
-extern int (*view_handlers[UI_VIEW_LAST])(int);
+extern void (*view_handlers[UI_VIEW_LAST])(int);
 extern void (*view_drawers[UI_VIEW_LAST])(void);
-extern Rect screen_rect;
-extern View_main view_main;
+extern Screen screen;
 extern View_sys view_sys;
 void	ui_init(void);
 void	ui_update_screen(void);
 void	ui_deinit(void);
 void	ui_print(int x, int y, Color col, char *format, ...);
+void	ui_title(char *fmt, ...);
 int	ui_textsize(char *text);
+int	ui_checkbox_size(Checkbox *checkbox);
 int	ui_collides(Geom geom, Vector2 point);
 int	ui_onscreen(Vector2 point);
 int	ui_onscreen_ring(Vector2 centre, float r);
@@ -57,6 +67,7 @@ void	ui_clickable_clear(void);
 void	ui_draw_views(void);
 void	ui_draw_rectangle(int x, int y, int w, int h, Color col);
 void	ui_draw_border(int x, int y, int w, int h, int px);
+void	ui_draw_border_around(int x, int y, int w, int h, int px);
 void	ui_draw_ring(int x, int y, float r, Color col);
 void	ui_draw_texture(Texture2D texture, int x, int y);
 void	ui_draw_circle(int x, int y, float r, Color col);
@@ -64,27 +75,30 @@ void	ui_draw_line(int sx, int sy, int ex, int ey, float thick, Color col);
 void	ui_draw_line_v(Vector2 start, Vector2 end, float thick, Color col);
 void	ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs);
 void	ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs);
-void	ui_draw_checkbox(int x, int y, Checkbox *checkbox);
-Vector2	ui_kmtopx(Vector2 km);
-Vector2	ui_pxtokm(Vector2 vector);
+int	ui_draw_checkbox(int x, int y, Checkbox *checkbox); /* returns width */
 Vector2 ui_vectordiff(Vector2 a, Vector2 b);
 float	ui_vectordist(Vector2 a, Vector2 b);
-void	ui_draw_orbit(Body *body);
-void	ui_draw_body(Body *body);
-int	ui_handle_view_main(int nowsel);
-int	ui_handle_view_colonies(int nowsel);
-int	ui_handle_view_bodies(int nowsel);
-int	ui_handle_view_fleets(int nowsel);
-int	ui_handle_view_design(int nowsel);
-int	ui_handle_view_sys(int nowsel);
-int	ui_handle_view_settings(int nowsel);
-void	ui_draw_view_main(void);
+void	ui_handle_view_colonies(int nowsel);
+void	ui_handle_view_fleets(int nowsel);
+void	ui_handle_view_design(int nowsel);
+void	ui_handle_view_sys(int nowsel);
+void	ui_handle_view_settings(int nowsel);
 void	ui_draw_view_colonies(void);
-void	ui_draw_view_bodies(void);
 void	ui_draw_view_fleets(void);
 void	ui_draw_view_design(void);
 void	ui_draw_view_sys(void);
 void	ui_draw_view_settings(void);
+
+/* ui/main.c */
+extern View_main view_main;
+void	ui_handle_view_main(int nowsel);
+void	ui_draw_view_main(void);
+
+/* ui/bodies.c */
+extern View_bodies view_bodies;
+void	ui_handle_view_bodies(int nowsel);
+void	ui_draw_view_bodies(void);
+
 
 /* pane.c */
 void	pane_begin(Pane *f);

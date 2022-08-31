@@ -9,11 +9,8 @@ Save *save = NULL;
 
 int
 main(void) {
-	int draw;
-	int view_prev = -1;
-	time_t lastevent;
+	int view_prev;
 	Loader *loader;
-
 
 	loader = loading_open(DATA_LOAD_STEPS + SAVE_READ_STEPS + 3, "Initializing UI");
 
@@ -23,8 +20,6 @@ main(void) {
 	save_read(loader, TESTSAVE);
 
 	loading_close(loader);
-
-	lastevent = time(NULL);
 
 	/* The window is hidden so that only the loading bar is shown. Hiding
 	 * and unhiding the window also has the added effect of making it
@@ -49,27 +44,15 @@ main(void) {
 			else if (IsKeyPressed(KEY_SIX)) view_tabs.sel = 5;
 		}
 
-		draw = view_handlers[view_tabs.sel](view_prev != view_tabs.sel);
-
-		if (lastevent == time(NULL))
-			draw = 1;
-
 		view_prev = view_tabs.sel;
 
-		if (view_prev != view_tabs.sel ||
-				GetMouseWheelMove() ||
-				IsWindowResized() ||
-				ui_clickable_update() ||
-				IsMouseButtonDown(MOUSE_BUTTON_LEFT) ||
-				IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
-			lastevent = time(NULL);
+		ui_clickable_update();
+		view_handlers[view_tabs.sel](view_prev != view_tabs.sel);
 
 		BeginDrawing();
-		if (draw) {
-			ClearBackground(col_bg);
-			ui_clickable_clear();
-			view_drawers[view_tabs.sel]();
-		}
+		ClearBackground(col_bg);
+		ui_clickable_clear();
+		view_drawers[view_tabs.sel]();
 		ui_draw_views();
 		EndDrawing();
 	}

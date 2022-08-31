@@ -38,7 +38,7 @@ bodytype_enumify(char *name) {
 char *
 bodytype_strify(Body *body) {
 	return bodytype_names[body->type +
-		body->parent ? body->parent->type : 0];
+		(body->parent ? body->parent->type : 0)];
 }
 
 Vector2
