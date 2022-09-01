@@ -410,10 +410,9 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 
 void
 ui_draw_border(int x, int y, int w, int h, int px) {
-	ui_draw_rectangle(x, y, w, px, col_border); /* top */
-	ui_draw_rectangle(x, y, px, h, col_border); /* left */
-	ui_draw_rectangle(x, y + h - px, w, px, col_border); /* bottom */
-	ui_draw_rectangle(x + w - px, y, px, h, col_border); /* right */
+	if (!pane_visible(y, y + h))
+		return;
+	DrawRectangleLinesEx((Rectangle){x, y, w, h}, px, col_border);
 }
 
 void
