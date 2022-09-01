@@ -109,8 +109,6 @@ float	pane_y(float y);
 Vector2	pane_v(Vector2 v);
 
 /* system.c */
-int	bodytype_enumify(char *name);
-char *	bodytype_strify(Body *body);
 Vector2	sys_vectorize(Polar polar);
 Vector2 sys_vectorize_around(Vector2 around, Polar polar);
 Polar	sys_polarize(Vector2 vector);
@@ -122,6 +120,12 @@ System *sys_init(char *name);
 System *sys_load(System *s, char *name);
 System *sys_get(char *name);
 System *sys_default(void);
+
+/* body.c */
+int	bodytype_enumify(char *name);
+char *	bodytype_strify(Body *body);
+int	body_cmp(Body *b1, Body *b2);
+void	body_sort(Body **bodies, size_t n);
 
 /* save.c */
 #define SAVE_READ_STEPS 2
