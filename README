@@ -16,3 +16,6 @@ Astronomy:
  - All oribts (excluding comets) are assumed to be spherical.
  - Comets "orbit" in a straight line extending outward from the centre of a
    star.
+
+   (Actually, newer versions of Aurora do model elliptical orbits, but not the
+   official release as of writing this).
