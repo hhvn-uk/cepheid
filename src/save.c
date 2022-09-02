@@ -1,5 +1,9 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
+#include <limits.h>
+#include <sys/stat.h>
 #include "main.h"
 
 /* Plan for dealing with multiple saves:
@@ -20,14 +24,18 @@ save_free(void) {
 }
 
 void
-save_read(Loader *lscr, char *dir) {
+save_read(Loader *lscr, char *name) {
+	char dir[PATH_MAX];
 	char *str;
+
 
 	if (save)
 		save_free();
 
-	if (!dir || !(save = malloc(sizeof(Save))))
+	if (!name || !(save = malloc(sizeof(Save))))
 		return;
+
+	snprintf(dir, sizeof(dir), "%s/%s", SAVEDIR, name);
 
 	loading_update(lscr, "Initializing DB");
 	dbdeclare(dir);
@@ -46,4 +54,39 @@ save_write(void) {
 	if (view_main.sys)
 		dbset(save->db.dir, "index", "selsystem", view_main.sys->name);
 	dbwrite(save->db.dir);
+}
+
+int
+save_exists(char *name) {
+	char dir[PATH_MAX];
+
+	snprintf(dir, sizeof(dir), "%s/%s", SAVEDIR, name);
+	if (access(dir, F_OK) == 0)
+		return 1;
+	return 0;
+}
+
+int
+save_create(char *name) {
+	char path[PATH_MAX];
+	FILE *f;
+
+	snprintf(path, sizeof(path), "%s/%s", SAVEDIR, name);
+	if (mkdir(path, 0755) == -1)
+		return -1;
+
+	snprintf(path, sizeof(path), "%s/%s/Systems", SAVEDIR, name);
+	if (mkdir(path, 0755) == -1)
+		return -1;
+
+	snprintf(path, sizeof(path), "%s/%s/Systems/Sol", SAVEDIR, name);
+	if (wdir_sol(path) == -1)
+		return -1;
+
+	snprintf(path, sizeof(path), "%s/%s/index", SAVEDIR, name);
+	if (!(f = fopen(path, "w")))
+		return -1;
+	fprintf(f, "selsystem\tSol\n");
+	fclose(f);
+	return 0;
 }

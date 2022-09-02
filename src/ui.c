@@ -117,6 +117,14 @@ ui_textsize(char *text) {
 	return MeasureTextEx(font, text, FONT_SIZE, FONT_SIZE/10).x;
 }
 
+float
+ui_get_scroll(void) {
+	float ret = GetMouseWheelMove();
+	if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT))
+		ret *= 2;
+	return ret;
+}
+
 int
 ui_collides(Geom geom, Vector2 point) {
 	switch (geom.type) {

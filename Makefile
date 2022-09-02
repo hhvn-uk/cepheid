@@ -3,7 +3,7 @@ DBDIR	= db
 DBLIB	= $(DBDIR)/db.o
 DBTOOL	= $(DBDIR)/dbtool
 SRCDIR	= src
-SRC	= $(shell find $(SRCDIR) -name "*.c") styles/$(STYLE).c
+SRC	= $(shell find $(SRCDIR) -name "*.c") styles/$(STYLE).c data/sol.c
 OBJ	= $(SRC:.c=.o)
 BIN	= game
 RAYLIB	= -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
@@ -13,6 +13,9 @@ include config.mk
 
 all: db data $(BIN)
 src/data.o: data/icons/*
+
+.c.o:
+	$(CC) $(CFLAGS) -D"SAVEDIR=\"$(SAVEDIR)\"" -c $< -o $@
 
 $(OBJ): src/struct.h
 $(BIN): $(OBJ) $(DBLIB)

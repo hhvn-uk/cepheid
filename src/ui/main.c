@@ -73,7 +73,7 @@ void
 ui_handle_view_main(int nowsel) {
 	Vector2 mouse = GetMousePosition();
 	Vector2 delta = GetMouseDelta();
-	float wheel = GetMouseWheelMove();
+	float wheel = ui_get_scroll();
 	float diff;
 	Body *furth;
 

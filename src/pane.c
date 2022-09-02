@@ -36,7 +36,7 @@ pane_end(void) {
 	}
 	if (m.x >= f->geom->x && m.x <= f->geom->x + f->geom->w &&
 			m.y >= f->geom->y && m.y <= f->geom->y + f->geom->h)
-		f->off -= GetMouseWheelMove() * SCROLL_MULT;
+		f->off -= ui_get_scroll() * SCROLL_MULT;
 	if (f->off > f->max - f->geom->h)
 		f->off = f->max - f->geom->h;
 	if (f->off < 0)

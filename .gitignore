@@ -1,10 +1,11 @@
 *.o
 data/*.h
+data/*.c
 data/sol
 data/worlds.tsv
 db/dbtool
 game
-testdb/
+saves/
 core.*
 tags
 perf.*

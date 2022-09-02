@@ -55,6 +55,7 @@ void	ui_deinit(void);
 void	ui_print(int x, int y, Color col, char *format, ...);
 void	ui_title(char *fmt, ...);
 int	ui_textsize(char *text);
+float	ui_get_scroll(void);
 int	ui_checkbox_size(Checkbox *checkbox);
 int	ui_collides(Geom geom, Vector2 point);
 int	ui_onscreen(Vector2 point);
@@ -131,6 +132,11 @@ void	body_sort(Body **bodies, size_t n);
 #define SAVE_READ_STEPS 2
 void 	save_read(Loader *lscr, char *dir);
 void	save_write(void);
+int	save_exists(char *name);
+int	save_create(char *name);
+
+/* ../data/sol.c */
+int	wdir_sol(char *dir);
 
 /* data.c */
 extern Font font;

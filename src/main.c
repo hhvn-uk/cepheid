@@ -3,7 +3,7 @@
 #include <raylib.h>
 #include "main.h"
 
-#define TESTSAVE "testdb"
+#define DEFSAVE	"default"
 
 Save *save = NULL;
 
@@ -17,7 +17,10 @@ main(void) {
 	ui_init();
 
 	data_load(loader);
-	save_read(loader, TESTSAVE);
+
+	if (!save_exists(DEFSAVE))
+		save_create(DEFSAVE);
+	save_read(loader, DEFSAVE);
 
 	loading_close(loader);
 
