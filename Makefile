@@ -5,7 +5,7 @@ DBTOOL	= $(DBDIR)/dbtool
 SRCDIR	= src
 SRC	= $(shell find $(SRCDIR) -name "*.c") styles/$(STYLE).c data/sol.c
 OBJ	= $(SRC:.c=.o)
-BIN	= game
+BIN	= cepheid
 RAYLIB	= -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 LDFLAGS	= $(RAYLIB) $(DBLIB)
 

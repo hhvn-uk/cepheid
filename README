@@ -1,3 +1,10 @@
+Cepheid
+=======
+
+This is an ISC-licensed clone of the game Aurora 4x.
+
+A cepheid is a radially pulsating star. It also isn't the name of another game.
+
 Concessions
 ===========
 
@@ -19,3 +26,6 @@ Astronomy:
 
    (Actually, newer versions of Aurora do model elliptical orbits, but not the
    official release as of writing this).
+
+See the "lore" for trans-newtonian elements on the Aurora wiki:
+	https://aurorawiki.pentarch.org/index.php?title=Trans_Newtonian_Elements
