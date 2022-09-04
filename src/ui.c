@@ -554,11 +554,12 @@ ui_draw_view_sys(void) {
 		y += 30;
 		ui_print(x, y,      col_fg, "Stars:     %d", view_sys.sel->num.stars);
 		ui_print(x, y + 10, col_fg, "Planets:   %d", view_sys.sel->num.planets);
-		ui_print(x, y + 20, col_fg, "Asteroids: %d", view_sys.sel->num.asteroids);
-		ui_print(x, y + 30, col_fg, "Comets:    %d", view_sys.sel->num.comets);
-		ui_print(x, y + 40, col_fg, "Moons:     %d", view_sys.sel->num.moons);
-		ui_draw_line(x, y + 52, x + 85, y + 52, 1, col_fg);
-		ui_print(x, y + 55, col_fg, "Total:     %d", view_sys.sel->bodies_len);
+		ui_print(x, y + 20, col_fg, "Dwarfs:    %d", view_sys.sel->num.dwarfs);
+		ui_print(x, y + 30, col_fg, "Asteroids: %d", view_sys.sel->num.asteroids);
+		ui_print(x, y + 40, col_fg, "Comets:    %d", view_sys.sel->num.comets);
+		ui_print(x, y + 50, col_fg, "Moons:     %d", view_sys.sel->num.moons);
+		ui_draw_line(x, y + 62, x + 85, y + 62, 1, col_fg);
+		ui_print(x, y + 65, col_fg, "Total:     %d", view_sys.sel->bodies_len);
 	}
 }
 

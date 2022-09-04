@@ -133,6 +133,7 @@ sys_load(System *s, char *name) {
 		switch (s->bodies[i]->type) {
 		case BODY_STAR:		s->num.stars++;		break;
 		case BODY_PLANET:	s->num.planets++;	break;
+		case BODY_DWARF:	s->num.dwarfs++;	break;
 		case BODY_ASTEROID:	s->num.asteroids++;	break;
 		case BODY_COMET:	s->num.comets++;	break;
 		case BODY_MOON:		s->num.moons++;		break;

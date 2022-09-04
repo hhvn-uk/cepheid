@@ -61,6 +61,7 @@ typedef struct {
 	struct {
 		int stars;
 		int planets;
+		int dwarfs;
 		int asteroids;
 		int comets;
 		int moons;
