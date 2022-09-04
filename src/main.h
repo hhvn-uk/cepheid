@@ -10,6 +10,11 @@
 #define ELEMS(array) (sizeof(array)/sizeof(array[0]))
 #define MAX(a, b) (a > b ? a : b)
 #define MIN(a, b) (a < b ? a : b)
+#define SORT_FUNC(func, type) \
+	static int \
+	func##_sort(const void *a, const void *b) { \
+		return func(*(type*)a, *(type*)b); \
+	}
 
 /* main.c */
 extern Save *save;

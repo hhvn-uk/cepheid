@@ -51,10 +51,7 @@ body_cmp(Body *b1, Body *b2) {
 	return (v1 == v2 ? 0 : (v1 > v2 ? 1 : -1));
 }
 
-static int
-body_cmp_sort(const void *a, const void *b) {
-	return body_cmp(*(const Body **)a, *(const Body **)b);
-}
+SORT_FUNC(body_cmp, Body *);
 
 void
 body_sort(Body **bodies, size_t n) {
