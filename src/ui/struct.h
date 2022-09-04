@@ -33,6 +33,7 @@ typedef struct {
 
 typedef struct {
 	System *sys;
+	Body *selstar;
 	Body *sel;
 	struct {
 		Checkbox planet;
@@ -42,8 +43,16 @@ typedef struct {
 		Checkbox comet;
 		Checkbox nomineral;
 	} show;
-	Pane stars;
-	Pane bodies;
+	struct {
+		Pane stars;
+		Pane bodies;
+	} pane;
+	Rect stars;
+	Rect disp;
+	Rect bodies;
+	Rect loc;
+	Rect mins;
+	Rect hab;
 } View_bodies;
 
 typedef struct {

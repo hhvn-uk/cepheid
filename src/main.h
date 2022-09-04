@@ -58,6 +58,7 @@ int	ui_textsize(char *text);
 float	ui_get_scroll(void);
 int	ui_checkbox_size(Checkbox *checkbox);
 int	ui_collides(Geom geom, Vector2 point);
+int	ui_collides_rect(Rect rect, Vector2 point);
 int	ui_onscreen(Vector2 point);
 int	ui_onscreen_ring(Vector2 centre, float r);
 int	ui_onscreen_circle(Vector2 centre, float r);

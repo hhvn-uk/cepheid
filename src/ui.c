@@ -137,6 +137,12 @@ ui_collides(Geom geom, Vector2 point) {
 }
 
 int
+ui_collides_rect(Rect rect, Vector2 point) {
+	Geom geom = {UI_RECT, .rect = rect};
+	return ui_collides(geom, point);
+}
+
+int
 ui_onscreen(Vector2 point) {
 	if (!pane_visible(point.y, point.y))
 		return 0;
