@@ -173,7 +173,9 @@ draw_body(Body *body) {
 	else
 		w = min_body_rad[body->type];
 
-	if (body->parent && body->type != BODY_COMET && body->dist / view_main.kmperpx < w)
+	if (body->parent && body->type != BODY_COMET &&
+			body->dist / view_main.kmperpx <
+			min_body_rad[body->parent->type])
 		return;
 
 	ui_draw_circle(body->pxloc.x, body->pxloc.y, w, col_body[body->type]);
