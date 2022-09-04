@@ -56,7 +56,7 @@ loading_open(int steps, char *initstr) {
 
 	shmdata->step = 0;
 	ret->step = &shmdata->step;
-	ret->data = &shmdata->str;
+	ret->data = shmdata->str;
 
 	if ((ret->pid = fork()) == -1)
 		goto unmap;
@@ -72,7 +72,7 @@ loading_open(int steps, char *initstr) {
 		data = mmap(NULL, sizeof(struct shmdata), PROT_READ,
 				MAP_SHARED, fd, 0);
 		if (fd == -1 || data == MAP_FAILED)
-			data = initstr;
+			exit(1);
 
 		SetWindowState(FLAG_WINDOW_TOPMOST);
 		SetTargetFPS(LOADING_FPS);
