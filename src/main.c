@@ -31,12 +31,7 @@ main(void) {
 	ClearWindowState(FLAG_WINDOW_HIDDEN);
 	ui_update_screen();
 
-	while (!WindowShouldClose()) {
-		ffree();
-
-		if (IsWindowResized())
-			ui_update_screen();
-
+	while (ui_loop()) {
 		if (IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT)) {
 			/* AAAAAAAAAAHHHHHHHHHHHH. WHY NOT JUST USE KEY_1, KEY_2..! */
 			if (IsKeyPressed(KEY_ONE)) view_tabs.sel = 0;
@@ -47,9 +42,6 @@ main(void) {
 			else if (IsKeyPressed(KEY_SIX)) view_tabs.sel = 5;
 		}
 
-		view_prev = view_tabs.sel;
-
-		ui_clickable_update();
 		view_handlers[view_tabs.sel](view_prev != view_tabs.sel);
 
 		BeginDrawing();
@@ -58,6 +50,8 @@ main(void) {
 		view_drawers[view_tabs.sel]();
 		ui_draw_views();
 		EndDrawing();
+
+		view_prev = view_tabs.sel;
 	}
 
 	data_unload();

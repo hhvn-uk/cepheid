@@ -77,6 +77,18 @@ ui_update_screen(void) {
 	screen.diag = sqrt(SQUARE(screen.w) + SQUARE(screen.h));
 }
 
+int
+ui_loop(void) {
+	if (WindowShouldClose())
+		return 0;
+
+	ffree();
+	if (IsWindowResized())
+		ui_update_screen();
+	ui_clickable_update();
+	return 1;
+}
+
 void
 ui_deinit(void) {
 	CloseWindow();

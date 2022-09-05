@@ -56,6 +56,7 @@ extern Screen screen;
 extern View_sys view_sys;
 void	ui_init(void);
 void	ui_update_screen(void);
+int	ui_loop(void);
 void	ui_deinit(void);
 void	ui_print(int x, int y, Color col, char *format, ...);
 void	ui_title(char *fmt, ...);
