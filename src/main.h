@@ -53,6 +53,7 @@ extern Tabs view_tabs;
 extern void (*view_handlers[UI_VIEW_LAST])(int);
 extern void (*view_drawers[UI_VIEW_LAST])(void);
 extern Screen screen;
+extern Focus focus;
 extern View_sys view_sys;
 void	ui_init(void);
 void	ui_update_screen(void);

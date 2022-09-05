@@ -58,8 +58,8 @@ pane_visible(float miny, float maxy) {
 
 float
 pane_max(float y) {
-	if (pane && y > pane->max)
-		pane->max = y;
+	if (pane && y - pane->geom->y > pane->max)
+		pane->max = y - pane->geom->y;
 	return y;
 }
 

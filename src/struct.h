@@ -89,6 +89,17 @@ typedef struct {
 	int w, h;
 } Rect;
 
+/* pane.c */
+#define PANESCROLL {NULL, 1, 0, 0}
+#define PANENOSCROLL {NULL, 0, 0, 0}
+typedef struct {
+	Rect *geom;
+	int scroll;
+	int max;
+	int off;
+} Pane;
+
+/* ui.c again */
 typedef struct {
 	Vector2 centre;
 	int r;
@@ -141,14 +152,18 @@ typedef struct {
 typedef struct {
 	char str[INPUT_MAX];
 	void (*onenter)(char *, int);
-	int arg;
+	int arg; /* differentiates buttons with common onenter() */
 } Input;
 
 #define DROPDOWN_MAX 64
 typedef struct {
 	int n;
 	int sel; /* -1 for none */
+	char *placeholder;
 	char *val[DROPDOWN_MAX];
+	/* internal */
+	Rect rect;
+	Pane pane;
 } Dropdown;
 
 enum UiElements {
@@ -157,7 +172,13 @@ enum UiElements {
 	UI_BODY,
 	UI_BUTTON,
 	UI_INPUT,
+	UI_DROPDOWN,
 };
+
+typedef struct {
+	enum UiElements type;
+	void *p;
+} Focus;
 
 enum UiViews {
 	UI_VIEW_MAIN,
@@ -177,6 +198,7 @@ typedef struct {
 	void *elem;
 } Clickable;
 
+/* loading.c */
 #define LOAD_STR_MAX 512
 typedef struct {
 	char path[64];
@@ -184,13 +206,3 @@ typedef struct {
 	int *step;
 	char *data;
 } Loader;
-
-/* pane.c */
-#define PANESCROLL {NULL, 1, 0, 0}
-#define PANENOSCROLL {NULL, 0, 0, 0}
-typedef struct {
-	Rect *geom;
-	int scroll;
-	int max;
-	int off;
-} Pane;

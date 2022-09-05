@@ -29,6 +29,7 @@ void (*view_drawers[UI_VIEW_LAST])(void) = {
 };
 
 Screen screen = { 0 };
+Focus focus = { 0 };
 
 Tabs view_tabs = {
 	/* Tactical is the terminology used in Aurora, so I decided to use it
@@ -214,6 +215,7 @@ void
 ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable) {
 	Tabs *tabs;
 	Checkbox *checkbox;
+	Dropdown *drop;
 	Rect *rect;
 	/* Circle *circle; */
 	int ftabw, fw, fn, tabw, x;
@@ -253,6 +255,19 @@ ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable) {
 		checkbox = clickable->elem;
 		checkbox->val = !checkbox->val;
 		break;
+	case UI_DROPDOWN:
+		if (button != MOUSE_BUTTON_LEFT)
+			return;
+		drop = clickable->elem;
+		if (focus.p != drop) {
+			focus.p = drop;
+		} else {
+			i = (mouse.y - rect->y) / FONT_SIZE;
+			if (i != 0 && i <= drop->n)
+				drop->sel = i - 1;
+			focus.p = NULL;
+		}
+		break;
 	}
 }
 
@@ -262,6 +277,7 @@ ui_clickable_update(void) {
 	MouseButton button;
 	int i;
 	int ret = 0;
+	int keepfocus = 0;
 
 	mouse = GetMousePosition();
 	/* I wish there was a: int GetMouseButton(void) */
@@ -273,9 +289,15 @@ ui_clickable_update(void) {
 	for (i = 0; i < CLICKABLE_MAX; i++) {
 		if (clickable[i].elem && ui_collides(clickable[i].geom, mouse)) {
 			ui_clickable_handle(mouse, button, &clickable[i]);
+			if (clickable[i].elem == focus.p)
+				keepfocus = 1;
 			ret = 1;
 		}
 	}
+
+	/* clicking outside the focused elememnt unfocuses */
+	if (button != -1 && !keepfocus)
+		focus.p = NULL;
 
 	/* Handle bodies seperately for efficiency:
 	 * - body->pxloc can be used instead of a geometry passed to
@@ -462,6 +484,42 @@ ui_draw_checkbox(int x, int y, Checkbox *box) {
 					rw, h),
 				UI_CHECKBOX, box);
 	return rw;
+}
+
+void
+ui_draw_dropdown(int x, int y, int w, Dropdown *d) {
+	int h = FONT_SIZE;
+	int fh, ph;
+	int focused;
+	int i;
+	int px = 2, py = 1;
+	Geom geom = {UI_RECT};
+
+	focused = focus.p == d;
+	fh = h + (focused ? h * d->n : 0);
+	ph = MIN(fh, (screen.h - x) * 0.75);
+
+	ui_draw_border_around(x, y, w, ph, 1);
+
+	d->rect = (Rect){x, y, w, fh + py};
+	d->pane.geom = &d->rect;
+	pane_begin(&d->pane);
+
+	if (d->sel != -1)
+		ui_print(x + px, y + py, col_fg, "%s", d->val[d->sel]);
+	else if (d->placeholder)
+		ui_print(x + px, y + py, col_info, "%s", d->placeholder);
+
+	if (focused) {
+		ui_draw_rectangle(x, y + h, w, fh - h, col_unselbg);
+		for (i = 0; i < d->n; i++) {
+			ui_print(x + px, y + py + (i+1) * h, col_fg, "%s", d->val[i]);
+		}
+	}
+
+	geom.rect = (Rect){x, y, w, ph};
+	ui_clickable_register(geom, UI_DROPDOWN, d);
+	pane_end();
 }
 
 Vector2
