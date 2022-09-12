@@ -38,7 +38,6 @@ loading_open(int steps, char *initstr) {
 	struct shmdata *data;
 	char curstr[LOAD_STR_MAX];
 	struct sigaction sa;
-	int step = 0;
 
 	ret = malloc(sizeof(Loader));
 	if (!ret) return NULL;

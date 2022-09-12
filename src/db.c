@@ -41,7 +41,6 @@ void
 dbsetbody(System *sys, Body *body) {
 	char *group;
 	char *parent;
-	enum BodyType type;
 
 	group = smprintf("%s/%s", sys->name, body->name);
 
