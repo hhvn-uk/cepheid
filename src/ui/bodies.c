@@ -57,7 +57,7 @@ ui_handle_view_bodies(int nowsel) {
 
 	if (!nowsel) {
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-				ui_collides_rect(v->bodies, m)) {
+				ui_collides(v->bodies, m)) {
 			pos = (m.y + v->pane.bodies.off - v->bodies.y - PAD)
 				/ FONT_SIZE;
 			for (i = j = 0; i < v->sys->bodies_len && j < pos; i++)
@@ -98,18 +98,18 @@ ui_draw_view_bodies(void) {
 	int i;
 	Body *body;
 
-	v->stars = (Rect){ PAD, VIEWS_HEIGHT + PAD * 2 + FONT_SIZE,
-		screen.w - PAD * 2, FONT_SIZE * 6 };
-	v->disp = (Rect){ v->stars.x, v->stars.y + v->stars.h + PAD,
-		v->stars.w, FONT_SIZE + PAD};
-	v->bodies = (Rect){ v->disp.x, v->disp.y + v->disp.h + PAD/2,
-		v->disp.w, screen.h - v->bodies.y - INFOBOX_H - BUTTONS };
-	v->loc = (Rect){ v->bodies.x, v->bodies.y + v->bodies.h + PAD,
-		INFOBOX_W, INFOBOX_H };
-	v->mins = (Rect){ v->loc.x + v->loc.w + PAD, v->loc.y,
-		INFOBOX_W, INFOBOX_H };
-	v->hab = (Rect){ v->mins.x + v->mins.w + PAD, v->mins.y,
-		INFOBOX_W, INFOBOX_H };
+	v->stars = RECT(PAD, VIEWS_HEIGHT + PAD * 2 + FONT_SIZE,
+		screen.w - PAD * 2, FONT_SIZE * 6);
+	v->disp = RECT(v->stars.x, v->stars.y + v->stars.h + PAD,
+		v->stars.w, FONT_SIZE + PAD);
+	v->bodies = RECT(v->disp.x, v->disp.y + v->disp.h + PAD/2,
+		v->disp.w, screen.h - v->bodies.y - INFOBOX_H - BUTTONS);
+	v->loc = RECT(v->bodies.x, v->bodies.y + v->bodies.h + PAD,
+		INFOBOX_W, INFOBOX_H);
+	v->mins = RECT(v->loc.x + v->loc.w + PAD, v->loc.y,
+		INFOBOX_W, INFOBOX_H);
+	v->hab = RECT(v->mins.x + v->mins.w + PAD, v->mins.y,
+		INFOBOX_W, INFOBOX_H);
 
 	if (!v->sel)
 		v->bodies.h += INFOBOX_H;

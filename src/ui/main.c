@@ -30,12 +30,10 @@ View_main view_main = {
 		.comettail = {1, 1, "Comet tails"}, /* TODO */
 		.geom = {
 			.type = UI_RECT,
-			.rect = {
-				.x = PAD,
-				.y = VIEWS_HEIGHT + PAD,
-				.w = 200,
-				.h = 400,
-			},
+			.x = PAD,
+			.y = VIEWS_HEIGHT + PAD,
+			.w = 200,
+			.h = 400,
 		},
 		.pane = PANESCROLL,
 	},
@@ -222,7 +220,7 @@ ui_draw_view_main(void) {
 	Vector2 mouse = GetMousePosition();
 	Vector2 mousekm = pxtokm(mouse);
 	Vector2 ruler;
-	Rect rect;
+	Geom geom;
 	Body *body;
 	float dist;
 	size_t i;
@@ -271,15 +269,15 @@ ui_draw_view_main(void) {
 			col_info, "%s", strkm(dist));
 
 	/* infobox */
-	ui_draw_tabbed_window(EXPLODE_RECT(view_main.infobox.geom.rect),
+	ui_draw_tabbed_window(EXPLODE_RECT(view_main.infobox.geom),
 			&view_main.infobox.tabs);
-	x = view_main.infobox.geom.rect.x + FONT_SIZE;
-	y = view_main.infobox.geom.rect.y + WINDOW_TAB_HEIGHT;
-	rect.x = x - FONT_SIZE;
-	rect.y = y;
-	rect.w = view_main.infobox.geom.rect.w - WINDOW_BORDER;
-	rect.h = view_main.infobox.geom.rect.h - WINDOW_TAB_HEIGHT - WINDOW_BORDER;
-	view_main.infobox.pane.geom = &rect;
+	x = view_main.infobox.geom.x + FONT_SIZE;
+	y = view_main.infobox.geom.y + WINDOW_TAB_HEIGHT;
+	geom = RECT(x - FONT_SIZE,
+			y,
+			view_main.infobox.geom.w - WINDOW_BORDER,
+			view_main.infobox.geom.h - WINDOW_TAB_HEIGHT - WINDOW_BORDER);
+	view_main.infobox.pane.geom = &geom;
 
 	pane_begin(&view_main.infobox.pane);
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarf);

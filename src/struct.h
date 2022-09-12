@@ -83,28 +83,6 @@ typedef struct {
 } Save;
 
 /* ui.c */
-/* I know raylib has Rectangle, but I don't want to type width and height */
-typedef struct {
-	int x, y;
-	int w, h;
-} Rect;
-
-/* pane.c */
-#define PANESCROLL {NULL, 1, 0, 0}
-#define PANENOSCROLL {NULL, 0, 0, 0}
-typedef struct {
-	Rect *geom;
-	int scroll;
-	int max;
-	int off;
-} Pane;
-
-/* ui.c again */
-typedef struct {
-	Vector2 centre;
-	int r;
-} Circle;
-
 enum Geometries {
 	UI_RECT,
 	UI_CIRCLE,
@@ -113,16 +91,32 @@ enum Geometries {
 typedef struct {
 	enum Geometries type;
 	union {
-		Rect rect;
-		Circle circle;
+		struct {
+			int x, y;
+			int w, h;
+		};
+		struct {
+			Vector2 centre;
+			int r;
+		};
 	};
 } Geom;
+
+/* pane.c */
+#define PANESCROLL {NULL, 1, 0, 0}
+#define PANENOSCROLL {NULL, 0, 0, 0}
+typedef struct {
+	Geom *geom;
+	int scroll;
+	int max;
+	int off;
+} Pane;
 
 typedef struct {
 	float w, h;
 	float diag;
 	Vector2 centre;
-	Rect rect; /* for passing to functions */
+	Geom rect; /* for passing to functions */
 } Screen;
 
 #define TABS_MAX 16
@@ -166,7 +160,7 @@ typedef struct {
 	char *placeholder;
 	char *val[DROPDOWN_MAX];
 	/* internal */
-	Rect rect;
+	Geom rect;
 	Pane pane;
 } Dropdown;
 

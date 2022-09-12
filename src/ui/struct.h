@@ -47,17 +47,17 @@ typedef struct {
 		Pane stars;
 		Pane bodies;
 	} pane;
-	Rect stars;
-	Rect disp;
-	Rect bodies;
-	Rect loc;
-	Rect mins;
-	Rect hab;
+	Geom stars;
+	Geom disp;
+	Geom bodies;
+	Geom loc;
+	Geom mins;
+	Geom hab;
 } View_bodies;
 
 typedef struct {
 	struct {
-		Rect geom;
+		Geom geom;
 	} info;
 	int pan;
 	Vector2 off;

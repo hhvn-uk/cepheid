@@ -44,13 +44,13 @@ float	strnum(char *str);
 #define PAD 10
 #define TPX 2
 #define TPY 1
-#define EXPLODE_RECT(r) r.x, r.y, r.w, r.h
-#define EXPLODE_CIRCLE(c) c.centre, c.r
-#define RLIFY_RECT(r) ((Rectangle){ EXPLODE_RECT(r) })
-#define GEOMIFY_RECT(r) ((Geom){UI_RECT, .rect = r})
-#define GEOMIFY_CIRCLE(c) ((Geom){UI_CIRCLE, .circle = c})
-#define GEOM_RECT(x, y, w, h) ((Geom){UI_RECT, .rect = {x, y, w, h}})
-#define GEOM_CIRCLE(centre, r) ((Geom){UI_CIRCLE, .circle = {centre, r})
+#define RECT(nx, ny, nw, nh) (Geom){UI_RECT, .x = nx, .y = ny, .w = nw, .h = nh}
+#define CIRCLE(x, y, nr) (Geom){UI_CIRCLE, .centre={x, y}, .r = nr}
+#define CIRCLEV(v, nr) (Geom){UI_CIRCLE, .centre = v, .r = nr}
+#define RLIFY_RECT(g) (Rectangle){g.x, g.y, g.w, g.h}
+#define EXPLODE_RECT(g) g.x, g.y, g.w, g.h
+#define EXPLODE_CIRCLE(g) g.centre.x, g.centre.y, g.r
+#define EXPLODE_CIRCLEV(g) g.centre, g.r
 extern Tabs view_tabs;
 extern void (*view_handlers[UI_VIEW_LAST])(int);
 extern void (*view_drawers[UI_VIEW_LAST])(void);
@@ -68,7 +68,6 @@ int	ui_textsize(char *text);
 float	ui_get_scroll(void);
 int	ui_checkbox_size(Checkbox *checkbox);
 int	ui_collides(Geom geom, Vector2 point);
-int	ui_collides_rect(Rect rect, Vector2 point);
 int	ui_onscreen(Vector2 point);
 int	ui_onscreen_ring(Vector2 centre, float r);
 int	ui_onscreen_circle(Vector2 centre, float r);

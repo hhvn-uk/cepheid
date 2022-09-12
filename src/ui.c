@@ -153,16 +153,10 @@ ui_collides(Geom geom, Vector2 point) {
 	switch (geom.type) {
 	case UI_CIRCLE:
 		return CheckCollisionPointCircle(point,
-				EXPLODE_CIRCLE(geom.circle));
+				EXPLODE_CIRCLEV(geom));
 	case UI_RECT: default: /* -Wreturn-type bitches without default */
-		return CheckCollisionPointRec(point, RLIFY_RECT(geom.rect));
+		return CheckCollisionPointRec(point, RLIFY_RECT(geom));
 	}
-}
-
-int
-ui_collides_rect(Rect rect, Vector2 point) {
-	Geom geom = {UI_RECT, .rect = rect};
-	return ui_collides(geom, point);
 }
 
 int
@@ -170,7 +164,7 @@ ui_onscreen(Vector2 point) {
 	if (!pane_visible(point.y, point.y))
 		return 0;
 	point.y = pane_y(point.y);
-	return ui_collides(GEOMIFY_RECT(screen.rect), point);
+	return ui_collides(screen.rect, point);
 }
 
 int
@@ -200,18 +194,7 @@ ui_clickable_register(Geom geom, enum UiElements type, void *elem) {
 
 	for (i = 0; i < CLICKABLE_MAX; i++) {
 		if (!clickable[i].elem) {
-			clickable[i].geom.type = geom.type;
-			switch (geom.type) {
-			case UI_RECT:
-				clickable[i].geom.rect = geom.rect;
-				clickable[i].geom.rect.y = pane_y(geom.rect.y);
-				break;
-			case UI_CIRCLE:
-				clickable[i].geom.circle = geom.circle;
-				clickable[i].geom.circle.centre.y =
-					pane_y(geom.circle.centre.y);
-				break;
-			}
+			clickable[i].geom = geom;
 			clickable[i].type = type;
 			clickable[i].elem = elem;
 			return;
@@ -227,29 +210,25 @@ ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable) {
 	Checkbox *checkbox;
 	Dropdown *drop;
 	Input *input;
-	Rect *rect;
-	/* Circle *circle; */
+	Geom *geom = &clickable->geom;
 	int ftabw, fw, fn, tabw, x;
 	int i;
-
-	rect = &clickable->geom.rect;
-	/* circle = &clickable->geom.circle; */
 
 	switch (clickable->type) {
 	case UI_TAB:
 		if (button != MOUSE_BUTTON_LEFT)
 			return;
 		tabs = clickable->elem;
-		for (fw = rect->w, fn = i = 0; i < tabs->n; i++) {
+		for (fw = geom->w, fn = i = 0; i < tabs->n; i++) {
 			if (!tabs->tabs[i].w)
 				fn++;
 			else
 				fw -= tabs->tabs[i].w;
 		}
 		ftabw = fw / fn;
-		for (i = 0, x = rect->x; i < tabs->n; x += tabw, i++) {
+		for (i = 0, x = geom->x; i < tabs->n; x += tabw, i++) {
 			if (i == tabs->n - 1)
-				tabw = rect->x + rect->w - x;
+				tabw = geom->x + geom->w - x;
 			else if (!tabs->tabs[i].w)
 				tabw = ftabw;
 			else
@@ -274,7 +253,7 @@ ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable) {
 		if (focus.p != input) {
 			ui_update_focus(UI_INPUT, input);
 		} else {
-			i = (mouse.x - TPX - rect->x + charpx / 2) / charpx;
+			i = (mouse.x - TPX - geom->x + charpx / 2) / charpx;
 			if (i < input->len)
 				input->cur = i;
 			else if (i > 0)
@@ -288,7 +267,7 @@ ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable) {
 		if (focus.p != drop) {
 			ui_update_focus(UI_DROPDOWN, drop);
 		} else {
-			i = (mouse.y - rect->y) / FONT_SIZE;
+			i = (mouse.y - geom->y) / FONT_SIZE;
 			if (i != 0 && i <= drop->n)
 				drop->sel = i - 1;
 			ui_update_focus(0, NULL);
@@ -536,7 +515,7 @@ ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	if (tabs->sel == 0) ui_draw_rectangle(x, y + 1, 1, h - 1, col_bg); /* undraw left border */
 	if (tabs->sel == tabs->n - 1) ui_draw_rectangle(x + w - 1, y + 1, 1, h - 1, col_bg); /* undraw right border */
 
-	ui_clickable_register(GEOM_RECT(x, y, w, h), UI_TAB, tabs);
+	ui_clickable_register(RECT(x, y, w, h), UI_TAB, tabs);
 }
 
 void
@@ -563,8 +542,7 @@ ui_draw_checkbox(int x, int y, Checkbox *box) {
 	ui_print(x + w + (w / 2), y + (h / 6), col_fg, "%s", box->label);
 	rw = w + (w / 2) + ui_textsize(box->label);
 	if (box->enabled)
-		ui_clickable_register(GEOM_RECT(x, y,
-					rw, h),
+		ui_clickable_register(RECT(x, y, rw, h),
 				UI_CHECKBOX, box);
 	return rw;
 }
@@ -575,7 +553,6 @@ ui_draw_dropdown(int x, int y, int w, Dropdown *d) {
 	int fh, ph;
 	int focused;
 	int i;
-	Geom geom = {UI_RECT};
 
 	focused = focus.p == d;
 	fh = h + (focused ? h * d->n : 0);
@@ -583,7 +560,7 @@ ui_draw_dropdown(int x, int y, int w, Dropdown *d) {
 
 	ui_draw_border_around(x, y, w, ph, 1);
 
-	d->rect = (Rect){x, y, w, fh + TPY};
+	d->rect = RECT(x, y, w, fh + TPY);
 	d->pane.geom = &d->rect;
 	pane_begin(&d->pane);
 
@@ -599,8 +576,7 @@ ui_draw_dropdown(int x, int y, int w, Dropdown *d) {
 		}
 	}
 
-	geom.rect = (Rect){x, y, w, ph};
-	ui_clickable_register(geom, UI_DROPDOWN, d);
+	ui_clickable_register(d->rect, UI_DROPDOWN, d);
 	pane_end();
 }
 
@@ -609,7 +585,6 @@ ui_draw_input(int x, int y, int w, Input *in) {
 	int h = FONT_SIZE;
 	int focused = focus.p == in;
 	int cw;
-	Geom geom = {UI_RECT, .rect = {x, y, w, h}};
 
 	/* Dirty hack: truncate str to length that fits */
 	cw = w / charpx - 1;
@@ -629,7 +604,7 @@ ui_draw_input(int x, int y, int w, Input *in) {
 	if (focused) {
 		ui_draw_rectangle(x + TPX + charpx * in->cur, y + TPY, 1, FONT_SIZE, col_fg);
 	}
-	ui_clickable_register(geom, UI_INPUT, in);
+	ui_clickable_register(RECT(x, y, w, h), UI_INPUT, in);
 }
 
 Vector2
