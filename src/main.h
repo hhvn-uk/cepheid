@@ -27,8 +27,8 @@ char *	sfprintf(char *fmt, ...); /* return string allocated for current frame */
 char *	vsmprintf(char *fmt, va_list args);
 char *	smprintf(char *fmt, ...); /* return allocated string */
 char *	nstrdup(char *str); /* NULL-safe */
-char *	strkmdist(float km);
-char *	strlightdist(float km);
+char *	strkm(float km);
+char *	strly(float km);
 int	streq(char *s1, char *s2); /* NULL-safe, no `== 0` required */
 int	strprefix(char *str, char *prefix);
 char *	strsuffix(char *str, char *suffix);

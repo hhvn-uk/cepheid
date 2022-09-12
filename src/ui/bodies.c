@@ -164,8 +164,8 @@ ui_draw_view_bodies(void) {
 		if (v->sel->type != BODY_COMET) {
 			ui_print(x, y += FONT_SIZE, col_info, "Orbital distance:");
 			ui_print(x + INFOBOX_W / 2, y, col_fg,
-					"%s (%s)", strkmdist(v->sel->dist),
-					strlightdist(v->sel->dist));
+					"%s (%s)", strkm(v->sel->dist),
+					strly(v->sel->dist));
 		}
 
 		ui_draw_border_around(EXPLODE_RECT(v->mins), 1);

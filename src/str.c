@@ -94,7 +94,7 @@ nstrdup(char *str) {
 }
 
 char *
-strkmdist(float km) {
+strkm(float km) {
 	if (km > GIGA)
 		return sfprintf("%.2fb km", km / GIGA);
 	else if (km > MEGA)
@@ -106,7 +106,7 @@ strkmdist(float km) {
 }
 
 char *
-strlightdist(float km) {
+strly(float km) {
 	float ls = km * KILO / C_MS;
 
 	if (ls > YEAR_LEN)

@@ -252,7 +252,7 @@ ui_draw_view_main(void) {
 		ruler = kmtopx(view_main.ruler.origin);
 		ui_draw_line_v(ruler, mouse, 1, col_info);
 		dist = ui_vectordist(view_main.ruler.origin, mousekm);
-		ui_print(mouse.x + PAD, mouse.y - PAD, col_info, "%s (%s)", strkmdist(dist), strlightdist(dist));
+		ui_print(mouse.x + PAD, mouse.y - PAD, col_info, "%s (%s)", strkm(dist), strly(dist));
 	}
 
 	/* scale */
@@ -268,7 +268,7 @@ ui_draw_view_main(void) {
 	dist = view_main.scale.w * view_main.kmperpx;
 	ui_print(view_main.scale.x + view_main.scale.w + FONT_SIZE / 3,
 			GetScreenHeight() - view_main.scale.y - FONT_SIZE / 2,
-			col_info, "%s", strkmdist(dist));
+			col_info, "%s", strkm(dist));
 
 	/* infobox */
 	ui_draw_tabbed_window(EXPLODE_RECT(view_main.infobox.geom.rect),
