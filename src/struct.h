@@ -149,11 +149,15 @@ typedef struct {
 } Button;
 
 #define INPUT_MAX 512
-typedef struct {
+typedef struct Input Input;
+struct Input {
 	char str[INPUT_MAX];
-	void (*onenter)(char *, int);
-	int arg; /* differentiates buttons with common onenter() */
-} Input;
+	wchar_t wstr[INPUT_MAX]; /* Oh no, not everything will fit. Whatever. */
+	char *placeholder;
+	int len;
+	int cur;
+	int (*onenter)(Input *); /* return positive to clear */
+};
 
 #define DROPDOWN_MAX 64
 typedef struct {

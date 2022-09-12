@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <raylib.h>
+#include <wchar.h>
 #include "main.h"
 
 static Clickable clickable[CLICKABLE_MAX];
@@ -61,6 +62,8 @@ View_sys view_sys = {
 	.sel = NULL,
 };
 
+int charpx; /* thank god for monospaced fonts */
+
 void
 ui_init(void) {
 	SetWindowState(FLAG_WINDOW_RESIZABLE|FLAG_WINDOW_HIDDEN);
@@ -78,6 +81,12 @@ ui_update_screen(void) {
 	screen.diag = sqrt(SQUARE(screen.w) + SQUARE(screen.h));
 }
 
+void
+ui_update_focus(enum UiElements type, void *p) {
+	focus.type = type;
+	focus.p = p;
+}
+
 int
 ui_loop(void) {
 	if (WindowShouldClose())
@@ -86,6 +95,7 @@ ui_loop(void) {
 	ffree();
 	if (IsWindowResized())
 		ui_update_screen();
+	ui_keyboard_handle();
 	ui_clickable_update();
 	return 1;
 }
@@ -127,7 +137,7 @@ ui_title(char *fmt, ...) {
 
 int
 ui_textsize(char *text) {
-	return MeasureTextEx(font, text, FONT_SIZE, FONT_SIZE/10).x;
+	return charpx * strlen(text);
 }
 
 float
@@ -216,6 +226,7 @@ ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable) {
 	Tabs *tabs;
 	Checkbox *checkbox;
 	Dropdown *drop;
+	Input *input;
 	Rect *rect;
 	/* Circle *circle; */
 	int ftabw, fw, fn, tabw, x;
@@ -255,17 +266,32 @@ ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable) {
 		checkbox = clickable->elem;
 		checkbox->val = !checkbox->val;
 		break;
+	case UI_INPUT:
+		/* TODO: display hover over text */
+		if (button != MOUSE_BUTTON_LEFT)
+			return;
+		input = clickable->elem;
+		if (focus.p != input) {
+			ui_update_focus(UI_INPUT, input);
+		} else {
+			i = (mouse.x - TPX - rect->x + charpx / 2) / charpx;
+			if (i < input->len)
+				input->cur = i;
+			else if (i > 0)
+				input->cur = input->len;
+		}
+		break;
 	case UI_DROPDOWN:
 		if (button != MOUSE_BUTTON_LEFT)
 			return;
 		drop = clickable->elem;
 		if (focus.p != drop) {
-			focus.p = drop;
+			ui_update_focus(UI_DROPDOWN, drop);
 		} else {
 			i = (mouse.y - rect->y) / FONT_SIZE;
 			if (i != 0 && i <= drop->n)
 				drop->sel = i - 1;
-			focus.p = NULL;
+			ui_update_focus(0, NULL);
 		}
 		break;
 	}
@@ -297,7 +323,7 @@ ui_clickable_update(void) {
 
 	/* clicking outside the focused elememnt unfocuses */
 	if (button != -1 && !keepfocus)
-		focus.p = NULL;
+		ui_update_focus(0, NULL);
 
 	/* Handle bodies seperately for efficiency:
 	 * - body->pxloc can be used instead of a geometry passed to
@@ -306,6 +332,65 @@ ui_clickable_update(void) {
 	 */
 
 	return ret;
+}
+
+static int
+ui_keyboard_check(int key, int *fcount) {
+	if (IsKeyPressed(key)) {
+		*fcount = -10;
+		return 1;
+	} else if (IsKeyDown(key) && !*fcount) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+void
+ui_keyboard_handle(void) {
+	static int fcount = 0;
+	wchar_t c;
+	Input *in;
+
+	/* Register multiple backspaces when held. raylib does this with
+	 * "characters", but anything other than a "character" has completely
+	 * different handling. (Newlines and backspaces *ARE* ASCII characters.
+	 * So... eugh). ncurses's get_blah23_ch_fgfgj is somehow better.
+	 *
+	 * This also IS NOT ABLE TO respect the X11 settings for outputting
+	 * characters while held because... Fuck you, apparently. Thanks
+	 * raylib. */
+	fcount++;
+	if (fcount == (int)TARGET_FPS/15)
+		fcount = 0;
+
+	if (focus.p && focus.type == UI_INPUT) {
+		in = focus.p;
+		c = GetCharPressed();
+
+		if (IsKeyPressed(KEY_ENTER) && in->onenter) {
+			wcstombs(in->str, in->wstr, INPUT_MAX);
+			if (in->onenter(in)) {
+				in->len = in->cur = 0;
+				in->wstr[0] = '\0';
+			}
+		} else if (ui_keyboard_check(KEY_BACKSPACE, &fcount) && in->len && in->cur) {
+			wmemmove(in->wstr + in->cur - 1,
+					in->wstr + in->cur, in->len - in->cur);
+			in->wstr[--in->len] = '\0';
+			in->cur--;
+		} else if (ui_keyboard_check(KEY_LEFT, &fcount) && in->cur) {
+			in->cur--;
+		} else if (ui_keyboard_check(KEY_RIGHT, &fcount) && in->cur != in->len) {
+			in->cur++;
+		} else if (c && in->len < INPUT_MAX) {
+			wmemmove(in->wstr + in->cur + 1, in->wstr + in->cur, in->len - in->cur);
+			in->wstr[in->cur] = c;
+			in->wstr[++in->len] = '\0';
+			in->cur++;
+		}
+
+	}
 }
 
 void
@@ -329,14 +414,14 @@ ui_draw_rectangle(int x, int y, int w, int h, Color col) {
 }
 
 
-#define SEGMAX 2500
+#define SEGMAX 1500
 
 void
 ui_draw_ring(int x, int y, float r, Color col) {
 	Vector2 v = {x, y};
 	Polar p;
 	float s;
-	float prec = screen.diag * 2 / (PI * 2 * r) * 360;
+	float prec = screen.diag * 1.5 / (PI * 2 * r) * 360;
 	float sdeg = 0, edeg = 360;
 	float deg;
 
@@ -355,9 +440,7 @@ ui_draw_ring(int x, int y, float r, Color col) {
 	sdeg = deg + prec;
 	edeg = deg - prec;
 
-	if (r < 100)
-		s = r;
-	else if (r < SEGMAX)
+	if (r < SEGMAX)
 		s = r / log10(r);
 	else
 		s = SEGMAX;
@@ -492,7 +575,6 @@ ui_draw_dropdown(int x, int y, int w, Dropdown *d) {
 	int fh, ph;
 	int focused;
 	int i;
-	int px = 2, py = 1;
 	Geom geom = {UI_RECT};
 
 	focused = focus.p == d;
@@ -501,25 +583,53 @@ ui_draw_dropdown(int x, int y, int w, Dropdown *d) {
 
 	ui_draw_border_around(x, y, w, ph, 1);
 
-	d->rect = (Rect){x, y, w, fh + py};
+	d->rect = (Rect){x, y, w, fh + TPY};
 	d->pane.geom = &d->rect;
 	pane_begin(&d->pane);
 
 	if (d->sel != -1)
-		ui_print(x + px, y + py, col_fg, "%s", d->val[d->sel]);
+		ui_print(x + TPX, y + TPY, col_fg, "%s", d->val[d->sel]);
 	else if (d->placeholder)
-		ui_print(x + px, y + py, col_info, "%s", d->placeholder);
+		ui_print(x + TPX, y + TPY, col_info, "%s", d->placeholder);
 
 	if (focused) {
 		ui_draw_rectangle(x, y + h, w, fh - h, col_unselbg);
 		for (i = 0; i < d->n; i++) {
-			ui_print(x + px, y + py + (i+1) * h, col_fg, "%s", d->val[i]);
+			ui_print(x + TPX, y + TPY + (i+1) * h, col_fg, "%s", d->val[i]);
 		}
 	}
 
 	geom.rect = (Rect){x, y, w, ph};
 	ui_clickable_register(geom, UI_DROPDOWN, d);
 	pane_end();
+}
+
+void
+ui_draw_input(int x, int y, int w, Input *in) {
+	int h = FONT_SIZE;
+	int focused = focus.p == in;
+	int cw;
+	Geom geom = {UI_RECT, .rect = {x, y, w, h}};
+
+	/* Dirty hack: truncate str to length that fits */
+	cw = w / charpx - 1;
+	if (in->len > cw) {
+		in->len = cw;
+		in->wstr[cw] = '\0';
+	}
+	if (in->cur > in->len)
+		in->cur = in->len;
+
+	ui_draw_border_around(x, y, w, h, 1);
+	ui_draw_rectangle(x, y, w, h, focused ? col_bg : col_unselbg);
+	if (in->len)
+		ui_print(x + TPX, y + TPY, col_fg, "%S", in->wstr);
+	else if (!focused && in->placeholder)
+		ui_print(x + TPX, y + TPY, col_info, "%s", in->placeholder);
+	if (focused) {
+		ui_draw_rectangle(x + TPX + charpx * in->cur, y + TPY, 1, FONT_SIZE, col_fg);
+	}
+	ui_clickable_register(geom, UI_INPUT, in);
 }
 
 Vector2

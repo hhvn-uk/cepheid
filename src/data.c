@@ -59,6 +59,7 @@ data_load(Loader *lscr) {
 	loading_update(lscr, "Loading fonts");
 	font = LoadFontFromMemory(".ttf", DejaVuSansMono_ttf,
 			sizeof(DejaVuSansMono_ttf), FONT_SIZE, NULL, 0);
+	charpx = MeasureTextEx(font, ".", FONT_SIZE, FONT_SIZE/10).x + FONT_SIZE/10;
 	/* one step per IMAGE_LOAD() */
 	IMAGE_LOAD(tactical);
 	IMAGE_LOAD(colonies);

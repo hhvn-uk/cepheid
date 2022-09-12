@@ -42,6 +42,8 @@ float	strnum(char *str);
 #define TARGET_FPS 60
 #define WINDOW_BORDER 2
 #define PAD 10
+#define TPX 2
+#define TPY 1
 #define EXPLODE_RECT(r) r.x, r.y, r.w, r.h
 #define EXPLODE_CIRCLE(c) c.centre, c.r
 #define RLIFY_RECT(r) ((Rectangle){ EXPLODE_RECT(r) })
@@ -55,6 +57,7 @@ extern void (*view_drawers[UI_VIEW_LAST])(void);
 extern Screen screen;
 extern Focus focus;
 extern View_sys view_sys;
+extern int charpx;
 void	ui_init(void);
 void	ui_update_screen(void);
 int	ui_loop(void);
@@ -73,6 +76,7 @@ void	ui_clickable_register(Geom geom, enum UiElements type, void *elem);
 void	ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable);
 int	ui_clickable_update(void);
 void	ui_clickable_clear(void);
+void	ui_keyboard_handle(void);
 void	ui_draw_views(void);
 void	ui_draw_rectangle(int x, int y, int w, int h, Color col);
 void	ui_draw_border(int x, int y, int w, int h, int px);
@@ -85,6 +89,8 @@ void	ui_draw_line_v(Vector2 start, Vector2 end, float thick, Color col);
 void	ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs);
 void	ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs);
 int	ui_draw_checkbox(int x, int y, Checkbox *checkbox); /* returns width */
+void	ui_draw_dropdown(int x, int y, int w, Dropdown *d);
+void	ui_draw_input(int x, int y, int w, Input *in);
 Vector2 ui_vectordiff(Vector2 a, Vector2 b);
 float	ui_vectordist(Vector2 a, Vector2 b);
 void	ui_handle_view_colonies(int nowsel);
