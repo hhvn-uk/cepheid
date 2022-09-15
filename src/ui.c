@@ -349,24 +349,16 @@ ui_keyboard_handle(void) {
 
 		if (IsKeyPressed(KEY_ENTER) && in->onenter) {
 			wcstombs(in->str, in->wstr, INPUT_MAX);
-			if (in->onenter(in)) {
-				in->len = in->cur = 0;
-				in->wstr[0] = '\0';
-			}
+			if (in->onenter(in))
+				edittrunc(in->wstr, &in->len, &in->cur);
 		} else if (ui_keyboard_check(KEY_BACKSPACE, &fcount) && in->len && in->cur) {
-			wmemmove(in->wstr + in->cur - 1,
-					in->wstr + in->cur, in->len - in->cur);
-			in->wstr[--in->len] = '\0';
-			in->cur--;
+			editrm(in->wstr, &in->len, &in->cur);
 		} else if (ui_keyboard_check(KEY_LEFT, &fcount) && in->cur) {
 			in->cur--;
 		} else if (ui_keyboard_check(KEY_RIGHT, &fcount) && in->cur != in->len) {
 			in->cur++;
 		} else if (c && in->len < INPUT_MAX) {
-			wmemmove(in->wstr + in->cur + 1, in->wstr + in->cur, in->len - in->cur);
-			in->wstr[in->cur] = c;
-			in->wstr[++in->len] = '\0';
-			in->cur++;
+			editins(in->wstr, &in->len, &in->cur, INPUT_MAX, c);
 		}
 
 	}

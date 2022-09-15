@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <limits.h>
+#include <wchar.h>
 #include <errno.h>
 #include <math.h>
 #include "main.h"
@@ -174,4 +175,27 @@ float
 strnum(char *str) {
 	if (!str) return 0;
 	return strtof(str, NULL);
+}
+
+void
+edittrunc(wchar_t *str, int *len, int *cur) {
+	*len = *cur = 0;
+	str[0] = '\0';
+}
+
+void
+editrm(wchar_t *str, int *len, int *cur) {
+	wmemmove(str + *cur - 1, str + *cur, *len - *cur);
+	str[--(*len)] = '\0';
+	(*cur)--;
+}
+
+void
+editins(wchar_t *str, int *len, int *cur, int size, wchar_t c) {
+	if (*len >= size)
+		return;
+	wmemmove(str + *cur + 1, str + *cur, *len - *cur);
+	str[*cur] = c;
+	str[++(*len)] = '\0';
+	(*cur)++;
 }

@@ -51,6 +51,8 @@ View_main view_main = {
 	.sys = NULL,
 };
 
+Input test = { 0 };
+
 Vector2
 kmtopx(Vector2 km) {
 	return (Vector2) {
@@ -290,4 +292,6 @@ ui_draw_view_main(void) {
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.comet);
 	ui_draw_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.comettail);
 	pane_end();
+
+	ui_draw_input(500, 500, 150, &test);
 }

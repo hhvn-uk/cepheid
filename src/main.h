@@ -34,6 +34,9 @@ int	strprefix(char *str, char *prefix);
 char *	strsuffix(char *str, char *suffix);
 int	strlistpos(char *str, char **list, size_t len);
 float	strnum(char *str);
+void	edittrunc(wchar_t *str, int *len, int *cur);
+void	editrm(wchar_t *str, int *len, int *cur);
+void	editins(wchar_t *str, int *len, int *cur, int size, wchar_t c);
 
 /* ui.c */
 #define VIEWS_MAX_WIDTH (UI_VIEW_LAST*100)
