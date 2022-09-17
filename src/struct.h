@@ -167,10 +167,10 @@ typedef struct {
 enum UiElements {
 	UI_TAB,
 	UI_CHECKBOX,
-	UI_BODY,
 	UI_BUTTON,
 	UI_INPUT,
 	UI_DROPDOWN,
+	UI_ELEMS,
 };
 
 typedef struct {

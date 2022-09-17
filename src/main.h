@@ -63,6 +63,7 @@ extern View_sys view_sys;
 extern int charpx;
 void	ui_init(void);
 void	ui_update_screen(void);
+void	ui_update_focus(enum UiElements type, void *p);
 int	ui_loop(void);
 void	ui_deinit(void);
 void	ui_print(int x, int y, Color col, char *format, ...);
@@ -75,7 +76,6 @@ int	ui_onscreen(Vector2 point);
 int	ui_onscreen_ring(Vector2 centre, float r);
 int	ui_onscreen_circle(Vector2 centre, float r);
 void	ui_clickable_register(Geom geom, enum UiElements type, void *elem);
-void	ui_clickable_handle(Vector2 mouse, MouseButton button, Clickable *clickable);
 int	ui_clickable_update(void);
 void	ui_clickable_clear(void);
 void	ui_keyboard_handle(void);
@@ -88,11 +88,7 @@ void	ui_draw_texture(Texture2D texture, int x, int y);
 void	ui_draw_circle(int x, int y, float r, Color col);
 void	ui_draw_line(int sx, int sy, int ex, int ey, float thick, Color col);
 void	ui_draw_line_v(Vector2 start, Vector2 end, float thick, Color col);
-void	ui_draw_tabs(int x, int y, int w, int h, Tabs *tabs);
 void	ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs);
-int	ui_draw_checkbox(int x, int y, Checkbox *checkbox); /* returns width */
-void	ui_draw_dropdown(int x, int y, int w, Dropdown *d);
-void	ui_draw_input(int x, int y, int w, Input *in);
 Vector2 ui_vectordiff(Vector2 a, Vector2 b);
 float	ui_vectordist(Vector2 a, Vector2 b);
 void	ui_handle_view_colonies(int nowsel);
@@ -105,6 +101,14 @@ void	ui_draw_view_fleets(void);
 void	ui_draw_view_design(void);
 void	ui_draw_view_sys(void);
 void	ui_draw_view_settings(void);
+
+/* uielem.c */
+extern void (*ui_elem_handlers[UI_ELEMS])(Vector2 mouse,
+		MouseButton button, Geom *geom, void *elem);
+void	ui_tabs(int x, int y, int w, int h, Tabs *tabs);
+int	ui_checkbox(int x, int y, Checkbox *checkbox); /* returns width */
+void	ui_dropdown(int x, int y, int w, Dropdown *d);
+void	ui_input(int x, int y, int w, Input *in);
 
 /* ui/main.c */
 extern View_main view_main;
