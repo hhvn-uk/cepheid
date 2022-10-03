@@ -158,7 +158,8 @@ typedef struct {
 	int n;
 	int sel; /* -1 for none */
 	char *placeholder;
-	char *val[DROPDOWN_MAX];
+	char *str[DROPDOWN_MAX];
+	void *val[DROPDOWN_MAX];
 	/* internal */
 	Geom rect;
 	Pane pane;

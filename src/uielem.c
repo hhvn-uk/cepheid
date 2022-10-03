@@ -152,14 +152,14 @@ ui_dropdown(int x, int y, int w, Dropdown *d) {
 	pane_begin(&d->pane);
 
 	if (d->sel != -1)
-		ui_print(x + TPX, y + TPY, col_fg, "%s", d->val[d->sel]);
+		ui_print(x + TPX, y + TPY, col_fg, "%s", d->str[d->sel]);
 	else if (d->placeholder)
 		ui_print(x + TPX, y + TPY, col_info, "%s", d->placeholder);
 
 	if (focused) {
 		ui_draw_rectangle(x, y + h, w, fh - h, col_unselbg);
 		for (i = 0; i < d->n; i++) {
-			ui_print(x + TPX, y + TPY + (i+1) * h, col_fg, "%s", d->val[i]);
+			ui_print(x + TPX, y + TPY + (i+1) * h, col_fg, "%s", d->str[i]);
 		}
 	}
 
