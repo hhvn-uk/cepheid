@@ -186,3 +186,8 @@ float	dbgetfloat(char *dir, char *group, char *key);
 Loader *loading_open(int steps, char *initstr);
 void	loading_update(Loader *hand, char *str);
 void	loading_close(Loader *hand);
+
+/* maths.c */
+float	cosf_d(float x);
+float	sinf_d(float x);
+float	atan2f_d(float y, float x);

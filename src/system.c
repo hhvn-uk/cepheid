@@ -7,8 +7,8 @@
 Vector2
 sys_vectorize(Polar polar) {
 	return (Vector2) {
-		polar.r * COSF(polar.theta),
-		polar.r * SINF(polar.theta)
+		polar.r * cosf_d(polar.theta),
+		polar.r * sinf_d(polar.theta)
 	};
 }
 
@@ -25,7 +25,7 @@ Polar
 sys_polarize(Vector2 vector) {
 	return (Polar) {
 		hypotf(vector.x, vector.y),
-		ATAN2F(vector.y, vector.x)
+		atan2f_d(vector.y, vector.x)
 	};
 }
 

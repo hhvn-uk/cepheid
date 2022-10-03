@@ -22,9 +22,9 @@
 
 /* eugh. raylib uses degrees, libm uses radians.
  * Let's make everything degrees. */
-#define COSF(n) cosf(RAD(n))
-#define SINF(n) sinf(RAD(n))
-#define ATAN2F(y, x) DEG(atan2f(y, x))
-
+#define cosf(...) deprecated()
+#define sinf(...) deprecated()
+#define atan2f(...) deprecated()
+/* see main.h for _d versions */
 
 #define SQUARE(a) (a * a)
