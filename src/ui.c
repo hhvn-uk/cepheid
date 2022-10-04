@@ -503,7 +503,7 @@ ui_draw_view_sys(void) {
 		ui_print(x, y + 40, col_fg, "Comets:    %d", view_sys.sel->num.comets);
 		ui_print(x, y + 50, col_fg, "Moons:     %d", view_sys.sel->num.moons);
 		ui_draw_line(x, y + 62, x + 85, y + 62, 1, col_fg);
-		ui_print(x, y + 65, col_fg, "Total:     %d", view_sys.sel->bodies_len);
+		/* ui_print(x, y + 65, col_fg, "Total:     %d", view_sys.sel->bodies_len); TODO: tree_count() */
 	}
 }
 

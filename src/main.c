@@ -7,6 +7,16 @@
 
 Save *save = NULL;
 
+void
+warning(char *fmt, ...) {
+	va_list ap;
+
+	fprintf(stderr, "warning: ");
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
+
 int
 main(void) {
 	int view_prev;

@@ -50,7 +50,9 @@ display_body(Body *body) {
 void
 ui_handle_view_bodies(int nowsel) {
 	Vector2 m = GetMousePosition();
-	int pos, i, j;
+	Tree *t;
+	Body *body;
+	int pos, i;
 
 	if (!v->sys)
 		v->sys = sys_default();
@@ -60,10 +62,12 @@ ui_handle_view_bodies(int nowsel) {
 				ui_collides(v->bodies, m)) {
 			pos = (m.y + v->pane.bodies.off - v->bodies.y - PAD)
 				/ FONT_SIZE;
-			for (i = j = 0; i < v->sys->bodies_len && j < pos; i++)
-				if (display_body(v->sys->bodies[i]))
-					if (++j == pos)
-						v->sel = v->sys->bodies[i];
+			for (t = v->sys->t->d, i = 0; t && i < pos; t = t->n) {
+				body = t->data;
+				if (display_body(body))
+					if (++i == pos)
+						v->sel = body;
+			}
 		}
 	}
 
@@ -95,7 +99,7 @@ draw_body(int x, int y, Body *body) {
 void
 ui_draw_view_bodies(void) {
 	int x, y;
-	int i;
+	Tree *t;
 	Body *body;
 
 	v->stars = RECT(PAD, VIEWS_HEIGHT + PAD * 2 + FONT_SIZE,
@@ -123,9 +127,11 @@ ui_draw_view_bodies(void) {
 	y = v->stars.y + PAD/2;
 	ui_print(x, y, col_fg, "Name");
 	y += FONT_SIZE * 1.5;
-	for (i = 0; i < v->sys->bodies_len; i++)
-		if (v->sys->bodies[i]->type == BODY_STAR)
-			y = draw_star(x, y, v->sys->bodies[i]);
+	for (t = v->sys->t->d; t; t = t->n) {
+		body = t->data;
+		if (body->type == BODY_STAR)
+			y = draw_star(x, y, body);
+	}
 	pane_end();
 
 	x = v->disp.x + PAD/2;
@@ -147,8 +153,8 @@ ui_draw_view_bodies(void) {
 	ui_print(x + 3*W, y, col_fg, "Parent");
 	ui_print(x + 5*W, y, col_fg, "Type");
 	y += FONT_SIZE * 1.5;
-	for (i = 0; i < v->sys->bodies_len; i++) {
-		body = v->sys->bodies[i];
+	for (t = v->sys->t->d; t; t = t->n) {
+		body = t->data;
 		if (display_body(body))
 			y = draw_body(x, y, body);
 	}

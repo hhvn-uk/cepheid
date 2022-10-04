@@ -18,6 +18,7 @@
 
 /* main.c */
 extern Save *save;
+void	warning(char *fmt, ...);
 
 /* str.c */
 void *	falloc(size_t size);
@@ -37,6 +38,11 @@ float	strnum(char *str);
 void	edittrunc(wchar_t *str, int *len, int *cur);
 void	editrm(wchar_t *str, int *len, int *cur);
 void	editins(wchar_t *str, int *len, int *cur, int size, wchar_t c);
+
+/* tree.c */
+Tree *	tree_add_child(Tree *t, char *name, int type, void *data, Tree **ptr);
+int	tree_delete(Tree **t, int freedata);
+int	tree_delete_r(Tree **t, int freedata);
 
 /* ui.c */
 #define VIEWS_MAX_WIDTH (UI_VIEW_LAST*100)

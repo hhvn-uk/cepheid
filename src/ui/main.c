@@ -221,9 +221,9 @@ ui_draw_view_main(void) {
 	Vector2 mousekm = pxtokm(mouse);
 	Vector2 ruler;
 	Geom geom;
+	Tree *t;
 	Body *body;
 	float dist;
-	size_t i;
 	float x, y;
 
 	/* debug info */
@@ -235,13 +235,13 @@ ui_draw_view_main(void) {
 	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD * 4, col_fg, "FPS: %d (target: %d)", GetFPS(), TARGET_FPS);
 
 	/* draw system bodies */
-	for (i = 0; i < view_main.sys->bodies_len; i++) {
-		body = view_main.sys->bodies[i];
+	for (t = view_main.sys->t->d; t; t = t->n) {
+		body = t->data;
 		body->pxloc = kmtopx(body->vector);
 		draw_orbit(body);
 	}
-	for (i = 0; i < view_main.sys->bodies_len; i++) {
-		body = view_main.sys->bodies[i];
+	for (t = view_main.sys->t->d; t; t = t->n) {
+		body = t->data;
 		draw_body(body);
 	}
 

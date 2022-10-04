@@ -1,7 +1,25 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+/* tree.c */
+typedef struct Tree Tree;
+struct Tree {
+	Tree *p; /* previous */
+	char *name;
+	int collapsed; /* matters for Treeview */
+	int type;
+	void *data;
+	Tree *u; /* up */
+	Tree *d; /* down */
+	Tree *n; /* next */
+};
+
 /* system.c */
+enum {
+	SYSTREE_SYS,
+	SYSTREE_BODY,
+};
+
 typedef struct {
 	float r;
 	float theta;
@@ -27,6 +45,7 @@ enum BodyType {
 
 typedef struct Body Body;
 struct Body {
+	Tree *t;
 	Body *parent;
 	Polar polar;
 	Vector2 vector;
@@ -55,8 +74,7 @@ struct Body {
 
 typedef struct {
 	char *name;
-	Body **bodies;
-	size_t bodies_len;
+	Tree *t;
 	Body *furthest_body;
 	struct {
 		int stars;
@@ -77,8 +95,7 @@ typedef struct {
 		char *systems;
 		char *fleets;
 	} db;
-	System *systems;
-	size_t systems_len;
+	Tree systems;
 	System *homesys;
 } Save;
 
@@ -137,7 +154,7 @@ typedef struct {
 } Checkbox;
 
 typedef struct {
-	char *name;
+	char *label;
 	void (*func)(int);
 	int arg;
 } Button;

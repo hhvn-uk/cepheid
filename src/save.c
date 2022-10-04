@@ -28,7 +28,6 @@ save_read(Loader *lscr, char *name) {
 	char dir[PATH_MAX];
 	char *str;
 
-
 	if (save)
 		save_free();
 
@@ -36,6 +35,8 @@ save_read(Loader *lscr, char *name) {
 		return;
 
 	snprintf(dir, sizeof(dir), "%s/%s", SAVEDIR, name);
+
+	memset(&save->systems, 0, sizeof(save->systems));
 
 	loading_update(lscr, "Initializing DB");
 	dbdeclare(dir);

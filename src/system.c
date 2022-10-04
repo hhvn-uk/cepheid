@@ -80,8 +80,7 @@ sys_init(char *name) {
 	System *ret = malloc(sizeof(System));
 	if (!ret) return NULL;
 	ret->name = nstrdup(name);
-	ret->bodies = NULL;
-	ret->bodies_len = 0;
+	ret->t = NULL;
 	ret->furthest_body = NULL;
 	memset(&ret->num, 0, sizeof(ret->num));
 	return ret;
@@ -102,6 +101,7 @@ filter_bodyinsystem(void *data, char *path) {
 System *
 sys_load(System *s, char *name) {
 	char *dir, *tmp;
+	Body **bodies;
 	char **bname;
 	char **bparent;
 	size_t blen, i;
@@ -113,24 +113,24 @@ sys_load(System *s, char *name) {
 	s->lypos.y = strnum(dbget(save->db.systems, name, "y"));
 
 	dir = smprintf("%s/", s->name);
-	s->bodies_len = blen = dblistgroups_f(&bname, save->db.systems, &filter_bodyinsystem, dir);
+	blen = dblistgroups_f(&bname, save->db.systems, &filter_bodyinsystem, dir);
 	if (!bname) return NULL;
 	bparent = malloc(sizeof(char *) * blen);
-	s->bodies = malloc(sizeof(Body *) * blen);
+	bodies = malloc(sizeof(Body *) * blen);
 
-	if (!bparent || !s->bodies)
+	if (!bparent || !bodies)
 		return NULL;
 
 	/* first pass: init bodies and parents */
 	for (i = 0; i < blen; i++) {
-		s->bodies[i] = malloc(sizeof(Body));
-		s->bodies[i]->name = nstrdup(bname[i] + strlen(dir));
+		bodies[i] = malloc(sizeof(Body));
+		bodies[i]->name = nstrdup(bname[i] + strlen(dir));
 		bparent[i] = nstrdup(dbget(save->db.systems, bname[i], "parent"));
 
 		tmp = dbget(save->db.systems, bname[i], "type");
-		s->bodies[i]->type = bodytype_enumify(tmp);
+		bodies[i]->type = bodytype_enumify(tmp);
 
-		switch (s->bodies[i]->type) {
+		switch (bodies[i]->type) {
 		case BODY_STAR:		s->num.stars++;		break;
 		case BODY_PLANET:	s->num.planets++;	break;
 		case BODY_DWARF:	s->num.dwarfs++;	break;
@@ -139,48 +139,48 @@ sys_load(System *s, char *name) {
 		case BODY_MOON:		s->num.moons++;		break;
 		}
 
-		s->bodies[i]->radius = strnum(dbget(save->db.systems, bname[i], "radius"));
-		s->bodies[i]->mass = strnum(dbget(save->db.systems, bname[i], "mass"));
-		s->bodies[i]->orbdays = strnum(dbget(save->db.systems, bname[i], "orbdays"));
-		if (s->bodies[i]->type == BODY_COMET) {
+		bodies[i]->radius = strnum(dbget(save->db.systems, bname[i], "radius"));
+		bodies[i]->mass = strnum(dbget(save->db.systems, bname[i], "mass"));
+		bodies[i]->orbdays = strnum(dbget(save->db.systems, bname[i], "orbdays"));
+		if (bodies[i]->type == BODY_COMET) {
 			/* mindist is on opposite side of parent */
-			s->bodies[i]->mindist = 0 - strnum(dbget(save->db.systems, bname[i], "mindist"));
-			s->bodies[i]->maxdist = strnum(dbget(save->db.systems, bname[i], "maxdist"));
-			s->bodies[i]->curdist = strnum(dbget(save->db.systems, bname[i], "curdist"));
-			s->bodies[i]->theta = strnum(dbget(save->db.systems, bname[i], "theta"));
-			s->bodies[i]->inward = strnum(dbget(save->db.systems, bname[i], "inward"));
+			bodies[i]->mindist = 0 - strnum(dbget(save->db.systems, bname[i], "mindist"));
+			bodies[i]->maxdist = strnum(dbget(save->db.systems, bname[i], "maxdist"));
+			bodies[i]->curdist = strnum(dbget(save->db.systems, bname[i], "curdist"));
+			bodies[i]->theta = strnum(dbget(save->db.systems, bname[i], "theta"));
+			bodies[i]->inward = strnum(dbget(save->db.systems, bname[i], "inward"));
 		} else {
-			s->bodies[i]->dist = strnum(dbget(save->db.systems, bname[i], "dist"));
-			s->bodies[i]->curtheta = strnum(dbget(save->db.systems, bname[i], "curtheta"));
+			bodies[i]->dist = strnum(dbget(save->db.systems, bname[i], "dist"));
+			bodies[i]->curtheta = strnum(dbget(save->db.systems, bname[i], "curtheta"));
 		}
 
 		/* so sys_get_polar() knows if it's usable */
-		s->bodies[i]->polar = (Polar) { INFINITY, INFINITY };
+		bodies[i]->polar = (Polar) { INFINITY, INFINITY };
 	}
 
 	/* second pass: assign parents (needs bparent[] from first pass) */
 	for (i = 0; i < blen; i++) {
 		tmp = smprintf("%s%s", dir, bparent[i]);
 		if ((pos = strlistpos(tmp, bname, blen)) != -1)
-			s->bodies[i]->parent = s->bodies[pos];
+			bodies[i]->parent = bodies[pos];
 		else
-			s->bodies[i]->parent = NULL;
+			bodies[i]->parent = NULL;
 		free(tmp);
 	}
 
 	/* third pass: get coords (needs parent ptr from second pass) */
 	for (i = 0; i < blen; i++) {
-		sys_get_polar(s->bodies[i]); /* Builds the cache for us: this is more
+		sys_get_polar(bodies[i]); /* Builds the cache for us: this is more
 						   efficient as it can cache the parent too */
-		s->bodies[i]->vector = sys_vectorize(s->bodies[i]->polar);
+		bodies[i]->vector = sys_vectorize(bodies[i]->polar);
 
 		/* This could deal with moons, but that's probably not useful.
 		 * What about multiple stars in a system? That may need to be
 		 * addressed in future */
-		if (s->bodies[i]->parent && s->bodies[i]->parent->type == BODY_STAR && (!s->furthest_body ||
-				(s->bodies[i]->type == BODY_COMET ? s->bodies[i]->maxdist : s->bodies[i]->dist) >
+		if (bodies[i]->parent && bodies[i]->parent->type == BODY_STAR && (!s->furthest_body ||
+				(bodies[i]->type == BODY_COMET ? bodies[i]->maxdist : bodies[i]->dist) >
 				(s->furthest_body->type == BODY_COMET ? s->furthest_body->maxdist : s->furthest_body->dist)))
-			s->furthest_body = s->bodies[i];
+			s->furthest_body = bodies[i];
 	}
 
 	for (i = 0; i < blen; i++) {
@@ -190,7 +190,14 @@ sys_load(System *s, char *name) {
 	dblistfree(bname, blen);
 	free(dir);
 
-	body_sort(s->bodies, s->bodies_len);
+	body_sort(bodies, blen);
+
+	tree_add_child(&save->systems, s->name, SYSTREE_SYS, s, &s->t);
+	for (i = 0; i < blen; i++)
+		tree_add_child(s->t, bodies[i]->name, SYSTREE_BODY, bodies[i], &bodies[i]->t);
+
+	/* The bodies are attached to the systree now, so don't need to be freed */
+	free(bodies);
 
 	return s;
 }
