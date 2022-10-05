@@ -742,7 +742,7 @@ dbcleanup(void) {
 	int i;
 
 	prev = dbs;
-	p = prev->next;
+	if (prev) p = prev->next;
 	while (prev) {
 		for (i = 0; i < MAXGROUPS; i++)
 			if (prev->tracked[i])

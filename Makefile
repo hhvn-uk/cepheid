@@ -32,7 +32,7 @@ db-clean:
 	@cd $(DBDIR); make clean
 dbtool:
 	@echo $(DBDIR): make $(DBTOOL)
-	@cd $(DBDIR); make dbtool
+	@cd $(DBDIR); make CFLAGS="$(CFLAGS)" dbtool
 
 data:
 	@echo $(DATADIR): make

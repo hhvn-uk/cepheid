@@ -41,6 +41,9 @@ main(int argc, char *argv[]) {
 	char **list;
 	size_t len, i;
 
+	if (argc >= 2)
+		dbdeclare(argv[1]);
+
 	if (argc == 2) {
 		len = dblistgroups(&list, argv[1]);
 		if (!list)
