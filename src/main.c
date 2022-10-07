@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <time.h>
 #include <raylib.h>
+#include <signal.h>
 #include "main.h"
 
 #define DEFSAVE	"default"
 
 Save *save = NULL;
+int sigint = 0;
+int sigterm = 0;
 
 void
 warning(char *fmt, ...) {
@@ -17,22 +20,32 @@ warning(char *fmt, ...) {
 	va_end(ap);
 }
 
+static void
+sighandler(int signal) {
+	switch (signal) {
+	case SIGINT: sigint = 1; break;
+	case SIGTERM: sigterm = 1; break;
+	}
+}
+
 int
 main(void) {
 	int view_prev;
-	Loader *loader;
+	struct sigaction sa;
 
-	loader = loading_open(DATA_LOAD_STEPS + SAVE_READ_STEPS + 3, "Initializing UI");
+	sa.sa_handler = sighandler;
+	sa.sa_flags = SA_RESTART;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
 
 	ui_init();
 
-	data_load(loader);
+	data_load();
 
 	if (!save_exists(DEFSAVE))
 		save_create(DEFSAVE);
-	save_read(loader, DEFSAVE);
-
-	loading_close(loader);
+	save_read(DEFSAVE);
 
 	/* The window is hidden so that only the loading bar is shown. Hiding
 	 * and unhiding the window also has the added effect of making it

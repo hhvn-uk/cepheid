@@ -47,16 +47,13 @@ unsigned char settings_png[] = {
 };
 
 #define IMAGE_LOAD(name) \
-	loading_update(lscr, "Loading image"); \
 	raw_image_##name = LoadImageFromMemory(".png", \
 			name##_png, sizeof(name##_png)); \
 	image_##name = LoadTextureFromImage(raw_image_##name); \
 	UnloadImage(raw_image_##name)
 
 void
-data_load(Loader *lscr) {
-	/* update main.h when adding loading steps */
-	loading_update(lscr, "Loading fonts");
+data_load(void) {
 	font = LoadFontFromMemory(".ttf", DejaVuSansMono_ttf,
 			sizeof(DejaVuSansMono_ttf), FONT_SIZE, NULL, 0);
 	charpx = MeasureTextEx(font, ".", FONT_SIZE, FONT_SIZE/10).x + FONT_SIZE/10;

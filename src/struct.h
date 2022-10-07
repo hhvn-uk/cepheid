@@ -2,6 +2,8 @@
 #include <sys/types.h>
 
 /* tree.c */
+#define TREEMAX 64 /* max depth: not actually enforced anywhere, anything
+		      deeper than this will get ignored in some places */
 typedef struct Tree Tree;
 struct Tree {
 	Tree *p; /* previous */
@@ -13,6 +15,9 @@ struct Tree {
 	Tree *d; /* down */
 	Tree *n; /* next */
 };
+
+/* typedef void (*Treegetter)(char *dir, char *group, int depth, Tree *t); */
+typedef void (*Treesetter)(char *dir, char *group, int depth, Tree *t);
 
 /* system.c */
 enum {

@@ -109,8 +109,8 @@ sys_load(System *s, char *name) {
 
 	if (!s) s = sys_init(name);
 
-	s->lypos.x = strnum(dbget(save->db.systems, name, "x"));
-	s->lypos.y = strnum(dbget(save->db.systems, name, "y"));
+	s->lypos.x = dbgetfloat(save->db.systems, name, "x");
+	s->lypos.y = dbgetfloat(save->db.systems, name, "y");
 
 	dir = smprintf("%s/", s->name);
 	blen = dblistgroups_f(&bname, save->db.systems, &filter_bodyinsystem, dir);
@@ -200,6 +200,44 @@ sys_load(System *s, char *name) {
 	free(bodies);
 
 	return s;
+}
+
+void
+sys_tree_setter(char *dir, char *group, int depth, Tree *t) {
+	System *s;
+	Body *b;
+	char *parent;
+
+	switch (t->type) {
+	case SYSTREE_SYS:
+		s = t->data;
+		dbsetfloat(dir, group, "x", s->lypos.x);
+		dbsetfloat(dir, group, "y", s->lypos.y);
+	case SYSTREE_BODY:
+		b = t->data;
+
+		if (body->parent) {
+			parent = b->parent->name;
+		} else {
+			s = t->u->data;
+			parent = s->name;
+		}
+		dbset(save->db.systems, group, "parent", parent);
+
+		dbsetfloat(dir, group, "radius", b->radius);
+		dbsetfloat(dir, group, "mass", b->mass);
+		dbsetfloat(dir, group, "orbdays", b->orbdays);
+		if (b->type == BODY_COMET) {
+			dbsetfloat(dir, group, "mindist", b->mindist);
+			dbsetfloat(dir, group, "maxdist", b->maxdist);
+			dbsetfloat(dir, group, "curdist", b->curdist);
+			dbsetfloat(dir, group, "theta", b->theta);
+			dbsetfloat(dir, group, "inward", b->inward);
+		} else {
+			dbsetfloat(dir, group, "dist", b->dist);
+			dbsetfloat(dir, group, "curtheta", b->curtheta);
+		}
+	}
 }
 
 System *

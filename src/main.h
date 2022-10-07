@@ -18,6 +18,8 @@
 
 /* main.c */
 extern Save *save;
+extern int sigint;
+extern int sigterm;
 void	warning(char *fmt, ...);
 
 /* str.c */
@@ -43,6 +45,7 @@ void	editins(wchar_t *str, int *len, int *cur, int size, wchar_t c);
 Tree *	tree_add_child(Tree *t, char *name, int type, void *data, Tree **ptr);
 int	tree_delete(Tree **t, int freedata);
 int	tree_delete_r(Tree **t, int freedata);
+int	tree_iter(Tree *t, int maxdepth, Tree **p, int *depth);
 
 /* ui.c */
 #define VIEWS_MAX_WIDTH (UI_VIEW_LAST*100)
@@ -145,6 +148,7 @@ Vector2	sys_get_vector(Body *body);
 Polar	sys_get_polar(Body *body);
 System *sys_init(char *name);
 System *sys_load(System *s, char *name);
+void	sys_tree_setter(char *dir, char *group, int depth, Tree *t);
 System *sys_get(char *name);
 System *sys_default(void);
 
@@ -156,7 +160,7 @@ void	body_sort(Body **bodies, size_t n);
 
 /* save.c */
 #define SAVE_READ_STEPS 2
-void 	save_read(Loader *lscr, char *dir);
+void 	save_read(char *dir);
 void	save_write(void);
 int	save_exists(char *name);
 int	save_create(char *name);
@@ -174,7 +178,7 @@ extern Texture image_design;
 extern Texture image_sys;
 extern Texture image_settings;
 #define DATA_LOAD_STEPS (1 + 7)
-void	data_load(Loader *lscr);
+void	data_load(void);
 void	data_unload(void);
 
 /* db.c */
@@ -182,11 +186,11 @@ int	vdbsetf(char *dir, char *group, char *key, char *fmt, va_list args);
 int	dbsetf(char *dir, char *group, char *key, char *fmt, ...);
 int	dbsetint(char *dir, char *group, char *key, int val);
 int	dbsetfloat(char *dir, char *group, char *key, float val);
-void	dbsetbody(System *sys, Body *body);
 int	vdbgetf(char *dir, char *group, char *key, char *fmt, va_list args);
 int	dbgetf(char *dir, char *group, char *key, char *fmt, ...);
 int	dbgetint(char *dir, char *group, char *key);
 float	dbgetfloat(char *dir, char *group, char *key);
+int	dbsettree(char *dir, Tree *t, Treesetter func);
 
 /* loading.c */
 Loader *loading_open(int steps, char *initstr);

@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 #include "main.h"
 
 int
@@ -35,36 +37,6 @@ dbsetint(char *dir, char *group, char *key, int val) {
 int
 dbsetfloat(char *dir, char *group, char *key, float val) {
 	return dbsetf(dir, group, key, "%f", val);
-}
-
-void
-dbsetbody(System *sys, Body *body) {
-	char *group;
-	char *parent;
-
-	group = smprintf("%s/%s", sys->name, body->name);
-
-	if (body->parent)
-		parent = body->parent->name;
-	else
-		parent = sys->name;
-	dbset(save->db.systems, group, "parent", parent);
-
-	dbset(save->db.systems, group, "type", bodytype_strify(body));
-	dbsetfloat(save->db.systems, group, "radius", body->radius);
-	dbsetfloat(save->db.systems, group, "mass", body->mass);
-	dbsetfloat(save->db.systems, group, "orbdays", body->orbdays);
-	if (body->type == BODY_COMET) {
-		dbsetfloat(save->db.systems, group, "mindist", 0 - body->mindist); /* see sys_load() */
-		dbsetfloat(save->db.systems, group, "maxdist", body->maxdist);
-		dbsetfloat(save->db.systems, group, "curdist", body->curdist);
-		dbsetfloat(save->db.systems, group, "theta", body->theta);
-		dbsetfloat(save->db.systems, group, "inward", body->inward);
-	} else {
-		dbsetfloat(save->db.systems, group, "dist", body->dist);
-		dbsetfloat(save->db.systems, group, "curtheta", body->curtheta);
-	}
-	free(group);
 }
 
 int
@@ -107,5 +79,50 @@ dbgetfloat(char *dir, char *group, char *key) {
 	float ret;
 
 	dbgetf(dir, group, key, "%f", &ret);
+	return ret;
+}
+
+int
+dbsettree(char *dir, Tree *t, Treesetter func) {
+	char *path[TREEMAX];
+	char group[PATH_MAX];
+	char *sp;
+	size_t sl, i, len;
+	int depth;
+	Tree *p;
+	int ret = 0;
+
+	for (p = NULL; tree_iter(t, TREEMAX, &p, &depth) != -1; ) {
+next:
+		path[depth] = p->name;
+
+		if (p->data) {
+			sl = sizeof(group);
+			sp = group;
+			for (i = 0; i <= depth; i++) {
+				len = strlen(path[i]);
+				if (len + (p->d ? strlen("index") : 0) >= sl) {
+					ret = -1;
+					warning("insufficient space to concatenate tree path\n");
+					goto next;
+				}
+
+				memcpy(sp, path[i], len);
+				if (i != depth || p->d)
+					sp[len] = '/';
+				else
+					sp[len] = '\0';
+				sp += len + 1;
+				sl -= len + 1;
+			}
+			if (p->d) {
+				len = strlen("index");
+				memcpy(sp, "index", len + 1);
+			}
+
+			func(dir, group, depth, p);
+		}
+	}
+
 	return ret;
 }

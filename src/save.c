@@ -24,7 +24,7 @@ save_free(void) {
 }
 
 void
-save_read(Loader *lscr, char *name) {
+save_read(char *name) {
 	char dir[PATH_MAX];
 	char *str;
 
@@ -38,13 +38,11 @@ save_read(Loader *lscr, char *name) {
 
 	memset(&save->systems, 0, sizeof(save->systems));
 
-	loading_update(lscr, "Initializing DB");
 	dbdeclare(dir);
 	save->db.dir = nstrdup(dir);
 	save->db.races = smprintf("%s/Races", dir);
 	save->db.systems = smprintf("%s/Systems", dir);
 	save->db.fleets = smprintf("%s/Fleets", dir);
-	loading_update(lscr, "Loading systems");
 	if ((str = dbget(save->db.dir, "index", "homesystem")))
 		save->homesys = sys_get(str);
 	return;
@@ -54,6 +52,7 @@ void
 save_write(void) {
 	if (view_main.sys)
 		dbset(save->db.dir, "index", "selsystem", view_main.sys->name);
+	dbsettree(save->db.systems, &save->systems, sys_tree_setter);
 	dbwrite(save->db.dir);
 }
 

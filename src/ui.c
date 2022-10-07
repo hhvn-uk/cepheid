@@ -89,7 +89,7 @@ ui_update_focus(enum UiElements type, void *p) {
 
 int
 ui_loop(void) {
-	if (WindowShouldClose())
+	if (WindowShouldClose() || sigint || sigterm)
 		return 0;
 
 	ffree();
