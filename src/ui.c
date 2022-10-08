@@ -6,9 +6,6 @@
 #include <wchar.h>
 #include "main.h"
 
-static Clickable clickable[CLICKABLE_MAX];
-
-/* Return 1 for redraw, 0 to keep prev */
 void (*view_handlers[UI_VIEW_LAST])(int) = {
 	[UI_VIEW_MAIN] = ui_handle_view_main,
 	[UI_VIEW_COLONIES] = ui_handle_view_colonies,
@@ -82,7 +79,7 @@ ui_update_screen(void) {
 }
 
 void
-ui_update_focus(enum UiElements type, void *p) {
+ui_update_focus(enum GuiElements type, void *p) {
 	focus.type = type;
 	focus.p = p;
 }
@@ -96,7 +93,7 @@ ui_loop(void) {
 	if (IsWindowResized())
 		ui_update_screen();
 	ui_keyboard_handle();
-	ui_clickable_update();
+	gui_click_handle();
 	return 1;
 }
 
@@ -188,67 +185,7 @@ ui_onscreen_circle(Vector2 centre, float r) {
 	return CheckCollisionCircleRec(centre, r, RLIFY_RECT(screen.rect));
 }
 
-void
-ui_clickable_register(Geom geom, enum UiElements type, void *elem) {
-	int i;
-
-	for (i = 0; i < CLICKABLE_MAX; i++) {
-		if (!clickable[i].elem) {
-			clickable[i].geom = geom;
-			clickable[i].type = type;
-			clickable[i].elem = elem;
-			return;
-		}
-	}
-
-	/* welp, we ran out */
-}
-
 int
-ui_clickable_update(void) {
-	Vector2 mouse;
-	MouseButton button;
-	Geom *geom;
-	int i;
-	int ret = 0;
-	int keepfocus = 0;
-
-	mouse = GetMousePosition();
-	/* I wish there was a: int GetMouseButton(void) */
-	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-		button = MOUSE_BUTTON_LEFT;
-	else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE))
-		button = MOUSE_BUTTON_MIDDLE;
-	else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
-		button = MOUSE_BUTTON_RIGHT;
-	else
-		button = -1;
-
-	for (i = 0; i < CLICKABLE_MAX; i++) {
-		if (clickable[i].elem && ui_collides(clickable[i].geom, mouse)) {
-			geom = &clickable[i].geom;
-			ui_elem_handlers[clickable[i].type](mouse,
-					button, geom, clickable[i].elem);
-			if (clickable[i].elem == focus.p)
-				keepfocus = 1;
-			ret = 1;
-		}
-	}
-
-	/* clicking outside the focused elememnt unfocuses */
-	if (button != -1 && !keepfocus)
-		ui_update_focus(0, NULL);
-
-	/* Handle bodies seperately for efficiency:
-	 * - body->pxloc can be used instead of a geometry passed to
-	 *   ui_clickable_register()
-	 * - bodies offscreen can't be clicked, so they can be skipped.
-	 */
-
-	return ret;
-}
-
-static int
 ui_keyboard_check(int key, int *fcount) {
 	if (IsKeyPressed(key)) {
 		*fcount = -10;
@@ -263,8 +200,6 @@ ui_keyboard_check(int key, int *fcount) {
 void
 ui_keyboard_handle(void) {
 	static int fcount = 0;
-	wchar_t c;
-	Input *in;
 
 	/* Register multiple backspaces when held. raylib does this with
 	 * "characters", but anything other than a "character" has completely
@@ -278,39 +213,15 @@ ui_keyboard_handle(void) {
 	if (fcount == (int)TARGET_FPS/15)
 		fcount = 0;
 
-	if (focus.p && focus.type == UI_INPUT) {
-		in = focus.p;
-		c = GetCharPressed();
-
-		if (IsKeyPressed(KEY_ENTER) && in->onenter) {
-			wcstombs(in->str, in->wstr, INPUT_MAX);
-			if (in->onenter(in))
-				edittrunc(in->wstr, &in->len, &in->cur);
-		} else if (ui_keyboard_check(KEY_BACKSPACE, &fcount) && in->len && in->cur) {
-			editrm(in->wstr, &in->len, &in->cur);
-		} else if (ui_keyboard_check(KEY_LEFT, &fcount) && in->cur) {
-			in->cur--;
-		} else if (ui_keyboard_check(KEY_RIGHT, &fcount) && in->cur != in->len) {
-			in->cur++;
-		} else if (c && in->len < INPUT_MAX) {
-			editins(in->wstr, &in->len, &in->cur, INPUT_MAX, c);
-		}
-
-	}
-}
-
-void
-ui_clickable_clear(void) {
-	int i;
-	for (i = 0; i < CLICKABLE_MAX; i++)
-		clickable[i].elem = NULL;
+	if (focus.p && gui_key_handlers[focus.type])
+		gui_key_handlers[focus.type](focus.p, &fcount);
 }
 
 void
 ui_draw_views(void) {
 	int sw = GetScreenWidth();
 	if (sw > VIEWS_MAX_WIDTH) sw = VIEWS_MAX_WIDTH;
-	ui_tabs(0, 0, sw, VIEWS_HEIGHT, &view_tabs);
+	gui_tabs(0, 0, sw, VIEWS_HEIGHT, &view_tabs);
 }
 
 void
@@ -416,7 +327,7 @@ ui_vectordist(Vector2 a, Vector2 b) {
 void
 ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs) {
 	ui_draw_rectangle(x, y, w, h, col_bg);
-	ui_tabs(x, y, w, WINDOW_TAB_HEIGHT, tabs);
+	gui_tabs(x, y, w, WINDOW_TAB_HEIGHT, tabs);
 	ui_draw_border(x, y, w, h, WINDOW_BORDER);
 }
 

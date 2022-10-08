@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <raylib.h>
 #include "struct.h"
-#include "ui/struct.h"
+#include "views/struct.h"
 #include "style.h"
 #include "maths.h"
 #include "../db/db.h"
@@ -72,7 +72,7 @@ extern View_sys view_sys;
 extern int charpx;
 void	ui_init(void);
 void	ui_update_screen(void);
-void	ui_update_focus(enum UiElements type, void *p);
+void	ui_update_focus(enum GuiElements type, void *p);
 int	ui_loop(void);
 void	ui_deinit(void);
 void	ui_print(int x, int y, Color col, char *format, ...);
@@ -84,9 +84,7 @@ int	ui_collides(Geom geom, Vector2 point);
 int	ui_onscreen(Vector2 point);
 int	ui_onscreen_ring(Vector2 centre, float r);
 int	ui_onscreen_circle(Vector2 centre, float r);
-void	ui_clickable_register(Geom geom, enum UiElements type, void *elem);
-int	ui_clickable_update(void);
-void	ui_clickable_clear(void);
+int	ui_keyboard_check(int key, int *fcount);
 void	ui_keyboard_handle(void);
 void	ui_draw_views(void);
 void	ui_draw_rectangle(int x, int y, int w, int h, Color col);
@@ -111,13 +109,13 @@ void	ui_draw_view_design(void);
 void	ui_draw_view_sys(void);
 void	ui_draw_view_settings(void);
 
-/* uielem.c */
-extern void (*ui_elem_handlers[UI_ELEMS])(Vector2 mouse,
-		MouseButton button, Geom *geom, void *elem);
-void	ui_tabs(int x, int y, int w, int h, Tabs *tabs);
-int	ui_checkbox(int x, int y, Checkbox *checkbox); /* returns width */
-void	ui_dropdown(int x, int y, int w, Dropdown *d);
-void	ui_input(int x, int y, int w, Input *in);
+/* gui.c */
+extern void (*gui_key_handlers[GUI_ELEMS])(void *elem, int *fcount);
+int	gui_click_handle(void);
+void	gui_tabs(int x, int y, int w, int h, Tabs *tabs);
+int	gui_checkbox(int x, int y, Checkbox *checkbox); /* returns width */
+void	gui_dropdown(int x, int y, int w, Dropdown *d);
+void	gui_input(int x, int y, int w, Input *in);
 
 /* ui/main.c */
 extern View_main view_main;
@@ -128,7 +126,6 @@ void	ui_draw_view_main(void);
 extern View_bodies view_bodies;
 void	ui_handle_view_bodies(int nowsel);
 void	ui_draw_view_bodies(void);
-
 
 /* pane.c */
 void	pane_begin(Pane *f);

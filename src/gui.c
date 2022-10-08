@@ -1,25 +1,88 @@
 #include "main.h"
 
-static void ui_handle_tabs(Vector2 mouse,
+static Clickable clickable[CLICKABLE_MAX];
+static int clickablei = 0;
+
+static void gui_click_tabs(Vector2 mouse,
 		MouseButton button, Geom *geom, void *elem);
-static void ui_handle_checkbox(Vector2 mouse,
+static void gui_click_checkbox(Vector2 mouse,
 		MouseButton button, Geom *geom, void *elem);
-static void ui_handle_dropdown(Vector2 mouse,
+static void gui_click_dropdown(Vector2 mouse,
 		MouseButton button, Geom *geom, void *elem);
-static void ui_handle_input(Vector2 mouse,
+static void gui_click_input(Vector2 mouse,
 		MouseButton button, Geom *geom, void *elem);
 
-void (*ui_elem_handlers[UI_ELEMS])(Vector2 mouse,
+static void gui_key_input(void *elem, int *fcount);
+
+static void (*click_handlers[GUI_ELEMS])(Vector2 mouse,
 		MouseButton button,
 		Geom *geom, void *elem) = {
-	[UI_TAB] = ui_handle_tabs,
-	[UI_CHECKBOX] = ui_handle_checkbox,
-	[UI_DROPDOWN] = ui_handle_dropdown,
-	[UI_INPUT] = ui_handle_input,
+	[GUI_TAB] = gui_click_tabs,
+	[GUI_CHECKBOX] = gui_click_checkbox,
+	[GUI_DROPDOWN] = gui_click_dropdown,
+	[GUI_INPUT] = gui_click_input,
 };
 
+void (*gui_key_handlers[GUI_ELEMS])(void *elem, int *fcount) = {
+	[GUI_TAB] = NULL,
+	[GUI_CHECKBOX] = NULL,
+	[GUI_DROPDOWN] = NULL,
+	[GUI_INPUT] = gui_key_input,
+};
+
+static void
+gui_click_register(Geom geom, enum GuiElements type, void *elem) {
+	if (clickablei >= CLICKABLE_MAX)
+		return; /* ran out */
+
+	clickable[clickablei].geom = geom;
+	clickable[clickablei].type = type;
+	clickable[clickablei].elem = elem;
+	clickablei++;
+}
+
+int
+gui_click_handle(void) {
+	Vector2 mouse;
+	MouseButton button;
+	Geom *geom;
+	int i;
+	int ret = 0;
+	int keepfocus = 0;
+
+	mouse = GetMousePosition();
+	/* I wish there was a: int GetMouseButton(void) */
+	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+		button = MOUSE_BUTTON_LEFT;
+	else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE))
+		button = MOUSE_BUTTON_MIDDLE;
+	else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+		button = MOUSE_BUTTON_RIGHT;
+	else
+		button = -1;
+
+	for (i = 0; i < clickablei; i++) {
+		if (clickable[i].elem && ui_collides(clickable[i].geom, mouse)) {
+			geom = &clickable[i].geom;
+			click_handlers[clickable[i].type](mouse,
+					button, geom, clickable[i].elem);
+			if (clickable[i].elem == focus.p)
+				keepfocus = 1;
+			ret = 1;
+		}
+	}
+
+	clickablei = 0;
+
+	/* clicking outside the focused elememnt unfocuses */
+	if (button != -1 && !keepfocus)
+		ui_update_focus(0, NULL);
+
+	return ret;
+}
+
 void
-ui_tabs(int x, int y, int w, int h, Tabs *tabs) {
+gui_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	int fw, fn, ftabw;
 	int tabw;
 	int padx, pady;
@@ -76,11 +139,11 @@ ui_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	if (tabs->sel == 0) ui_draw_rectangle(x, y + 1, 1, h - 1, col_bg); /* undraw left border */
 	if (tabs->sel == tabs->n - 1) ui_draw_rectangle(x + w - 1, y + 1, 1, h - 1, col_bg); /* undraw right border */
 
-	ui_clickable_register(RECT(x, y, w, h), UI_TAB, tabs);
+	gui_click_register(RECT(x, y, w, h), GUI_TAB, tabs);
 }
 
 static void
-ui_handle_tabs(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+gui_click_tabs(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
 	int ftabw, fw, fn;
 	int tabw, x, i;
 	Tabs *tabs = elem;
@@ -109,7 +172,7 @@ ui_handle_tabs(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
 }
 
 int
-ui_checkbox(int x, int y, Checkbox *box) {
+gui_checkbox(int x, int y, Checkbox *box) {
 	int w, h;
 	int rw;
 
@@ -120,13 +183,13 @@ ui_checkbox(int x, int y, Checkbox *box) {
 	ui_print(x + w + (w / 2), y + (h / 6), col_fg, "%s", box->label);
 	rw = w + (w / 2) + ui_textsize(box->label);
 	if (box->enabled)
-		ui_clickable_register(RECT(x, y, rw, h),
-				UI_CHECKBOX, box);
+		gui_click_register(RECT(x, y, rw, h),
+				GUI_CHECKBOX, box);
 	return rw;
 }
 
 static void
-ui_handle_checkbox(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+gui_click_checkbox(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
 	Checkbox *checkbox = elem;
 
 	if (button != MOUSE_BUTTON_LEFT)
@@ -135,7 +198,7 @@ ui_handle_checkbox(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
 }
 
 void
-ui_dropdown(int x, int y, int w, Dropdown *d) {
+gui_dropdown(int x, int y, int w, Dropdown *d) {
 	int h = FONT_SIZE;
 	int fh, ph;
 	int focused;
@@ -163,19 +226,19 @@ ui_dropdown(int x, int y, int w, Dropdown *d) {
 		}
 	}
 
-	ui_clickable_register(d->rect, UI_DROPDOWN, d);
+	gui_click_register(d->rect, GUI_DROPDOWN, d);
 	pane_end();
 }
 
 static void
-ui_handle_dropdown(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+gui_click_dropdown(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
 	Dropdown *drop = elem;
 	int i;
 
 	if (button != MOUSE_BUTTON_LEFT)
 		return;
 	if (focus.p != drop) {
-		ui_update_focus(UI_DROPDOWN, drop);
+		ui_update_focus(GUI_DROPDOWN, drop);
 	} else {
 		i = (mouse.y - geom->y) / FONT_SIZE;
 		if (i != 0 && i <= drop->n)
@@ -185,7 +248,7 @@ ui_handle_dropdown(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
 }
 
 void
-ui_input(int x, int y, int w, Input *in) {
+gui_input(int x, int y, int w, Input *in) {
 	int h = FONT_SIZE;
 	int focused = focus.p == in;
 	int cw;
@@ -208,23 +271,43 @@ ui_input(int x, int y, int w, Input *in) {
 	if (focused) {
 		ui_draw_rectangle(x + TPX + charpx * in->cur, y + TPY, 1, FONT_SIZE, col_fg);
 	}
-	ui_clickable_register(RECT(x, y, w, h), UI_INPUT, in);
+	gui_click_register(RECT(x, y, w, h), GUI_INPUT, in);
 }
 
 static void
-ui_handle_input(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+gui_click_input(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
 	Input *input = elem;
 	int i;
 
 	if (button != MOUSE_BUTTON_LEFT)
 		return;
 	if (focus.p != input) {
-		ui_update_focus(UI_INPUT, input);
+		ui_update_focus(GUI_INPUT, input);
 	} else {
 		i = (mouse.x - TPX - geom->x + charpx / 2) / charpx;
 		if (i < input->len)
 			input->cur = i;
 		else if (i > 0)
 			input->cur = input->len;
+	}
+}
+
+static void
+gui_key_input(void *elem, int *fcount) {
+	wchar_t c = GetCharPressed();
+	Input *in = elem;
+
+	if (IsKeyPressed(KEY_ENTER) && in->onenter) {
+		wcstombs(in->str, in->wstr, INPUT_MAX);
+		if (in->onenter(in))
+			edittrunc(in->wstr, &in->len, &in->cur);
+	} else if (ui_keyboard_check(KEY_BACKSPACE, fcount) && in->len && in->cur) {
+		editrm(in->wstr, &in->len, &in->cur);
+	} else if (ui_keyboard_check(KEY_LEFT, fcount) && in->cur) {
+		in->cur--;
+	} else if (ui_keyboard_check(KEY_RIGHT, fcount) && in->cur != in->len) {
+		in->cur++;
+	} else if (c && in->len < INPUT_MAX) {
+		editins(in->wstr, &in->len, &in->cur, INPUT_MAX, c);
 	}
 }

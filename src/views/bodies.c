@@ -136,12 +136,12 @@ ui_draw_view_bodies(void) {
 
 	x = v->disp.x + PAD/2;
 	y = v->disp.y + PAD/2;
-	x += ui_checkbox(x, y, &v->show.planet) + PAD * 2;
-	x += ui_checkbox(x, y, &v->show.moon) + PAD * 2;
-	x += ui_checkbox(x, y, &v->show.dwarf) + PAD * 2;
-	x += ui_checkbox(x, y, &v->show.asteroid) + PAD * 2;
-	x += ui_checkbox(x, y, &v->show.comet) + PAD * 2;
-	x += ui_checkbox(x, y, &v->show.nomineral);
+	x += gui_checkbox(x, y, &v->show.planet) + PAD * 2;
+	x += gui_checkbox(x, y, &v->show.moon) + PAD * 2;
+	x += gui_checkbox(x, y, &v->show.dwarf) + PAD * 2;
+	x += gui_checkbox(x, y, &v->show.asteroid) + PAD * 2;
+	x += gui_checkbox(x, y, &v->show.comet) + PAD * 2;
+	x += gui_checkbox(x, y, &v->show.nomineral);
 	ui_draw_border_around(v->disp.x, v->disp.y, x, v->disp.h, 1);
 
 	ui_draw_border_around(EXPLODE_RECT(v->bodies), 1);

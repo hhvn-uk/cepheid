@@ -69,7 +69,6 @@ main(void) {
 
 		BeginDrawing();
 		ClearBackground(col_bg);
-		ui_clickable_clear();
 		view_drawers[view_tabs.sel]();
 		ui_draw_views();
 		EndDrawing();

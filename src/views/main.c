@@ -280,14 +280,14 @@ ui_draw_view_main(void) {
 	view_main.infobox.pane.geom = &geom;
 
 	pane_begin(&view_main.infobox.pane);
-	ui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarf);
-	ui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarfn);
-	ui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.asteroid);
-	ui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.asteroidn);
-	ui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.comet);
-	ui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.dwarf);
-	ui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.asteroid);
-	ui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.comet);
-	ui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.comettail);
+	gui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarf);
+	gui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.dwarfn);
+	gui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.asteroid);
+	gui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.asteroidn);
+	gui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.names.comet);
+	gui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.dwarf);
+	gui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.asteroid);
+	gui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.orbit.comet);
+	gui_checkbox(x, y += FONT_SIZE*1.5, &view_main.infobox.comettail);
 	pane_end();
 }

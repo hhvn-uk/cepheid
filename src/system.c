@@ -216,13 +216,8 @@ sys_tree_setter(char *dir, char *group, int depth, Tree *t) {
 	case SYSTREE_BODY:
 		b = t->data;
 
-		if (body->parent) {
-			parent = b->parent->name;
-		} else {
-			s = t->u->data;
-			parent = s->name;
-		}
-		dbset(save->db.systems, group, "parent", parent);
+		if (b->parent)
+			dbset(save->db.systems, group, "parent", b->parent->name);
 
 		dbsetfloat(dir, group, "radius", b->radius);
 		dbsetfloat(dir, group, "mass", b->mass);

@@ -187,17 +187,17 @@ typedef struct {
 	Pane pane;
 } Dropdown;
 
-enum UiElements {
-	UI_TAB,
-	UI_CHECKBOX,
-	UI_BUTTON,
-	UI_INPUT,
-	UI_DROPDOWN,
-	UI_ELEMS,
+enum GuiElements {
+	GUI_TAB,
+	GUI_CHECKBOX,
+	GUI_BUTTON,
+	GUI_INPUT,
+	GUI_DROPDOWN,
+	GUI_ELEMS,
 };
 
 typedef struct {
-	enum UiElements type;
+	enum GuiElements type;
 	void *p;
 } Focus;
 
@@ -215,7 +215,7 @@ enum UiViews {
 #define CLICKABLE_MAX 64
 typedef struct {
 	Geom geom;
-	enum UiElements type;
+	enum GuiElements type;
 	void *elem;
 } Clickable;
 
