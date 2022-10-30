@@ -177,6 +177,36 @@ strnum(char *str) {
 	return strtof(str, NULL);
 }
 
+size_t
+strlistcmp(char **l1, size_t s1, char **l2, size_t s2) {
+	size_t i;
+
+	for (i = 0; i < s1 && i < s2; i++) {
+		if (!streq(l1[i], l2[i]))
+			break;
+	}
+
+	return i;
+}
+
+size_t
+strsplit(char *str, char *sep, char **list, size_t len) {
+	char *save;
+	size_t i;
+
+	if (!str)
+		return 0;
+
+	for (i = 0; i < len; i++) {
+		list[i] = strtok_r(i == 0 ? str : NULL, sep, &save);
+
+		if (!list[i])
+			break;
+	}
+
+	return i;
+}
+
 void
 edittrunc(wchar_t *str, int *len, int *cur) {
 	*len = *cur = 0;

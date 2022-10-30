@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <raylib.h>
+#include <math.h>
 #include "main.h"
 
 static char *bodytype_names[BODY_LAST] = {
@@ -37,6 +38,20 @@ char *
 bodytype_strify(Body *body) {
 	return bodytype_names[body->type +
 		(body->parent ? body->parent->type : 0)];
+}
+
+Body *
+body_init(char *name) {
+	Body *ret;
+
+	ret = malloc(sizeof(Body));
+	if (!ret) return NULL;
+	ret->name = nstrdup(name);
+	ret->t = NULL;
+	ret->parent = NULL;
+	ret->polar = (Polar) { INFINITY, INFINITY };
+
+	return ret;
 }
 
 int

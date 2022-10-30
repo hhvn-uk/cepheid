@@ -37,6 +37,8 @@ int	strprefix(char *str, char *prefix);
 char *	strsuffix(char *str, char *suffix);
 int	strlistpos(char *str, char **list, size_t len);
 float	strnum(char *str);
+size_t	strlistcmp(char **l1, size_t s1, char **l2, size_t s2);
+size_t	strsplit(char *str, char *sep, char **list, size_t len);
 void	edittrunc(wchar_t *str, int *len, int *cur);
 void	editrm(wchar_t *str, int *len, int *cur);
 void	editins(wchar_t *str, int *len, int *cur, int size, wchar_t c);
@@ -144,14 +146,16 @@ Polar	sys_sum_polar(Polar absolute, Polar relative);
 Vector2	sys_get_vector(Body *body);
 Polar	sys_get_polar(Body *body);
 System *sys_init(char *name);
-System *sys_load(System *s, char *name);
-void	sys_tree_setter(char *dir, char *group, int depth, Tree *t);
+void	sys_tree_load(void);
+char *	sys_tree_getter(char *dir, char *group, char *name, int depth, Tree *t);
+void	sys_tree_setter(char *dir, char *group, char *name, int depth, Tree *t);
 System *sys_get(char *name);
 System *sys_default(void);
 
 /* body.c */
 int	bodytype_enumify(char *name);
 char *	bodytype_strify(Body *body);
+Body *	body_init(char *name);
 int	body_cmp(Body *b1, Body *b2);
 void	body_sort(Body **bodies, size_t n);
 
@@ -187,6 +191,7 @@ int	vdbgetf(char *dir, char *group, char *key, char *fmt, va_list args);
 int	dbgetf(char *dir, char *group, char *key, char *fmt, ...);
 int	dbgetint(char *dir, char *group, char *key);
 float	dbgetfloat(char *dir, char *group, char *key);
+int	dbgettree(char *dir, Tree *t, Treegetter func);
 int	dbsettree(char *dir, Tree *t, Treesetter func);
 
 /* loading.c */

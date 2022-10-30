@@ -20,6 +20,7 @@ tree_add_child(Tree *t, char *name, int type, void *data, Tree **ptr) {
 	e->type = type;
 	e->data = data;
 	e->u = t;
+	e->collapsed = 0;
 
 	if (!t->d) {
 		t->d = e;

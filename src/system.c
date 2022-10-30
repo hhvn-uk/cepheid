@@ -96,41 +96,96 @@ filter_bodyinsystem(void *data, char *path) {
 		return 0;
 }
 
-/* If s is true, ignore name and load the system.
- * If s is NULL, call sys_init(name); */
-System *
-sys_load(System *s, char *name) {
-	char *dir, *tmp;
-	Body **bodies;
-	char **bname;
-	char **bparent;
-	size_t blen, i;
-	int pos;
+void
+sys_tree_load(void) {
+	Tree *t, *bt;
+	System *s;
+	char **bn;
+	Body **bp;
+	int bl, i, n, pos;
 
-	if (!s) s = sys_init(name);
+	/* initialize systems and bodies */
+	dbgettree(save->db.systems, &save->systems, sys_tree_getter);
 
-	s->lypos.x = dbgetfloat(save->db.systems, name, "x");
-	s->lypos.y = dbgetfloat(save->db.systems, name, "y");
+	/* bn & bp are only free'd at the end to avoid excess (re)allocations */
+	bl = 10;
+	bn = malloc(bl * sizeof(char *));
+	bp = malloc(bl * sizeof(char *));
 
-	dir = smprintf("%s/", s->name);
-	blen = dblistgroups_f(&bname, save->db.systems, &filter_bodyinsystem, dir);
-	if (!bname) return NULL;
-	bparent = malloc(sizeof(char *) * blen);
-	bodies = malloc(sizeof(Body *) * blen);
+	for (t = save->systems.d; t; t = t->n) {
+		s = t->data;
 
-	if (!bparent || !bodies)
-		return NULL;
+		/* first pass: init names & pointer arrays */
+		for (i = 0, bt = t->d; bt; bt = bt->n, i++) {
+			if (i == bl - 1) {
+				bl += 10;
+				bn = realloc(bn, bl * sizeof(char *));
+				bp = realloc(bp, bl * sizeof(char *));
+			}
 
-	/* first pass: init bodies and parents */
-	for (i = 0; i < blen; i++) {
-		bodies[i] = malloc(sizeof(Body));
-		bodies[i]->name = nstrdup(bname[i] + strlen(dir));
-		bparent[i] = nstrdup(dbget(save->db.systems, bname[i], "parent"));
+			bn[i] = bt->name;
+			bp[i] = bt->data;
+		}
 
-		tmp = dbget(save->db.systems, bname[i], "type");
-		bodies[i]->type = bodytype_enumify(tmp);
+		n = i;
 
-		switch (bodies[i]->type) {
+		/* second pass: assign parent pointer */
+		for (i = 0; i < n; i++) {
+			if ((pos = strlistpos(bp[i]->pname, bn, n)) != -1) {
+				free(bp[i]->pname);
+				bp[i]->parent = bp[pos];
+			} else {
+				bp[i]->parent = NULL;
+			}
+		}
+
+		/* third pass: get coords (needs parent ptr from second pass) */
+		for (i = 0; i < n; i++) {
+			sys_get_polar(bp[i]); /* Builds the cache for us: this
+						 is more efficient as it can
+						 cache the parent too */
+			bp[i]->vector = sys_vectorize(bp[i]->polar);
+
+			/* This could deal with moons, but that's probably not
+			 * useful. What about multiple stars in a system? That
+			 * may need to be addressed in future */
+			if (bp[i]->parent && bp[i]->parent->type == BODY_STAR && (!s->furthest_body ||
+					(bp[i]->type == BODY_COMET ? bp[i]->maxdist : bp[i]->dist) >
+					(s->furthest_body->type == BODY_COMET ? s->furthest_body->maxdist : s->furthest_body->dist)))
+				s->furthest_body = bp[i];
+		}
+
+		body_sort(bp, n);
+	}
+
+	free(bp);
+	free(bn);
+}
+
+char *
+sys_tree_getter(char *dir, char *group, char *name, int depth, Tree *t) {
+	System *s;
+	Body *b;
+
+	if (depth == 1) {
+		s = sys_init(name);
+		s->t = t;
+
+		s->lypos.x = dbgetfloat(dir, group, "x");
+		s->lypos.y = dbgetfloat(dir, group, "y");
+
+		t->type = SYSTREE_SYS;
+		t->data = s;
+		return s->name;
+	} else {
+		s = t->u->data; /* parent should be a system */
+		b = body_init(name);
+		b->t = t;
+
+		b->pname = nstrdup(dbget(dir, group, "parent"));
+
+		b->type = bodytype_enumify(dbget(dir, group, "type"));
+		switch (b->type) {
 		case BODY_STAR:		s->num.stars++;		break;
 		case BODY_PLANET:	s->num.planets++;	break;
 		case BODY_DWARF:	s->num.dwarfs++;	break;
@@ -139,74 +194,31 @@ sys_load(System *s, char *name) {
 		case BODY_MOON:		s->num.moons++;		break;
 		}
 
-		bodies[i]->radius = strnum(dbget(save->db.systems, bname[i], "radius"));
-		bodies[i]->mass = strnum(dbget(save->db.systems, bname[i], "mass"));
-		bodies[i]->orbdays = strnum(dbget(save->db.systems, bname[i], "orbdays"));
-		if (bodies[i]->type == BODY_COMET) {
+		b->radius = dbgetfloat(dir, group, "radius");
+		b->mass = dbgetfloat(dir, group, "mass");
+		b->orbdays = dbgetfloat(dir, group, "orbdays");
+		if (b->type == BODY_COMET) {
 			/* mindist is on opposite side of parent */
-			bodies[i]->mindist = 0 - strnum(dbget(save->db.systems, bname[i], "mindist"));
-			bodies[i]->maxdist = strnum(dbget(save->db.systems, bname[i], "maxdist"));
-			bodies[i]->curdist = strnum(dbget(save->db.systems, bname[i], "curdist"));
-			bodies[i]->theta = strnum(dbget(save->db.systems, bname[i], "theta"));
-			bodies[i]->inward = strnum(dbget(save->db.systems, bname[i], "inward"));
+			b->mindist = 0 - dbgetfloat(dir, group, "mindist");
+			b->maxdist = dbgetfloat(dir, group, "maxdist");
+			b->curdist = dbgetfloat(dir, group, "curdist");
+			b->theta = dbgetfloat(dir, group, "theta");
+			b->inward = dbgetfloat(dir, group, "inward");
 		} else {
-			bodies[i]->dist = strnum(dbget(save->db.systems, bname[i], "dist"));
-			bodies[i]->curtheta = strnum(dbget(save->db.systems, bname[i], "curtheta"));
+			b->dist = dbgetfloat(dir, group, "dist");
+			b->curtheta = dbgetfloat(dir, group, "curtheta");
 		}
 
-		/* so sys_get_polar() knows if it's usable */
-		bodies[i]->polar = (Polar) { INFINITY, INFINITY };
+		t->type = SYSTREE_BODY;
+		t->data = b;
+		return b->name;
 	}
-
-	/* second pass: assign parents (needs bparent[] from first pass) */
-	for (i = 0; i < blen; i++) {
-		tmp = smprintf("%s%s", dir, bparent[i]);
-		if ((pos = strlistpos(tmp, bname, blen)) != -1)
-			bodies[i]->parent = bodies[pos];
-		else
-			bodies[i]->parent = NULL;
-		free(tmp);
-	}
-
-	/* third pass: get coords (needs parent ptr from second pass) */
-	for (i = 0; i < blen; i++) {
-		sys_get_polar(bodies[i]); /* Builds the cache for us: this is more
-						   efficient as it can cache the parent too */
-		bodies[i]->vector = sys_vectorize(bodies[i]->polar);
-
-		/* This could deal with moons, but that's probably not useful.
-		 * What about multiple stars in a system? That may need to be
-		 * addressed in future */
-		if (bodies[i]->parent && bodies[i]->parent->type == BODY_STAR && (!s->furthest_body ||
-				(bodies[i]->type == BODY_COMET ? bodies[i]->maxdist : bodies[i]->dist) >
-				(s->furthest_body->type == BODY_COMET ? s->furthest_body->maxdist : s->furthest_body->dist)))
-			s->furthest_body = bodies[i];
-	}
-
-	for (i = 0; i < blen; i++) {
-		free(bparent[i]);
-	}
-	free(bparent);
-	dblistfree(bname, blen);
-	free(dir);
-
-	body_sort(bodies, blen);
-
-	tree_add_child(&save->systems, s->name, SYSTREE_SYS, s, &s->t);
-	for (i = 0; i < blen; i++)
-		tree_add_child(s->t, bodies[i]->name, SYSTREE_BODY, bodies[i], &bodies[i]->t);
-
-	/* The bodies are attached to the systree now, so don't need to be freed */
-	free(bodies);
-
-	return s;
 }
 
 void
-sys_tree_setter(char *dir, char *group, int depth, Tree *t) {
+sys_tree_setter(char *dir, char *group, char *name, int depth, Tree *t) {
 	System *s;
 	Body *b;
-	char *parent;
 
 	switch (t->type) {
 	case SYSTREE_SYS:
@@ -237,13 +249,19 @@ sys_tree_setter(char *dir, char *group, int depth, Tree *t) {
 
 System *
 sys_get(char *name) {
-	/* For now, call sys_load. In future, get the system via save. */
-	return sys_load(NULL, name);
+	Tree *t;
+
+	for (t = save->systems.d; t; t = t->n)
+		if (streq(t->name, name))
+			return t->data;
+
+	return NULL;
 }
 
 System *
 sys_default(void) {
 	char *str;
+
 	if (view_main.sys)
 		return view_main.sys;
 	else if ((str = dbget(save->db.dir, "index", "selsystem")))

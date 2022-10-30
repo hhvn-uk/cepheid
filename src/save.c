@@ -43,8 +43,9 @@ save_read(char *name) {
 	save->db.races = smprintf("%s/Races", dir);
 	save->db.systems = smprintf("%s/Systems", dir);
 	save->db.fleets = smprintf("%s/Fleets", dir);
-	if ((str = dbget(save->db.dir, "index", "homesystem")))
-		save->homesys = sys_get(str);
+	/* if ((str = dbget(save->db.dir, "index", "homesystem"))) */
+	/* 	save->homesys = sys_get(str); */
+	sys_tree_load();
 	return;
 };
 

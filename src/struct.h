@@ -16,8 +16,8 @@ struct Tree {
 	Tree *n; /* next */
 };
 
-/* typedef void (*Treegetter)(char *dir, char *group, int depth, Tree *t); */
-typedef void (*Treesetter)(char *dir, char *group, int depth, Tree *t);
+typedef char * (*Treegetter)(char *dir, char *group, char *name, int depth, Tree *t);
+typedef void (*Treesetter)(char *dir, char *group, char *name, int depth, Tree *t);
 
 /* system.c */
 enum {
@@ -51,7 +51,10 @@ enum BodyType {
 typedef struct Body Body;
 struct Body {
 	Tree *t;
-	Body *parent;
+	union {
+		Body *parent;
+		char *pname; /* used during sys_tree_load() */
+	};
 	Polar polar;
 	Vector2 vector;
 	Vector2 pxloc; /* used by ui functions */
