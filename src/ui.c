@@ -222,6 +222,9 @@ ui_draw_views(void) {
 	int sw = GetScreenWidth();
 	if (sw > VIEWS_MAX_WIDTH) sw = VIEWS_MAX_WIDTH;
 	gui_tabs(0, 0, sw, VIEWS_HEIGHT, &view_tabs);
+#ifdef DEBUG
+	DrawFPS(sw + FONT_SIZE, FONT_SIZE / 2);
+#endif /* DEBUG */
 }
 
 void

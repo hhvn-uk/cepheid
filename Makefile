@@ -41,7 +41,7 @@ data-clean:
 	@echo $(DATADIR): make clean
 	@cd $(DATADIR); make clean
 
-tags:
+tags: $(SRC)
 	ctags -R .
 
 # ignore generated headers

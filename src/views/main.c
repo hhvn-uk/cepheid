@@ -226,13 +226,13 @@ ui_draw_view_main(void) {
 	float dist;
 	float x, y;
 
-	/* debug info */
+#ifdef DEBUG
 	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD, col_fg, "W: %f | H: %f", (float)screen.w, (float)screen.h);
 	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD * 2, col_fg, "Xoff: %f | Yoff: %f | km/px: %f",
 			view_main.kmx, view_main.kmy, view_main.kmperpx);
 	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD * 3, col_fg, "X: %f | Y: %f",
 			mousekm.x, mousekm.y);
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD * 4, col_fg, "FPS: %d (target: %d)", GetFPS(), TARGET_FPS);
+#endif /* DEBUG */
 
 	/* draw system bodies */
 	for (t = view_main.sys->t->d; t; t = t->n) {
