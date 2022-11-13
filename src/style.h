@@ -29,7 +29,7 @@
 /* colours */
 extern const Color col_fg;
 extern const Color col_bg;
-extern const Color col_unselbg;
+extern const Color col_altbg;
 extern const Color col_border;
 extern const Color col_info;
 extern const Color col_orbit;

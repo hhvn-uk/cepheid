@@ -119,7 +119,7 @@ gui_tabs(int x, int y, int w, int h, Tabs *tabs) {
 		if (i == tabs->sel)
 			selx = cx;
 		else
-			ui_draw_rectangle(cx, y, tabw, h, col_unselbg);
+			ui_draw_rectangle(cx, y, tabw, h, col_altbg);
 		ui_print(cx + padx + iw, y + pady, col_fg, "%s", tabs->tabs[i].name);
 		if (tabs->tabs[i].icon)
 			ui_draw_texture(*tabs->tabs[i].icon, cx + padx / 2,
@@ -220,7 +220,7 @@ gui_dropdown(int x, int y, int w, Dropdown *d) {
 		ui_print(x + TPX, y + TPY, col_info, "%s", d->placeholder);
 
 	if (focused) {
-		ui_draw_rectangle(x, y + h, w, fh - h, col_unselbg);
+		ui_draw_rectangle(x, y + h, w, fh - h, col_altbg);
 		for (i = 0; i < d->n; i++) {
 			ui_print(x + TPX, y + TPY + (i+1) * h, col_fg, "%s", d->str[i]);
 		}
@@ -263,7 +263,7 @@ gui_input(int x, int y, int w, Input *in) {
 		in->cur = in->len;
 
 	ui_draw_border_around(x, y, w, h, 1);
-	ui_draw_rectangle(x, y, w, h, focused ? col_bg : col_unselbg);
+	ui_draw_rectangle(x, y, w, h, focused ? col_bg : col_altbg);
 	if (in->len)
 		ui_print(x + TPX, y + TPY, col_fg, "%S", in->wstr);
 	else if (!focused && in->placeholder)

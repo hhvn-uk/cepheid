@@ -9,7 +9,7 @@
 
 const Color col_fg =		WHITE;
 const Color col_bg = 		{ 0x00, 0x00, 0x3c, 0xff };
-const Color col_unselbg = 	{ 0x00, 0x00, 0x2c, 0xff };
+const Color col_altbg = 	{ 0x00, 0x00, 0x2c, 0xff };
 const Color col_border = 	{ 0x1e, 0x1e, 0x1e, 0xff };
 const Color col_info =		AURORA_GREEN;
 const Color col_orbit = 	AURORA_GREEN;

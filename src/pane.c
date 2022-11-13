@@ -27,7 +27,7 @@ pane_end(void) {
 				f->geom->y,
 				SCROLLBAR_W,
 				f->geom->h,
-				col_unselbg);
+				col_altbg);
 		ui_draw_rectangle(f->geom->x + f->geom->w - SCROLLBAR_W,
 				f->geom->y + f->geom->h * f->off / f->max,
 				SCROLLBAR_W,
