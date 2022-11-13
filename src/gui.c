@@ -4,20 +4,20 @@
 static Clickable clickable[CLICKABLE_MAX];
 static int clickablei = 0;
 
-static void gui_click_tabs(Vector2 mouse,
+static void gui_click_tabs(Vector mouse,
 		MouseButton button, Geom *geom, void *elem);
-static void gui_click_checkbox(Vector2 mouse,
+static void gui_click_checkbox(Vector mouse,
 		MouseButton button, Geom *geom, void *elem);
-static void gui_click_input(Vector2 mouse,
+static void gui_click_input(Vector mouse,
 		MouseButton button, Geom *geom, void *elem);
-static void gui_click_dropdown(Vector2 mouse,
+static void gui_click_dropdown(Vector mouse,
 		MouseButton button, Geom *geom, void *elem);
-static void gui_click_treeview(Vector2 mouse,
+static void gui_click_treeview(Vector mouse,
 		MouseButton button, Geom *geom, void *elem);
 
 static void gui_key_input(void *elem, int *fcount);
 
-static void (*click_handlers[GUI_ELEMS])(Vector2 mouse,
+static void (*click_handlers[GUI_ELEMS])(Vector mouse,
 		MouseButton button,
 		Geom *geom, void *elem) = {
 	[GUI_TAB] = gui_click_tabs,
@@ -50,7 +50,7 @@ gui_click_register(Geom geom, enum GuiElements type, void *elem) {
 
 int
 gui_click_handle(void) {
-	Vector2 mouse;
+	Vector mouse;
 	MouseButton button;
 	Geom *geom;
 	int i;
@@ -150,7 +150,7 @@ gui_tabs(int x, int y, int w, int h, Tabs *tabs) {
 }
 
 static void
-gui_click_tabs(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+gui_click_tabs(Vector mouse, MouseButton button, Geom *geom, void *elem) {
 	int ftabw, fw, fn;
 	int tabw, x, i;
 	Tabs *tabs = elem;
@@ -196,7 +196,7 @@ gui_checkbox(int x, int y, Checkbox *box) {
 }
 
 static void
-gui_click_checkbox(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+gui_click_checkbox(Vector mouse, MouseButton button, Geom *geom, void *elem) {
 	Checkbox *checkbox = elem;
 
 	if (button != MOUSE_BUTTON_LEFT)
@@ -238,7 +238,7 @@ gui_dropdown(int x, int y, int w, Dropdown *d) {
 }
 
 static void
-gui_click_dropdown(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+gui_click_dropdown(Vector mouse, MouseButton button, Geom *geom, void *elem) {
 	Dropdown *drop = elem;
 	int i;
 
@@ -282,7 +282,7 @@ gui_input(int x, int y, int w, Input *in) {
 }
 
 static void
-gui_click_input(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+gui_click_input(Vector mouse, MouseButton button, Geom *geom, void *elem) {
 	Input *input = elem;
 	int i;
 
@@ -381,7 +381,7 @@ gui_treeview(int x, int y, int w, int h, Treeview *tv) {
 }
 
 static void
-gui_click_treeview(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+gui_click_treeview(Vector mouse, MouseButton button, Geom *geom, void *elem) {
 	Treeview *tv = elem;
 	int depth;
 	Tree *p;

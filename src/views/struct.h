@@ -20,7 +20,7 @@ typedef struct {
 	int pan;
 	struct {
 		int held;
-		Vector2 origin;
+		Vector origin;
 	} ruler;
 	float kmx, kmy;
 	float kmperpx;
@@ -56,7 +56,7 @@ typedef struct {
 		Geom geom;
 	} info;
 	int pan;
-	Vector2 off;
+	Vector off;
 	float lytopx;
 	System *sel;
 } View_sys;

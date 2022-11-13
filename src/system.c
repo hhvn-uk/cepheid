@@ -4,48 +4,7 @@
 #include <raylib.h>
 #include "main.h"
 
-Vector2
-sys_vectorize(Polar polar) {
-	return (Vector2) {
-		polar.r * cosf_d(polar.theta),
-		polar.r * sinf_d(polar.theta)
-	};
-}
-
-Vector2
-sys_vectorize_around(Vector2 around, Polar polar) {
-	Vector2 relative = sys_vectorize(polar);
-	return (Vector2) {
-		around.x + relative.x,
-		around.y + relative.y
-	};
-}
-
-Polar
-sys_polarize(Vector2 vector) {
-	return (Polar) {
-		hypotf(vector.x, vector.y),
-		atan2f_d(vector.y, vector.x)
-	};
-}
-
-Polar
-sys_polarize_around(Vector2 around, Vector2 vector) {
-	Vector2 v = {vector.y - around.y, vector.x - around.x};
-	return sys_polarize(v);
-}
-
-Polar
-sys_sum_polar(Polar absolute, Polar relative) {
-	return sys_polarize(sys_vectorize_around(sys_vectorize(absolute), relative));
-}
-
-Vector2
-sys_get_vector(Body *body) {
-	return sys_vectorize(sys_get_polar(body));
-}
-
-Polar
+static Polar
 sys_get_polar(Body *body) {
 	Polar polar;
 
@@ -58,7 +17,7 @@ sys_get_polar(Body *body) {
 			polar.r = body->curdist;
 			polar.theta = body->theta;
 		} else {
-			polar = sys_sum_polar(sys_get_polar(body->parent),
+			polar = polar_add(sys_get_polar(body->parent),
 					(Polar){body->curdist, body->theta});
 		}
 	} else {
@@ -66,7 +25,7 @@ sys_get_polar(Body *body) {
 			polar.r = body->dist;
 			polar.theta = body->curtheta;
 		} else {
-			polar = sys_sum_polar(sys_get_polar(body->parent),
+			polar = polar_add(sys_get_polar(body->parent),
 					(Polar){body->dist, body->curtheta});
 		}
 	}
@@ -134,7 +93,7 @@ sys_tree_load(void) {
 			sys_get_polar(bp[i]); /* Builds the cache for us: this
 						 is more efficient as it can
 						 cache the parent too */
-			bp[i]->vector = sys_vectorize(bp[i]->polar);
+			bp[i]->vector = vectorize(bp[i]->polar);
 
 			/* This could deal with moons, but that's probably not
 			 * useful. What about multiple stars in a system? That

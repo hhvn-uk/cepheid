@@ -105,7 +105,7 @@ ui_deinit(void) {
 void
 ui_print(int x, int y, Color col, char *fmt, ...) {
 	va_list ap;
-	Vector2 pos;
+	Vector pos;
 	char *text;
 
 	if (!pane_visible(y, y + FONT_SIZE))
@@ -146,7 +146,7 @@ ui_get_scroll(void) {
 }
 
 int
-ui_collides(Geom geom, Vector2 point) {
+ui_collides(Geom geom, Vector point) {
 	switch (geom.type) {
 	case UI_CIRCLE:
 		return CheckCollisionPointCircle(point,
@@ -157,7 +157,7 @@ ui_collides(Geom geom, Vector2 point) {
 }
 
 int
-ui_onscreen(Vector2 point) {
+ui_onscreen(Vector point) {
 	if (!pane_visible(point.y, point.y))
 		return 0;
 	point.y = pane_y(point.y);
@@ -165,7 +165,7 @@ ui_onscreen(Vector2 point) {
 }
 
 int
-ui_onscreen_ring(Vector2 centre, float r) {
+ui_onscreen_ring(Vector centre, float r) {
 	float d = ui_vectordist(centre, screen.centre);
 
 	if (!pane_visible(centre.y - r, centre.y + r))
@@ -178,7 +178,7 @@ ui_onscreen_ring(Vector2 centre, float r) {
 }
 
 int
-ui_onscreen_circle(Vector2 centre, float r) {
+ui_onscreen_circle(Vector centre, float r) {
 	if (!pane_visible(centre.y - r, centre.y + r))
 		return 0;
 	centre.y = pane_y(centre.y);
@@ -238,7 +238,7 @@ ui_draw_rectangle(int x, int y, int w, int h, Color col) {
 
 void
 ui_draw_ring(int x, int y, float r, Color col) {
-	Vector2 v = {x, y};
+	Vector v = {x, y};
 	Polar p;
 	float s;
 	float prec = screen.diag * 1.5 / (PI * 2 * r) * 360;
@@ -251,7 +251,7 @@ ui_draw_ring(int x, int y, float r, Color col) {
 	if (!pane_visible(v.y - r, v.y + r))
 		return;
 
-	p = sys_polarize_around(v, screen.centre);
+	p = polarize_at(v, screen.centre);
 	deg = p.theta;
 
 	/* Draw the section of the ring (+ wriggle room) that will be onscreen
@@ -288,13 +288,13 @@ ui_draw_circle(int x, int y, float r, Color col) {
 
 void
 ui_draw_line(int sx, int sy, int ex, int ey, float thick, Color col) {
-	Vector2 s = {sx, sy};
-	Vector2 e = {ex, ey};
+	Vector s = {sx, sy};
+	Vector e = {ex, ey};
 	ui_draw_line_v(s, e, thick, col);
 }
 
 void
-ui_draw_line_v(Vector2 start, Vector2 end, float thick, Color col) {
+ui_draw_line_v(Vector start, Vector end, float thick, Color col) {
 	DrawLineEx(pane_v(start), pane_v(end), thick, col);
 }
 
@@ -310,20 +310,20 @@ ui_draw_border_around(int x, int y, int w, int h, int px) {
 	ui_draw_border(x - px, y - px, w + px * 2, h + px * 2, px);
 }
 
-Vector2
-ui_vectordiff(Vector2 a, Vector2 b) {
+Vector
+ui_vectordiff(Vector a, Vector b) {
 	float x = a.x - b.x;
 	float y = a.y - b.y;
 	if (x < 0)
 		x *= -1;
 	if (y < 0)
 		y *= -1;
-	return (Vector2) {x, y};
+	return (Vector) {x, y};
 }
 
 float
-ui_vectordist(Vector2 a, Vector2 b) {
-	Vector2 diff = ui_vectordiff(a, b);
+ui_vectordist(Vector a, Vector b) {
+	Vector diff = ui_vectordiff(a, b);
 	return sqrtf(diff.x * diff.x + diff.y * diff.y);
 }
 

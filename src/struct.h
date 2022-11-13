@@ -24,6 +24,8 @@ typedef void (*Treesetter)(char *dir, char *group, char *name, int depth, Tree *
 typedef int (*Treefilter)(Tree *t, void *data);
 typedef void (*Treeprinter)(int x, int y, Treeview *tv, Tree *t);
 
+/* coords.c */
+typedef Vector2 Vector;
 typedef struct {
 	float r;
 	float theta;
@@ -61,8 +63,8 @@ struct Body {
 		char *pname; /* used during sys_tree_load() */
 	};
 	Polar polar;
-	Vector2 vector;
-	Vector2 pxloc; /* used by ui functions */
+	Vector vector;
+	Vector pxloc; /* used by ui functions */
 	char *name;
 	enum BodyType type;
 	float radius;
@@ -97,7 +99,7 @@ typedef struct {
 		int comets;
 		int moons;
 	} num;
-	Vector2 lypos;
+	Vector lypos;
 } System;
 
 /* save.c */
@@ -126,7 +128,7 @@ typedef struct {
 			int w, h;
 		};
 		struct {
-			Vector2 centre;
+			Vector centre;
 			int r;
 		};
 	};
@@ -145,7 +147,7 @@ typedef struct {
 typedef struct {
 	float w, h;
 	float diag;
-	Vector2 centre;
+	Vector centre;
 	Geom rect; /* for passing to functions */
 } Screen;
 

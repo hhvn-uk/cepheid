@@ -17,7 +17,7 @@ pane_begin(Pane *f) {
 void
 pane_end(void) {
 	Pane *f = pane;
-	Vector2 m = GetMousePosition();
+	Vector m = GetMousePosition();
 
 	if (!f) return;
 
@@ -69,9 +69,9 @@ pane_y(float y) {
 	return y - pane->off;
 }
 
-Vector2
-pane_v(Vector2 v) {
+Vector
+pane_v(Vector v) {
 	if (!pane)
-		return (Vector2) {v.x, v.y};
-	return (Vector2) {v.x, v.y - pane->off};
+		return (Vector) {v.x, v.y};
+	return (Vector) {v.x, v.y - pane->off};
 }

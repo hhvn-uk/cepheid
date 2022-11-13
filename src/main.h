@@ -49,7 +49,6 @@ Vector	vectorize_at(Vector at, Polar p);
 Polar	polarize(Vector v);
 Polar	polarize_at(Vector at, Vector vector);
 Polar	polar_add(Polar abs, Polar rel);
-Polar	polar_add_noconv(Polar abs, Polar rel);
 
 /* tree.c */
 Tree *	tree_add_child(Tree *t, char *name, int type, void *data, Tree **ptr);
@@ -91,10 +90,10 @@ void	ui_title(char *fmt, ...);
 int	ui_textsize(char *text);
 float	ui_get_scroll(void);
 int	ui_checkbox_size(Checkbox *checkbox);
-int	ui_collides(Geom geom, Vector2 point);
-int	ui_onscreen(Vector2 point);
-int	ui_onscreen_ring(Vector2 centre, float r);
-int	ui_onscreen_circle(Vector2 centre, float r);
+int	ui_collides(Geom geom, Vector point);
+int	ui_onscreen(Vector point);
+int	ui_onscreen_ring(Vector centre, float r);
+int	ui_onscreen_circle(Vector centre, float r);
 int	ui_keyboard_check(int key, int *fcount);
 void	ui_keyboard_handle(void);
 void	ui_draw_views(void);
@@ -105,10 +104,10 @@ void	ui_draw_ring(int x, int y, float r, Color col);
 void	ui_draw_texture(Texture2D texture, int x, int y);
 void	ui_draw_circle(int x, int y, float r, Color col);
 void	ui_draw_line(int sx, int sy, int ex, int ey, float thick, Color col);
-void	ui_draw_line_v(Vector2 start, Vector2 end, float thick, Color col);
+void	ui_draw_line_v(Vector start, Vector end, float thick, Color col);
 void	ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs);
-Vector2 ui_vectordiff(Vector2 a, Vector2 b);
-float	ui_vectordist(Vector2 a, Vector2 b);
+Vector ui_vectordiff(Vector a, Vector b);
+float	ui_vectordist(Vector a, Vector b);
 void	ui_handle_view_colonies(int nowsel);
 void	ui_handle_view_fleets(int nowsel);
 void	ui_handle_view_design(int nowsel);
@@ -145,16 +144,9 @@ void	pane_end(void);
 int	pane_visible(float miny, float maxy); /* calls pane_max automatically */
 float	pane_max(float y); /* returns original y */
 float	pane_y(float y);
-Vector2	pane_v(Vector2 v);
+Vector	pane_v(Vector v);
 
 /* system.c */
-Vector2	sys_vectorize(Polar polar);
-Vector2 sys_vectorize_around(Vector2 around, Polar polar);
-Polar	sys_polarize(Vector2 vector);
-Polar	sys_polarize_around(Vector2 around, Vector2 vector);
-Polar	sys_sum_polar(Polar absolute, Polar relative);
-Vector2	sys_get_vector(Body *body);
-Polar	sys_get_polar(Body *body);
 System *sys_init(char *name);
 void	sys_tree_load(void);
 char *	sys_tree_getter(char *dir, char *group, char *name, int depth, Tree *t);

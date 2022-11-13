@@ -51,17 +51,17 @@ View_main view_main = {
 	.sys = NULL,
 };
 
-Vector2
-kmtopx(Vector2 km) {
-	return (Vector2) {
+Vector
+kmtopx(Vector km) {
+	return (Vector) {
 		(GetScreenWidth() / 2) + (km.x - view_main.kmx) / view_main.kmperpx,
 		(GetScreenHeight() / 2) + (km.y - view_main.kmy) / view_main.kmperpx
 	};
 }
 
-Vector2
-pxtokm(Vector2 vector) {
-	return (Vector2) {
+Vector
+pxtokm(Vector vector) {
+	return (Vector) {
 		((vector.x - GetScreenWidth() / 2) * view_main.kmperpx) + view_main.kmx,
 		((vector.y - GetScreenHeight() / 2) * view_main.kmperpx) + view_main.kmy
 	};
@@ -69,8 +69,8 @@ pxtokm(Vector2 vector) {
 
 void
 ui_handle_view_main(int nowsel) {
-	Vector2 mouse = GetMousePosition();
-	Vector2 delta = GetMouseDelta();
+	Vector mouse = GetMousePosition();
+	Vector delta = GetMouseDelta();
 	float wheel = ui_get_scroll();
 	float diff;
 	Body *furth;
@@ -131,7 +131,7 @@ should_draw_body_checkbox(Body *body, int type, Checkbox *box) {
 
 static void
 draw_orbit(Body *body) {
-	Vector2 parent;
+	Vector parent;
 	float pxrad;
 
 	if (!body->parent)
@@ -179,7 +179,7 @@ draw_body(Body *body) {
 	ui_draw_circle(body->pxloc.x, body->pxloc.y, w, col_body[body->type]);
 	if (body->type == BODY_COMET && view_main.infobox.comettail.val &&
 			10 * view_main.kmperpx < body->curdist)
-		ui_draw_line_v(body->pxloc, sys_vectorize_around(body->pxloc,
+		ui_draw_line_v(body->pxloc, vectorize_at(body->pxloc,
 				(Polar){w * 11 / min_body_rad[BODY_COMET],
 				body->inward ? body->theta : body->theta + 180}),
 				w / min_body_rad[BODY_COMET], col_body[BODY_COMET]);
@@ -217,9 +217,9 @@ draw_body(Body *body) {
 
 void
 ui_draw_view_main(void) {
-	Vector2 mouse = GetMousePosition();
-	Vector2 mousekm = pxtokm(mouse);
-	Vector2 ruler;
+	Vector mouse = GetMousePosition();
+	Vector mousekm = pxtokm(mouse);
+	Vector ruler;
 	Geom geom;
 	Tree *t;
 	Body *body;
