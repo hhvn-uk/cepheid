@@ -43,13 +43,9 @@ typedef struct {
 		Checkbox comet;
 		Checkbox nomineral;
 	} show;
-	struct {
-		Pane stars;
-		Pane bodies;
-	} pane;
-	Geom stars;
 	Geom disp;
 	Geom bodies;
+	Treeview tree;
 	Geom loc;
 	Geom mins;
 	Geom hab;

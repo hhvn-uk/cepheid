@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "main.h"
 
 static Clickable clickable[CLICKABLE_MAX];
@@ -7,9 +8,11 @@ static void gui_click_tabs(Vector2 mouse,
 		MouseButton button, Geom *geom, void *elem);
 static void gui_click_checkbox(Vector2 mouse,
 		MouseButton button, Geom *geom, void *elem);
+static void gui_click_input(Vector2 mouse,
+		MouseButton button, Geom *geom, void *elem);
 static void gui_click_dropdown(Vector2 mouse,
 		MouseButton button, Geom *geom, void *elem);
-static void gui_click_input(Vector2 mouse,
+static void gui_click_treeview(Vector2 mouse,
 		MouseButton button, Geom *geom, void *elem);
 
 static void gui_key_input(void *elem, int *fcount);
@@ -19,15 +22,19 @@ static void (*click_handlers[GUI_ELEMS])(Vector2 mouse,
 		Geom *geom, void *elem) = {
 	[GUI_TAB] = gui_click_tabs,
 	[GUI_CHECKBOX] = gui_click_checkbox,
-	[GUI_DROPDOWN] = gui_click_dropdown,
+	[GUI_BUTTON] = NULL,
 	[GUI_INPUT] = gui_click_input,
+	[GUI_DROPDOWN] = gui_click_dropdown,
+	[GUI_TREEVIEW] = gui_click_treeview,
 };
 
 void (*gui_key_handlers[GUI_ELEMS])(void *elem, int *fcount) = {
 	[GUI_TAB] = NULL,
 	[GUI_CHECKBOX] = NULL,
-	[GUI_DROPDOWN] = NULL,
+	[GUI_BUTTON] = NULL,
 	[GUI_INPUT] = gui_key_input,
+	[GUI_DROPDOWN] = NULL,
+	[GUI_TREEVIEW] = NULL,
 };
 
 static void
@@ -309,5 +316,88 @@ gui_key_input(void *elem, int *fcount) {
 		in->cur++;
 	} else if (c && in->len < INPUT_MAX) {
 		editins(in->wstr, &in->len, &in->cur, INPUT_MAX, c);
+	}
+}
+
+/* This function is an intermediate filter that checks whether an item is
+ * collapsed before running the filter defined in the Treeview struct */
+static int
+gui_treeview_filter(Tree *t, void *data) {
+	Treeview *tv = data;
+
+	if (t->u && t->u->collapsed)
+		return 0;
+
+	if (tv->filter)
+		return tv->filter(t, tv->fdata);
+	else
+		return 1;
+}
+
+void
+gui_treeview(int x, int y, int w, int h, Treeview *tv) {
+	int depth;
+	Tree *p;
+	int cx, cy;
+	int i;
+
+	ui_draw_border_around(x, y, w, h, 1);
+
+	if (!tv->rect.w && !tv->rect.h) /* zero when unitialized */
+		tv->pane = (Pane)PANESCROLL;
+	tv->rect = RECT(x, y, w, h);
+	tv->pane.geom = &tv->rect;
+
+	pane_begin(&tv->pane);
+
+	if (tv->print) {
+		tv->print(x + PAD, y + FONT_SIZE, tv, NULL);
+		cy = y + FONT_SIZE + PAD / 2;
+	} else {
+		cy = y;
+	}
+
+	for (p = NULL; tree_iter_f(tv->t, TREEMAX, &p, &depth, gui_treeview_filter, tv) != -1; ) {
+		cy += FONT_SIZE;
+		cx = x + PAD * (depth + 2);
+
+		if (tv->colmask & p->type) {
+			ui_draw_rectangle(cx - PAD,     cy + 2, 5, 5, col_altbg);
+			ui_draw_rectangle(cx - PAD,     cy + 4, 5, 1, col_fg);
+			ui_draw_rectangle(cx - PAD + 2, cy + 2, 1, 5, col_fg);
+		}
+
+		if (tv->print)
+			tv->print(cx, cy, tv, p);
+		else
+			ui_print(cx, cy, tv->sel == p ? col_info : col_fg, "%s", p->name);
+
+		for (i = 0, cx = x + PAD; i < depth; i++, cx += PAD)
+			ui_draw_rectangle(cx + 2, cy - 2, 1, FONT_SIZE + 1, col_altbg);
+	}
+
+	pane_end();
+	gui_click_register(tv->rect, GUI_TREEVIEW, tv);
+}
+
+static void
+gui_click_treeview(Vector2 mouse, MouseButton button, Geom *geom, void *elem) {
+	Treeview *tv = elem;
+	int depth;
+	Tree *p;
+	int i, pos;
+
+	if (button == -1)
+		return;
+
+	pos = (mouse.y - geom->y - FONT_SIZE - (tv->print ? FONT_SIZE + PAD / 2 : 0) + tv->pane.off) / FONT_SIZE;
+
+	for (i = 0, p = 0; tree_iter_f(tv->t, TREEMAX, &p, &depth, gui_treeview_filter, tv) != -1 && i <= pos; i++) {
+		if (i == pos) {
+			if (mouse.x < geom->x + PAD * (depth + 2) && p->type & tv->colmask)
+				p->collapsed = !p->collapsed;
+			else if (p->type & tv->selmask)
+				tv->sel = p;
+		}
 	}
 }

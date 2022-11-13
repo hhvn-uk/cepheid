@@ -1,34 +1,39 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-/* tree.c */
+/* tree.c
+ * See tree.c for further documentation */
 #define TREEMAX 64 /* max depth: not actually enforced anywhere, anything
 		      deeper than this will get ignored in some places */
 typedef struct Tree Tree;
 struct Tree {
 	Tree *p; /* previous */
 	char *name;
-	int collapsed; /* matters for Treeview */
-	int type;
+	int collapsed; /* used by Treeview */
+	int type; /* NOT a bitmask */
 	void *data;
 	Tree *u; /* up */
 	Tree *d; /* down */
 	Tree *n; /* next */
 };
 
+typedef struct Treeview Treeview;
+
 typedef char * (*Treegetter)(char *dir, char *group, char *name, int depth, Tree *t);
 typedef void (*Treesetter)(char *dir, char *group, char *name, int depth, Tree *t);
-
-/* system.c */
-enum {
-	SYSTREE_SYS,
-	SYSTREE_BODY,
-};
+typedef int (*Treefilter)(Tree *t, void *data);
+typedef void (*Treeprinter)(int x, int y, Treeview *tv, Tree *t);
 
 typedef struct {
 	float r;
 	float theta;
 } Polar;
+
+/* system.c */
+enum {
+	SYSTREE_SYS = 1,
+	SYSTREE_BODY = 2,
+};
 
 /* body->type + body->parent->type == complex type
  *
@@ -190,12 +195,27 @@ typedef struct {
 	Pane pane;
 } Dropdown;
 
+/* typedef'd earlier */
+struct Treeview {
+	Tree *t;
+	Tree *sel;
+	int selmask; /* bitmask of selectable types */
+	int colmask; /* bitmask of collapsible types */
+	void *fdata; /* data to pass to filter() */
+	Treefilter filter; /* hide nodes when 0 is returned */
+	Treeprinter print; /* prints data related to the node */
+	/* internal */
+	Geom rect;
+	Pane pane;
+};
+
 enum GuiElements {
 	GUI_TAB,
 	GUI_CHECKBOX,
 	GUI_BUTTON,
 	GUI_INPUT,
 	GUI_DROPDOWN,
+	GUI_TREEVIEW,
 	GUI_ELEMS,
 };
 

@@ -43,10 +43,19 @@ void	edittrunc(wchar_t *str, int *len, int *cur);
 void	editrm(wchar_t *str, int *len, int *cur);
 void	editins(wchar_t *str, int *len, int *cur, int size, wchar_t c);
 
+/* coords.c */
+Vector	vectorize(Polar p);
+Vector	vectorize_at(Vector at, Polar p);
+Polar	polarize(Vector v);
+Polar	polarize_at(Vector at, Vector vector);
+Polar	polar_add(Polar abs, Polar rel);
+Polar	polar_add_noconv(Polar abs, Polar rel);
+
 /* tree.c */
 Tree *	tree_add_child(Tree *t, char *name, int type, void *data, Tree **ptr);
 int	tree_delete(Tree **t, int freedata);
 int	tree_delete_r(Tree **t, int freedata);
+int	tree_iter_f(Tree *t, int maxdepth, Tree **p, int *depth, Treefilter filter, void *fdata);
 int	tree_iter(Tree *t, int maxdepth, Tree **p, int *depth);
 
 /* ui.c */
@@ -118,6 +127,7 @@ void	gui_tabs(int x, int y, int w, int h, Tabs *tabs);
 int	gui_checkbox(int x, int y, Checkbox *checkbox); /* returns width */
 void	gui_dropdown(int x, int y, int w, Dropdown *d);
 void	gui_input(int x, int y, int w, Input *in);
+void	gui_treeview(int x, int y, int w, int h, Treeview *tv);
 
 /* ui/main.c */
 extern View_main view_main;

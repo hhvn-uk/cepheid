@@ -86,16 +86,6 @@ sys_init(char *name) {
 	return ret;
 }
 
-static int
-filter_bodyinsystem(void *data, char *path) {
-	char *system = data;
-
-	if (!strstr(path, "/index") && strncmp(path, system, strlen(system)) != 0)
-		return 1;
-	else
-		return 0;
-}
-
 void
 sys_tree_load(void) {
 	Tree *t, *bt;
@@ -155,7 +145,8 @@ sys_tree_load(void) {
 				s->furthest_body = bp[i];
 		}
 
-		body_sort(bp, n);
+		/* TODO: actually sort the tree */
+		/* body_sort(bp, n); */
 	}
 
 	free(bp);

@@ -6,6 +6,9 @@
 #define BUTTONS 50
 #define W MIN(screen.w / 20, 50)
 
+static int tree_filter(Tree *t, void *data);
+static void tree_printer(int x, int y, Treeview *tv, Tree *t);
+
 static View_bodies *v = &view_bodies;
 View_bodies view_bodies = {
 	.sys = NULL,
@@ -19,32 +22,59 @@ View_bodies view_bodies = {
 		.comet = {1, 1, "Show comets"},
 		.nomineral = {1, 1, "Show bodies without mins"},
 	},
-	.pane = {
-		.stars = PANESCROLL,
-		.bodies = PANESCROLL,
-	},
+	.tree = {
+		.t = NULL,
+		.sel = NULL,
+		.selmask = SYSTREE_BODY,
+		.colmask = SYSTREE_SYS,
+		.filter = tree_filter,
+		.print = tree_printer,
+	}
 };
 
 static int
-display_body(Body *body) {
-	if (body->type == BODY_STAR || !body->parent)
+tree_filter(Tree *t, void *data) {
+	Body *b;
+
+	if (t->type == SYSTREE_SYS)
+		return 1;
+
+	b = t->data;
+	if (b->type == BODY_STAR || !b->parent)
 		return 0;
-	if (body->type == BODY_MOON && !v->show.moon.val)
+	if (b->type == BODY_MOON && !v->show.moon.val)
 		return 0;
-	if ((body->type == BODY_PLANET || body->parent->type == BODY_PLANET) &&
-			!v->show.planet.val)
+	if ((b->type == BODY_PLANET || b->parent->type == BODY_PLANET) && !v->show.planet.val)
 		return 0;
-	if ((body->type == BODY_DWARF || body->parent->type == BODY_DWARF) &&
-			!v->show.dwarf.val)
+	if ((b->type == BODY_DWARF || b->parent->type == BODY_DWARF) && !v->show.dwarf.val)
 		return 0;
-	if ((body->type == BODY_ASTEROID || body->parent->type == BODY_ASTEROID) &&
-			!v->show.asteroid.val)
+	if ((b->type == BODY_ASTEROID || b->parent->type == BODY_ASTEROID) && !v->show.asteroid.val)
 		return 0;
-	if ((body->type == BODY_COMET || body->parent->type == BODY_COMET) &&
-			!v->show.comet.val)
+	if ((b->type == BODY_COMET || b->parent->type == BODY_COMET) && !v->show.comet.val)
 		return 0;
 	/* TODO: exclude bodies with no mins */
 	return 1;
+}
+
+static void
+tree_printer(int x, int y, Treeview *tv, Tree *t) {
+	int sel = tv->sel == t;
+	Color c = sel ? col_info : col_fg;
+	Body *b;
+	int cx = tv->rect.x;
+
+	if (!t) {
+		ui_print(x, y, col_fg, "Body");
+		ui_print(cx + 3*W, y, col_fg, "Parent");
+		ui_print(cx + 5*W, y, col_fg, "Type");
+	} else if (t->type != SYSTREE_BODY) {
+		ui_print(x, y, c, t->name);
+	} else {
+		b = t->data;
+		ui_print(x, y, c, "%s", b->name);
+		ui_print(cx + 3*W, y, c, "%s", b->parent ? b->parent->name : "");
+		ui_print(cx + 5*W, y, c, "%s", bodytype_strify(b));
+	}
 }
 
 void
@@ -58,29 +88,17 @@ ui_handle_view_bodies(int nowsel) {
 		v->sys = sys_default();
 
 	if (!nowsel) {
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-				ui_collides(v->bodies, m)) {
-			pos = (m.y + v->pane.bodies.off - v->bodies.y - PAD)
-				/ FONT_SIZE;
-			for (t = v->sys->t->d, i = 0; t && i < pos; t = t->n) {
-				body = t->data;
-				if (display_body(body))
-					if (++i == pos)
-						v->sel = body;
-			}
-		}
-	}
-
-	if (nowsel)
+		if (v->tree.sel)
+			v->sel = v->tree.sel->data;
+		else
+			v->sel = NULL;
+	} else {
 		ui_title("Bodies in %s", v->sys->name);
+		v->tree.t = &save->systems;
+	}
 }
 
-static int
-draw_star(int x, int y, Body *star) {
-	ui_print(x, y, col_fg, "%s", star->name);
-	return y + FONT_SIZE;
-}
-
+#if 0
 static int
 draw_body(int x, int y, Body *body) {
 	Color col;
@@ -95,17 +113,15 @@ draw_body(int x, int y, Body *body) {
 	ui_print(x + 5*W, y, col, "%s", bodytype_strify(body));
 	return y + FONT_SIZE;
 }
+#endif
 
 void
 ui_draw_view_bodies(void) {
 	int x, y;
-	Tree *t;
 	Body *body;
 
-	v->stars = RECT(PAD, VIEWS_HEIGHT + PAD * 2 + FONT_SIZE,
-		screen.w - PAD * 2, FONT_SIZE * 6);
-	v->disp = RECT(v->stars.x, v->stars.y + v->stars.h + PAD,
-		v->stars.w, FONT_SIZE + PAD);
+	v->disp = RECT(PAD, VIEWS_HEIGHT + FONT_SIZE,
+		screen.w - PAD * 2, FONT_SIZE + PAD);
 	v->bodies = RECT(v->disp.x, v->disp.y + v->disp.h + PAD/2,
 		v->disp.w, screen.h - v->bodies.y - INFOBOX_H - BUTTONS);
 	v->loc = RECT(v->bodies.x, v->bodies.y + v->bodies.h + PAD,
@@ -118,22 +134,6 @@ ui_draw_view_bodies(void) {
 	if (!v->sel)
 		v->bodies.h += INFOBOX_H;
 
-	ui_print(PAD, VIEWS_HEIGHT + PAD, col_fg, "[System selection dropdown]");
-
-	ui_draw_border_around(EXPLODE_RECT(v->stars), 1);
-	v->pane.stars.geom = &v->stars;
-	pane_begin(&v->pane.stars);
-	x = v->stars.x + PAD/2;
-	y = v->stars.y + PAD/2;
-	ui_print(x, y, col_fg, "Name");
-	y += FONT_SIZE * 1.5;
-	for (t = v->sys->t->d; t; t = t->n) {
-		body = t->data;
-		if (body->type == BODY_STAR)
-			y = draw_star(x, y, body);
-	}
-	pane_end();
-
 	x = v->disp.x + PAD/2;
 	y = v->disp.y + PAD/2;
 	x += gui_checkbox(x, y, &v->show.planet) + PAD * 2;
@@ -144,21 +144,7 @@ ui_draw_view_bodies(void) {
 	x += gui_checkbox(x, y, &v->show.nomineral);
 	ui_draw_border_around(v->disp.x, v->disp.y, x, v->disp.h, 1);
 
-	ui_draw_border_around(EXPLODE_RECT(v->bodies), 1);
-	v->pane.bodies.geom = &v->bodies;
-	pane_begin(&v->pane.bodies);
-	x = v->bodies.x + PAD/2;
-	y = v->bodies.y + PAD/2;
-	ui_print(x, y, col_fg, "Name");
-	ui_print(x + 3*W, y, col_fg, "Parent");
-	ui_print(x + 5*W, y, col_fg, "Type");
-	y += FONT_SIZE * 1.5;
-	for (t = v->sys->t->d; t; t = t->n) {
-		body = t->data;
-		if (display_body(body))
-			y = draw_body(x, y, body);
-	}
-	pane_end();
+	gui_treeview(EXPLODE_RECT(v->bodies), &v->tree);
 
 	if (v->sel) {
 		ui_draw_border_around(EXPLODE_RECT(v->loc), 1);
@@ -177,6 +163,4 @@ ui_draw_view_bodies(void) {
 		ui_draw_border_around(EXPLODE_RECT(v->mins), 1);
 		ui_draw_border_around(EXPLODE_RECT(v->hab), 1);
 	}
-
-	DrawFPS(50, 50);
 }
