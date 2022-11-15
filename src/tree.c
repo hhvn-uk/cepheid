@@ -219,14 +219,31 @@ tree_sort_sideways(Tree *t, Treecompar compar, void *cdata) {
 
 static int
 tree_sort_filter(Tree *t, void *data) {
-	return !t->n && t->u;
+	return !t->p && t->u;
 }
 
 void
 tree_sort(Tree *t, Treecompar compar, void *cdata) {
 	Tree *p;
 	int depth;
+	Tree **s;
+	int sl, si;
 
-	for (p = NULL; tree_iter_f(t, TREEMAX, &p, &depth, tree_sort_filter, NULL) != -1; )
-		tree_sort_sideways(p, compar, cdata);
+	/* The tree can't be sorted (i,e, modified) whilst iterating through it. */
+	sl = 10;
+	s = malloc(sl * sizeof(Tree *));
+
+	for (p = NULL, si = 0; tree_iter_f(t, TREEMAX, &p, &depth, tree_sort_filter, NULL) != -1; si++) {
+		if (si == sl - 1) {
+			sl += 10;
+			s = realloc(s, sl * sizeof(Tree *));
+		}
+
+		s[si] = p;
+	}
+
+	while (si--)
+		tree_sort_sideways(s[si], compar, cdata);
+
+	free(s);
 }
