@@ -7,36 +7,36 @@
 static Pane *pane = NULL;
 
 void
-pane_begin(Pane *f) {
-	f->max = 0;
-	BeginScissorMode(f->geom->x, f->geom->y,
-			f->geom->w, f->geom->h);
-	pane = f;
+pane_begin(Pane *p) {
+	p->max = 0;
+	BeginScissorMode(p->geom->x, p->geom->y,
+			p->geom->w, p->geom->h);
+	pane = p;
 }
 
 void
 pane_end(void) {
-	Pane *f = pane;
+	Pane *p = pane;
 	Vector m = mouse.vector;
 
-	if (!f) return;
+	if (!p) return;
 
 	pane = NULL; /* unset pane so we can draw freely */
-	if (f->max > f->geom->h) {
-		ui_draw_rect(f->geom->x + f->geom->w - SCROLLBAR_W,
-				f->geom->y,
+	if (p->max > p->geom->h) {
+		ui_draw_rect(p->geom->x + p->geom->w - SCROLLBAR_W,
+				p->geom->y,
 				SCROLLBAR_W,
-				f->geom->h,
+				p->geom->h,
 				col_altbg);
-		ui_draw_rect(f->geom->x + f->geom->w - SCROLLBAR_W,
-				f->geom->y + f->geom->h * f->off / f->max,
+		ui_draw_rect(p->geom->x + p->geom->w - SCROLLBAR_W,
+				p->geom->y + p->geom->h * p->off / p->max,
 				SCROLLBAR_W,
-				(float)f->geom->h / (float)f->max * (float)f->geom->h,
+				(float)p->geom->h / (float)p->max * (float)p->geom->h,
 				col_fg);
 	}
-	if (m.x >= f->geom->x && m.x <= f->geom->x + f->geom->w &&
-			m.y >= f->geom->y && m.y <= f->geom->y + f->geom->h)
-		pane_scroll(f, mouse.scroll * SCROLL_MULT * -1);
+	if (m.x >= p->geom->x && m.x <= p->geom->x + p->geom->w &&
+			m.y >= p->geom->y && m.y <= p->geom->y + p->geom->h)
+		pane_scroll(p, mouse.scroll * SCROLL_MULT * -1);
 	EndScissorMode();
 }
 
@@ -73,10 +73,10 @@ pane_v(Vector v) {
 }
 
 void
-pane_scroll(Pane *f, int incr) {
-	f->off += incr;
-	if (f->off > f->max - f->geom->h)
-		f->off = f->max - f->geom->h;
-	if (f->off < 0)
-		f->off = 0;
+pane_scroll(Pane *p, int incr) {
+	p->off += incr;
+	if (p->off > p->max - p->geom->h)
+		p->off = p->max - p->geom->h;
+	if (p->off < 0)
+		p->off = 0;
 }
