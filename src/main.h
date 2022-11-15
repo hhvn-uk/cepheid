@@ -25,6 +25,7 @@ void	warning(char *fmt, ...);
 /* str.c */
 void *	falloc(size_t size);
 void	ffree(void);
+char *	fstrdup(char *str);
 char *	vsfprintf(char *fmt, va_list args);
 char *	sfprintf(char *fmt, ...); /* return string allocated for current frame */
 char *	vsmprintf(char *fmt, va_list args);
@@ -39,6 +40,7 @@ int	strlistpos(char *str, char **list, size_t len);
 float	strnum(char *str);
 size_t	strlistcmp(char **l1, size_t s1, char **l2, size_t s2);
 size_t	strsplit(char *str, char *sep, char **list, size_t len);
+char *	strtrunc(char *str, int w);
 void	edittrunc(wchar_t *str, int *len, int *cur);
 void	editrm(wchar_t *str, int *len, int *cur);
 void	editins(wchar_t *str, int *len, int *cur, int size, wchar_t c);
@@ -56,6 +58,8 @@ int	tree_delete(Tree **t, int freedata);
 int	tree_delete_r(Tree **t, int freedata);
 int	tree_iter_f(Tree *t, int maxdepth, Tree **p, int *depth, Treefilter filter, void *fdata);
 int	tree_iter(Tree *t, int maxdepth, Tree **p, int *depth);
+void	tree_sort_sideways(Tree *t, Treecompar compar, void *cdata);
+void	tree_sort(Tree *t, Treecompar compar, void *cdata);
 
 /* ui.c */
 #define VIEWS_MAX_WIDTH (UI_VIEW_LAST*100)
@@ -78,6 +82,7 @@ extern void (*view_handlers[UI_VIEW_LAST])(int);
 extern void (*view_drawers[UI_VIEW_LAST])(void);
 extern Screen screen;
 extern Focus focus;
+extern Vector mouse;
 extern View_sys view_sys;
 extern int charpx;
 void	ui_init(void);
@@ -86,6 +91,7 @@ void	ui_update_focus(enum GuiElements type, void *p);
 int	ui_loop(void);
 void	ui_deinit(void);
 void	ui_print(int x, int y, Color col, char *format, ...);
+void	ui_printw(int x, int y, int w, Color col, char *format, ...);
 void	ui_title(char *fmt, ...);
 int	ui_textsize(char *text);
 float	ui_get_scroll(void);
@@ -98,6 +104,7 @@ int	ui_keyboard_check(int key, int *fcount);
 void	ui_keyboard_handle(void);
 void	ui_draw_views(void);
 void	ui_draw_rectangle(int x, int y, int w, int h, Color col);
+void	ui_draw_expander(int x, int y, int w, int expanded);
 void	ui_draw_border(int x, int y, int w, int h, int px);
 void	ui_draw_border_around(int x, int y, int w, int h, int px);
 void	ui_draw_ring(int x, int y, float r, Color col);
@@ -145,6 +152,7 @@ int	pane_visible(float miny, float maxy); /* calls pane_max automatically */
 float	pane_max(float y); /* returns original y */
 float	pane_y(float y);
 Vector	pane_v(Vector v);
+void	pane_scroll(Pane *f, int incr);
 
 /* system.c */
 System *sys_init(char *name);
@@ -158,8 +166,6 @@ System *sys_default(void);
 int	bodytype_enumify(char *name);
 char *	bodytype_strify(Body *body);
 Body *	body_init(char *name);
-int	body_cmp(Body *b1, Body *b2);
-void	body_sort(Body **bodies, size_t n);
 
 /* save.c */
 #define SAVE_READ_STEPS 2

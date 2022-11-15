@@ -24,6 +24,8 @@ typedef void (*Treesetter)(char *dir, char *group, char *name, int depth, Tree *
 typedef int (*Treefilter)(Tree *t, void *data);
 typedef void (*Treeprinter)(int x, int y, Treeview *tv, Tree *t);
 
+typedef int (*Treecompar)(Tree *a, Tree *b, void *data);
+
 /* coords.c */
 typedef Vector2 Vector;
 typedef struct {
@@ -135,8 +137,8 @@ typedef struct {
 } Geom;
 
 /* pane.c */
-#define PANESCROLL {NULL, 1, 0, 0}
-#define PANENOSCROLL {NULL, 0, 0, 0}
+#define PANESCROLL (Pane){NULL, 1, 0, 0}
+#define PANENOSCROLL (Pane){NULL, 0, 0, 0}
 typedef struct {
 	Geom *geom;
 	int scroll;

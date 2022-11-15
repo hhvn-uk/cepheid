@@ -53,22 +53,3 @@ body_init(char *name) {
 
 	return ret;
 }
-
-int
-body_cmp(Body *b1, Body *b2) {
-	float v1, v2;
-	Body *p;
-
-	for (p = b1, v1 = 0; p->parent; p = p->parent)
-		v1 += (p->type == BODY_COMET ? p->maxdist : p->dist);
-	for (p = b2, v2 = 0; p->parent; p = p->parent)
-		v2 += (p->type == BODY_COMET ? p->maxdist : p->dist);
-	return (v1 == v2 ? 0 : (v1 > v2 ? 1 : -1));
-}
-
-SORT_FUNC(body_cmp, Body *);
-
-void
-body_sort(Body **bodies, size_t n) {
-	qsort(bodies, n, sizeof(Body *), body_cmp_sort);
-}

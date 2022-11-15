@@ -49,6 +49,9 @@ typedef struct {
 	Geom loc;
 	Geom mins;
 	Geom hab;
+	struct {
+		Body *sel;
+	} prevframe;
 } View_bodies;
 
 typedef struct {

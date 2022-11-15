@@ -8,6 +8,7 @@
 #include <math.h>
 #include "main.h"
 
+#define TEXTBUF 2048
 #define FMEMMAX 1024
 
 static void *fmem[FMEMMAX] = {NULL};
@@ -30,6 +31,15 @@ ffree(void) {
 		fmem[fmemi] = NULL;
 	}
 	fmemi = 0;
+}
+
+char *
+fstrdup(char *str) {
+	char *ret;
+
+	ret = falloc(strlen(str) + 1);
+	strcpy(ret, str);
+	return ret;
 }
 
 char *
@@ -205,6 +215,34 @@ strsplit(char *str, char *sep, char **list, size_t len) {
 	}
 
 	return i;
+}
+
+#define TRUNCSTR "…"
+#define TRUNCLEN strlen(TRUNCSTR)
+
+char *
+strtrunc(char *str, int w) {
+	char buf[TEXTBUF];
+	int len, cw, i, s;
+	mbstate_t mb = {0};
+
+	for (s = i = 0, len = strlen(str);
+			str && *str;
+			i += cw, str += cw, s++, len -= cw) {
+		cw = mbrlen(str, len, &mb);
+
+		if ((s == w - 1 && str[cw] != '\0') || TEXTBUF - i <= 8) {
+			memcpy(&buf[i], TRUNCSTR, TRUNCLEN);
+			i += TRUNCLEN;
+			goto end;
+		}
+
+		memcpy(&buf[i], str, cw);
+	}
+
+end:
+	buf[i] = '\0';
+	return fstrdup(buf);
 }
 
 void

@@ -28,6 +28,7 @@ void (*view_drawers[UI_VIEW_LAST])(void) = {
 
 Screen screen = { 0 };
 Focus focus = { 0 };
+Vector mouse = { 0 };
 
 Tabs view_tabs = {
 	/* Tactical is the terminology used in Aurora, so I decided to use it
@@ -94,6 +95,7 @@ ui_loop(void) {
 		ui_update_screen();
 	ui_keyboard_handle();
 	gui_click_handle();
+	mouse = GetMousePosition();
 	return 1;
 }
 
@@ -105,19 +107,36 @@ ui_deinit(void) {
 void
 ui_print(int x, int y, Color col, char *fmt, ...) {
 	va_list ap;
-	Vector pos;
+	Vector pos = {x, pane_y(y)};
 	char *text;
 
 	if (!pane_visible(y, y + FONT_SIZE))
 		return;
 
 	pos.x = x;
-	pos.y = pane_y(y);
 	va_start(ap, fmt);
 	text = vsmprintf(fmt, ap);
 	va_end(ap);
 	DrawTextEx(font, text, pos, (float)FONT_SIZE, FONT_SIZE/10, col);
 	free(text);
+}
+
+void
+ui_printw(int x, int y, int w, Color col, char *fmt, ...) {
+	va_list ap;
+	Vector pos = {x, pane_y(y)};
+	char *t1, *t2;
+
+	if (!pane_visible(y, y + FONT_SIZE))
+		return;
+
+	pos.x = x;
+	va_start(ap, fmt);
+	t1 = vsmprintf(fmt, ap);
+	va_end(ap);
+	t2 = strtrunc(t1, w / charpx);
+	DrawTextEx(font, t2, pos, (float)FONT_SIZE, FONT_SIZE/10, col);
+	free(t1);
 }
 
 void
@@ -233,6 +252,19 @@ ui_draw_rectangle(int x, int y, int w, int h, Color col) {
 		DrawRectangle(x, pane_y(y), w, h, col);
 }
 
+void
+ui_draw_expander(int x, int y, int w, int expanded) {
+	int p = (w / 2) - 1;
+	if (!pane_visible(y, y + w))
+		return;
+
+	if (w-1 & 1) warning("drawing plus with even width\n");
+
+	DrawRectangle(x, y, w, w, col_altbg);
+	DrawRectangle(x + 1, y + p + 1, w - 2, 1, col_fg);
+	if (!expanded)
+		DrawRectangle(x + p + 1, y + 1, 1, w - 2, col_fg);
+}
 
 #define SEGMAX 1500
 

@@ -62,6 +62,7 @@ tree_printer(int x, int y, Treeview *tv, Tree *t) {
 	Color c = sel ? col_info : col_fg;
 	Body *b;
 	int cx = tv->rect.x;
+	int cw = tv->rect.w;
 
 	if (!t) {
 		ui_print(x, y, col_fg, "Body");
@@ -71,9 +72,9 @@ tree_printer(int x, int y, Treeview *tv, Tree *t) {
 		ui_print(x, y, c, t->name);
 	} else {
 		b = t->data;
-		ui_print(x, y, c, "%s", b->name);
-		ui_print(cx + 3*W, y, c, "%s", b->parent ? b->parent->name : "");
-		ui_print(cx + 5*W, y, c, "%s", bodytype_strify(b));
+		ui_printw(x, y, cx + 3*W - x, c, "%s", b->name);
+		ui_printw(cx + 3*W, y, 2*W, c, "%s", b->parent ? b->parent->name : "");
+		ui_printw(cx + 5*W, y, cw, c, "%s", bodytype_strify(b));
 	}
 }
 
@@ -83,6 +84,8 @@ ui_handle_view_bodies(int nowsel) {
 	Tree *t;
 	Body *body;
 	int pos, i;
+
+	v->prevframe.sel = v->sel;
 
 	if (!v->sys)
 		v->sys = sys_default();
@@ -97,23 +100,6 @@ ui_handle_view_bodies(int nowsel) {
 		v->tree.t = &save->systems;
 	}
 }
-
-#if 0
-static int
-draw_body(int x, int y, Body *body) {
-	Color col;
-
-	if (body == v->sel)
-		col = col_info;
-	else
-		col = col_fg;
-
-	ui_print(x, y, col, "%s", body->name);
-	ui_print(x + 3*W, y, col, "%s", body->parent ? body->parent->name : "-");
-	ui_print(x + 5*W, y, col, "%s", bodytype_strify(body));
-	return y + FONT_SIZE;
-}
-#endif
 
 void
 ui_draw_view_bodies(void) {
@@ -143,6 +129,9 @@ ui_draw_view_bodies(void) {
 	x += gui_checkbox(x, y, &v->show.comet) + PAD * 2;
 	x += gui_checkbox(x, y, &v->show.nomineral);
 	ui_draw_border_around(v->disp.x, v->disp.y, x, v->disp.h, 1);
+
+	if (v->sel && !v->prevframe.sel && mouse.y > v->bodies.y + v->bodies.h)
+		pane_scroll(&v->tree.pane, INFOBOX_H);
 
 	gui_treeview(EXPLODE_RECT(v->bodies), &v->tree);
 

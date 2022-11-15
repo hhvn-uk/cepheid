@@ -180,3 +180,53 @@ int
 tree_iter(Tree *t, int maxdepth, Tree **p, int *depth) {
 	return tree_iter_f(t, maxdepth, p, depth, NULL, NULL);
 }
+
+void
+tree_sort_sideways(Tree *t, Treecompar compar, void *cdata) {
+	Tree *cp, *np, *p;
+
+	for (; t->p; t = t->p);
+
+	cp = t->n;
+	while (cp) {
+		np = cp->n;
+
+		p = cp->p;
+
+		if (cp->p) cp->p->n = cp->n;
+		if (cp->n) cp->n->p = cp->p;
+
+		for (; p; p = p->p) {
+			if (compar(p, cp, cdata) < 0) {
+				if (p->n) p->n->p = cp;
+				cp->n = p->n;
+				cp->p = p;
+				p->n = cp;
+				break;
+			}
+			if (!p->p) {
+				t->u->d = cp;
+				cp->p = NULL;
+				cp->n = p;
+				p->p = cp;
+				break;
+			}
+		}
+
+		cp = np;
+	}
+}
+
+static int
+tree_sort_filter(Tree *t, void *data) {
+	return !t->n && t->u;
+}
+
+void
+tree_sort(Tree *t, Treecompar compar, void *cdata) {
+	Tree *p;
+	int depth;
+
+	for (p = NULL; tree_iter_f(t, TREEMAX, &p, &depth, tree_sort_filter, NULL) != -1; )
+		tree_sort_sideways(p, compar, cdata);
+}

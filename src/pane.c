@@ -36,11 +36,7 @@ pane_end(void) {
 	}
 	if (m.x >= f->geom->x && m.x <= f->geom->x + f->geom->w &&
 			m.y >= f->geom->y && m.y <= f->geom->y + f->geom->h)
-		f->off -= ui_get_scroll() * SCROLL_MULT;
-	if (f->off > f->max - f->geom->h)
-		f->off = f->max - f->geom->h;
-	if (f->off < 0)
-		f->off = 0;
+		pane_scroll(f, ui_get_scroll() * SCROLL_MULT * -1);
 	EndScissorMode();
 }
 
@@ -74,4 +70,13 @@ pane_v(Vector v) {
 	if (!pane)
 		return (Vector) {v.x, v.y};
 	return (Vector) {v.x, v.y - pane->off};
+}
+
+void
+pane_scroll(Pane *f, int incr) {
+	f->off += incr;
+	if (f->off > f->max - f->geom->h)
+		f->off = f->max - f->geom->h;
+	if (f->off < 0)
+		f->off = 0;
 }

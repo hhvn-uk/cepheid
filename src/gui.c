@@ -344,7 +344,7 @@ gui_treeview(int x, int y, int w, int h, Treeview *tv) {
 	ui_draw_border_around(x, y, w, h, 1);
 
 	if (!tv->rect.w && !tv->rect.h) /* zero when unitialized */
-		tv->pane = (Pane)PANESCROLL;
+		tv->pane = PANESCROLL;
 	tv->rect = RECT(x, y, w, h);
 	tv->pane.geom = &tv->rect;
 
@@ -361,11 +361,8 @@ gui_treeview(int x, int y, int w, int h, Treeview *tv) {
 		cy += FONT_SIZE;
 		cx = x + PAD * (depth + 2);
 
-		if (tv->colmask & p->type) {
-			ui_draw_rectangle(cx - PAD,     cy + 2, 5, 5, col_altbg);
-			ui_draw_rectangle(cx - PAD,     cy + 4, 5, 1, col_fg);
-			ui_draw_rectangle(cx - PAD + 2, cy + 2, 1, 5, col_fg);
-		}
+		if (tv->colmask & p->type)
+			ui_draw_expander(cx - PAD - 2, cy - 1, 9, !p->collapsed);
 
 		if (tv->print)
 			tv->print(cx, cy, tv, p);
@@ -394,9 +391,11 @@ gui_click_treeview(Vector mouse, MouseButton button, Geom *geom, void *elem) {
 
 	for (i = 0, p = 0; tree_iter_f(tv->t, TREEMAX, &p, &depth, gui_treeview_filter, tv) != -1 && i <= pos; i++) {
 		if (i == pos) {
-			if (mouse.x < geom->x + PAD * (depth + 2) && p->type & tv->colmask)
+			if (p->type & tv->colmask && (!(p->type & tv->selmask) ||
+						mouse.x < geom->x + PAD * (depth + 2)))
 				p->collapsed = !p->collapsed;
-			else if (p->type & tv->selmask)
+			if (p->type & tv->selmask && (!(p->type & tv->colmask) ||
+						mouse.x > geom->x + PAD * (depth + 2)))
 				tv->sel = p;
 		}
 	}

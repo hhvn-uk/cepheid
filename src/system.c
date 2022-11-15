@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <raylib.h>
+#include <assert.h>
 #include "main.h"
 
 static Polar
@@ -43,6 +44,31 @@ sys_init(char *name) {
 	ret->furthest_body = NULL;
 	memset(&ret->num, 0, sizeof(ret->num));
 	return ret;
+}
+
+static int
+sys_tree_compar(Tree *a, Tree *b, void *data) {
+	System *sa, *sb;
+	Body *p;
+	float v1, v2;
+
+	assert(a->type == b->type);
+
+	switch (a->type) {
+	case SYSTREE_SYS:
+		sa = a->data;
+		sb = b->data;
+		return (abs(sa->lypos.x) + abs(sa->lypos.y)) -
+			(abs(sb->lypos.x) + abs(sb->lypos.y));
+	case SYSTREE_BODY:
+		for (p = a->data, v1 = 0; p->parent; p = p->parent)
+			v1 += (p->type == BODY_COMET ? p->maxdist : p->dist);
+		for (p = b->data, v2 = 0; p->parent; p = p->parent)
+			v2 += (p->type == BODY_COMET ? p->maxdist : p->dist);
+		return (v1 == v2 ? 0 : (v1 > v2 ? 1 : -1));
+	}
+
+	return 0;
 }
 
 void
@@ -103,13 +129,12 @@ sys_tree_load(void) {
 					(s->furthest_body->type == BODY_COMET ? s->furthest_body->maxdist : s->furthest_body->dist)))
 				s->furthest_body = bp[i];
 		}
-
-		/* TODO: actually sort the tree */
-		/* body_sort(bp, n); */
 	}
 
 	free(bp);
 	free(bn);
+
+	tree_sort(&save->systems, sys_tree_compar, NULL);
 }
 
 char *
