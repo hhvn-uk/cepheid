@@ -17,7 +17,7 @@ pane_begin(Pane *f) {
 void
 pane_end(void) {
 	Pane *f = pane;
-	Vector m = GetMousePosition();
+	Vector m = mouse.vector;
 
 	if (!f) return;
 
@@ -36,7 +36,7 @@ pane_end(void) {
 	}
 	if (m.x >= f->geom->x && m.x <= f->geom->x + f->geom->w &&
 			m.y >= f->geom->y && m.y <= f->geom->y + f->geom->h)
-		pane_scroll(f, ui_get_scroll() * SCROLL_MULT * -1);
+		pane_scroll(f, mouse.scroll * SCROLL_MULT * -1);
 	EndScissorMode();
 }
 

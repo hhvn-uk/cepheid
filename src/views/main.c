@@ -69,9 +69,7 @@ pxtokm(Vector vector) {
 
 void
 ui_handle_view_main(int nowsel) {
-	Vector mouse = GetMousePosition();
-	Vector delta = GetMouseDelta();
-	float wheel = ui_get_scroll();
+	float wheel = mouse.scroll;
 	float diff;
 	Body *furth;
 
@@ -79,7 +77,7 @@ ui_handle_view_main(int nowsel) {
 		furth = view_main.sys->furthest_body;
 
 #define SCROLL_DIVISOR 10
-	if (!ui_collides(view_main.infobox.geom, mouse)) {
+	if (!ui_collides(view_main.infobox.geom, mouse.vector)) {
 		if (wheel) {
 			diff = wheel * (view_main.kmperpx/SCROLL_DIVISOR);
 			if (diff > 0 || !furth || view_main.kmperpx * GetScreenHeight() <
@@ -92,9 +90,9 @@ ui_handle_view_main(int nowsel) {
 
 		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
 			if (view_main.pan) {
-				view_main.kmx -= delta.x * view_main.kmperpx;
-				view_main.kmy -= delta.y * view_main.kmperpx;
-			} else if (!ui_collides(view_main.infobox.geom, mouse)) {
+				view_main.kmx -= mouse.delta.x * view_main.kmperpx;
+				view_main.kmy -= mouse.delta.y * view_main.kmperpx;
+			} else if (!ui_collides(view_main.infobox.geom, mouse.vector)) {
 				view_main.pan = 1;
 			}
 		} else {
@@ -103,7 +101,7 @@ ui_handle_view_main(int nowsel) {
 
 		if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && !view_main.ruler.held) {
 			view_main.ruler.held = 1;
-			view_main.ruler.origin = pxtokm(mouse);
+			view_main.ruler.origin = pxtokm(mouse.vector);
 		} else if (IsMouseButtonUp(MOUSE_BUTTON_RIGHT)) {
 			view_main.ruler.held = 0;
 		}
@@ -217,8 +215,7 @@ draw_body(Body *body) {
 
 void
 ui_draw_view_main(void) {
-	Vector mouse = GetMousePosition();
-	Vector mousekm = pxtokm(mouse);
+	Vector mousekm = pxtokm(mouse.vector);
 	Vector ruler;
 	Geom geom;
 	Tree *t;
@@ -248,7 +245,7 @@ ui_draw_view_main(void) {
 	/* ruler */
 	if (view_main.ruler.held) {
 		ruler = kmtopx(view_main.ruler.origin);
-		ui_draw_line_v(ruler, mouse, 1, col_info);
+		ui_draw_line_v(ruler, mouse.vector, 1, col_info);
 		dist = ui_vectordist(view_main.ruler.origin, mousekm);
 		ui_print(mouse.x + PAD, mouse.y - PAD, col_info, "%s (%s)", strkm(dist), strly(dist));
 	}

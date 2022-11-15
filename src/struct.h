@@ -153,6 +153,13 @@ typedef struct {
 	Geom rect; /* for passing to functions */
 } Screen;
 
+typedef struct {
+	Vector vector;
+	Vector delta;
+	int x, y;
+	int scroll;
+} Mouse;
+
 #define TABS_MAX 16
 typedef struct {
 	int n;

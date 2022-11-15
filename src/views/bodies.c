@@ -80,7 +80,6 @@ tree_printer(int x, int y, Treeview *tv, Tree *t) {
 
 void
 ui_handle_view_bodies(int nowsel) {
-	Vector m = GetMousePosition();
 	Tree *t;
 	Body *body;
 	int pos, i;

@@ -28,7 +28,7 @@ void (*view_drawers[UI_VIEW_LAST])(void) = {
 
 Screen screen = { 0 };
 Focus focus = { 0 };
-Vector mouse = { 0 };
+Mouse mouse = { 0 };
 
 Tabs view_tabs = {
 	/* Tactical is the terminology used in Aurora, so I decided to use it
@@ -95,7 +95,14 @@ ui_loop(void) {
 		ui_update_screen();
 	ui_keyboard_handle();
 	gui_click_handle();
-	mouse = GetMousePosition();
+
+	mouse.vector = GetMousePosition();
+	mouse.delta = GetMouseDelta();
+	mouse.x = mouse.vector.x;
+	mouse.y = mouse.vector.y;
+	mouse.scroll = GetMouseWheelMove();
+	if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT))
+		mouse.scroll *= 2;
 	return 1;
 }
 
@@ -154,14 +161,6 @@ ui_title(char *fmt, ...) {
 int
 ui_textsize(char *text) {
 	return charpx * strlen(text);
-}
-
-float
-ui_get_scroll(void) {
-	float ret = GetMouseWheelMove();
-	if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT))
-		ret *= 2;
-	return ret;
 }
 
 int
