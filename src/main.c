@@ -2,6 +2,7 @@
 #include <time.h>
 #include <raylib.h>
 #include <signal.h>
+#include <stdlib.h>
 #include "main.h"
 
 #define DEFSAVE	"default"
@@ -9,6 +10,22 @@
 Save *save = NULL;
 int sigint = 0;
 int sigterm = 0;
+
+void
+error(int code, char *fmt, ...) {
+	va_list ap;
+
+	fprintf(stderr, "error: ");
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
+#ifdef DEBUG
+	raise(SIGTRAP);
+#else
+	exit(code);
+#endif /* DEBUG */
+}
 
 void
 warning(char *fmt, ...) {
@@ -20,8 +37,8 @@ warning(char *fmt, ...) {
 	va_end(ap);
 
 #ifdef DEBUG
-	raise(SIGABRT);
-#endif
+	raise(SIGTRAP);
+#endif /* DEBUG */
 }
 
 static void

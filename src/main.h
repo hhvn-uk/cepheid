@@ -20,6 +20,7 @@
 extern Save *save;
 extern int sigint;
 extern int sigterm;
+void	error(int code, char *fmt, ...);
 void	warning(char *fmt, ...);
 
 /* str.c */
@@ -188,6 +189,12 @@ extern Texture image_settings;
 #define DATA_LOAD_STEPS (1 + 7)
 void	data_load(void);
 void	data_unload(void);
+
+/* bdb.c */
+#define bdset(d, g, ...) _bdset(d, g, __VA_ARGS__, NULL)
+#define bdget(d, g, ...) _bdget(d, g, __VA_ARGS__, NULL)
+void	_bdset(char *dir, char *group, ...);
+void	_bdget(char *dir, char *group, ...);
 
 /* db.c */
 int	vdbsetf(char *dir, char *group, char *key, char *fmt, va_list args);
