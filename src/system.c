@@ -242,6 +242,10 @@ sys_default(void) {
 		return view_main.sys;
 	else if ((str = dbget(save->db.dir, "index", "selsystem")))
 		return sys_get(str);
-	else
+	else if (save->homesys)
 		return save->homesys;
+	else if (save->systems.d && save->systems.d->data)
+		return save->systems.d->data;
+	else
+		exit(1);
 }
