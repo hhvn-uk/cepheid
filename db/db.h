@@ -1,7 +1,5 @@
 #include <stddef.h>
 
-#define MAXGROUPS 256 /* groups in a DB */
-
 /* -----
  * Declaration
  */
