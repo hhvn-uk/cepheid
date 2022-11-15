@@ -80,10 +80,6 @@ tree_printer(int x, int y, Treeview *tv, Tree *t) {
 
 void
 ui_handle_view_bodies(int nowsel) {
-	Tree *t;
-	Body *body;
-	int pos, i;
-
 	v->prevframe.sel = v->sel;
 
 	if (!v->sys)
@@ -103,7 +99,6 @@ ui_handle_view_bodies(int nowsel) {
 void
 ui_draw_view_bodies(void) {
 	int x, y;
-	Body *body;
 
 	v->disp = RECT(PAD, VIEWS_HEIGHT + FONT_SIZE,
 		screen.w - PAD * 2, FONT_SIZE + PAD);

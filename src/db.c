@@ -146,6 +146,7 @@ dbgettree(char *dir, Tree *r, Treegetter func) {
 	int index;
 	int i, j;
 	Tree *t, *p;
+	int ret = 0;
 
 	glen = dblistgroups(&groups, dir);
 	slen = 0;
@@ -197,9 +198,14 @@ nchild:
 			 * therefore responsible for allocating the name
 			 * and returning it */
 			t = tree_add_child(t, name, 0, NULL, NULL);
-			dbtree_concat(split, j, group, index || j != slen - 1);
+			if (dbtree_concat(split, j, group, index || j != slen - 1) == -1) {
+				ret = -1;
+				continue;
+			}
 			if (!t->data)
 				t->name = func(dir, group, name, j + 1, t);
 		}
 	}
+
+	return ret;
 }

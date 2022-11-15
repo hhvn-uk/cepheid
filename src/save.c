@@ -26,7 +26,7 @@ save_free(void) {
 void
 save_read(char *name) {
 	char dir[PATH_MAX];
-	char *str;
+	/* char *str; */
 
 	if (save)
 		save_free();

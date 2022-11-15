@@ -257,7 +257,7 @@ ui_draw_expander(int x, int y, int w, int expanded) {
 	if (!pane_visible(y, y + w))
 		return;
 
-	if (w-1 & 1) warning("drawing plus with even width\n");
+	if ((w-1) & 1) warning("drawing plus with even width\n");
 
 	DrawRectangle(x, y, w, w, col_altbg);
 	DrawRectangle(x + 1, y + p + 1, w - 2, 1, col_fg);

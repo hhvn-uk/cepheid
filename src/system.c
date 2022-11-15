@@ -167,6 +167,7 @@ sys_tree_getter(char *dir, char *group, char *name, int depth, Tree *t) {
 		case BODY_ASTEROID:	s->num.asteroids++;	break;
 		case BODY_COMET:	s->num.comets++;	break;
 		case BODY_MOON:		s->num.moons++;		break;
+		case BODY_LAST: /* shut up compiler */          break;
 		}
 
 		b->radius = dbgetfloat(dir, group, "radius");
