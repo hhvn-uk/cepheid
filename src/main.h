@@ -102,7 +102,7 @@ int	ui_onscreen_circle(Vector centre, float r);
 int	ui_keyboard_check(int key, int *fcount);
 void	ui_keyboard_handle(void);
 void	ui_draw_views(void);
-void	ui_draw_rectangle(int x, int y, int w, int h, Color col);
+void	ui_draw_rect(int x, int y, int w, int h, Color col);
 void	ui_draw_expander(int x, int y, int w, int expanded);
 void	ui_draw_border(int x, int y, int w, int h, int px);
 void	ui_draw_border_around(int x, int y, int w, int h, int px);

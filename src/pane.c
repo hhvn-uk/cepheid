@@ -23,12 +23,12 @@ pane_end(void) {
 
 	pane = NULL; /* unset pane so we can draw freely */
 	if (f->max > f->geom->h) {
-		ui_draw_rectangle(f->geom->x + f->geom->w - SCROLLBAR_W,
+		ui_draw_rect(f->geom->x + f->geom->w - SCROLLBAR_W,
 				f->geom->y,
 				SCROLLBAR_W,
 				f->geom->h,
 				col_altbg);
-		ui_draw_rectangle(f->geom->x + f->geom->w - SCROLLBAR_W,
+		ui_draw_rect(f->geom->x + f->geom->w - SCROLLBAR_W,
 				f->geom->y + f->geom->h * f->off / f->max,
 				SCROLLBAR_W,
 				(float)f->geom->h / (float)f->max * (float)f->geom->h,

@@ -246,7 +246,7 @@ ui_draw_views(void) {
 }
 
 void
-ui_draw_rectangle(int x, int y, int w, int h, Color col) {
+ui_draw_rect(int x, int y, int w, int h, Color col) {
 	if (pane_visible(y, y + h))
 		DrawRectangle(x, pane_y(y), w, h, col);
 }
@@ -360,7 +360,7 @@ ui_vectordist(Vector a, Vector b) {
 
 void
 ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs) {
-	ui_draw_rectangle(x, y, w, h, col_bg);
+	ui_draw_rect(x, y, w, h, col_bg);
 	gui_tabs(x, y, w, WINDOW_TAB_HEIGHT, tabs);
 	ui_draw_border(x, y, w, h, WINDOW_BORDER);
 }

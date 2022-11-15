@@ -89,7 +89,7 @@ gui_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	int cx, selx = -1;
 	int i;
 
-	ui_draw_rectangle(x, y, w, h, col_bg);
+	ui_draw_rect(x, y, w, h, col_bg);
 
 	for (fw = w, fn = i = 0; i < tabs->n; i++) {
 		if (!tabs->tabs[i].w)
@@ -118,12 +118,12 @@ gui_tabs(int x, int y, int w, int h, Tabs *tabs) {
 		if (i == tabs->sel)
 			selx = cx;
 		else
-			ui_draw_rectangle(cx, y, tabw, h, col_altbg);
+			ui_draw_rect(cx, y, tabw, h, col_altbg);
 		ui_print(cx + padx + iw, y + pady, col_fg, "%s", tabs->tabs[i].name);
 		if (tabs->tabs[i].icon)
 			ui_draw_texture(*tabs->tabs[i].icon, cx + padx / 2,
 					y + (h - tabs->tabs[i].icon->width) / 2);
-		ui_draw_rectangle(cx + tabw - 1, y, 1, h, col_border);
+		ui_draw_rect(cx + tabw - 1, y, 1, h, col_border);
 	}
 
 	if (tabs->sel != tabs->n - 1) {
@@ -134,9 +134,9 @@ gui_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	}
 
 	ui_draw_border(x, y, w, h, 1);
-	if (selx != -1) ui_draw_rectangle(selx - 1, y + h - 1, tabw + 1, 1, col_bg); /* undraw bottom border */
-	if (tabs->sel == 0) ui_draw_rectangle(x, y + 1, 1, h - 1, col_bg); /* undraw left border */
-	if (tabs->sel == tabs->n - 1) ui_draw_rectangle(x + w - 1, y + 1, 1, h - 1, col_bg); /* undraw right border */
+	if (selx != -1) ui_draw_rect(selx - 1, y + h - 1, tabw + 1, 1, col_bg); /* undraw bottom border */
+	if (tabs->sel == 0) ui_draw_rect(x, y + 1, 1, h - 1, col_bg); /* undraw left border */
+	if (tabs->sel == tabs->n - 1) ui_draw_rect(x + w - 1, y + 1, 1, h - 1, col_bg); /* undraw right border */
 
 	gui_click_register(RECT(x, y, w, h), GUI_TAB, tabs);
 }
@@ -177,7 +177,7 @@ gui_checkbox(int x, int y, Checkbox *box) {
 
 	w = h = FONT_SIZE;
 	ui_draw_border(x, y, w, h, 1);
-	ui_draw_rectangle(x + 1, y + 1, w - 2, h - 2,
+	ui_draw_rect(x + 1, y + 1, w - 2, h - 2,
 			box->enabled ? (box->val ? col_fg : col_bg) : col_border);
 	ui_print(x + w + (w / 2), y + (h / 6), col_fg, "%s", box->label);
 	rw = w + (w / 2) + ui_textsize(box->label);
@@ -219,7 +219,7 @@ gui_dropdown(int x, int y, int w, Dropdown *d) {
 		ui_print(x + TPX, y + TPY, col_info, "%s", d->placeholder);
 
 	if (focused) {
-		ui_draw_rectangle(x, y + h, w, fh - h, col_altbg);
+		ui_draw_rect(x, y + h, w, fh - h, col_altbg);
 		for (i = 0; i < d->n; i++) {
 			ui_print(x + TPX, y + TPY + (i+1) * h, col_fg, "%s", d->str[i]);
 		}
@@ -262,13 +262,13 @@ gui_input(int x, int y, int w, Input *in) {
 		in->cur = in->len;
 
 	ui_draw_border_around(x, y, w, h, 1);
-	ui_draw_rectangle(x, y, w, h, focused ? col_bg : col_altbg);
+	ui_draw_rect(x, y, w, h, focused ? col_bg : col_altbg);
 	if (in->len)
 		ui_print(x + TPX, y + TPY, col_fg, "%S", in->wstr);
 	else if (!focused && in->placeholder)
 		ui_print(x + TPX, y + TPY, col_info, "%s", in->placeholder);
 	if (focused) {
-		ui_draw_rectangle(x + TPX + charpx * in->cur, y + TPY, 1, FONT_SIZE, col_fg);
+		ui_draw_rect(x + TPX + charpx * in->cur, y + TPY, 1, FONT_SIZE, col_fg);
 	}
 	gui_click_register(RECT(x, y, w, h), GUI_INPUT, in);
 }
@@ -362,7 +362,7 @@ gui_treeview(int x, int y, int w, int h, Treeview *tv) {
 			ui_print(cx, cy, tv->sel == p ? col_info : col_fg, "%s", p->name);
 
 		for (i = 0, cx = x + PAD; i < depth; i++, cx += PAD)
-			ui_draw_rectangle(cx + 2, cy - 2, 1, FONT_SIZE + 1, col_altbg);
+			ui_draw_rect(cx + 2, cy - 2, 1, FONT_SIZE + 1, col_altbg);
 	}
 
 	pane_end();

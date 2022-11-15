@@ -251,13 +251,13 @@ ui_draw_view_main(void) {
 	}
 
 	/* scale */
-	ui_draw_rectangle(view_main.scale.x,
+	ui_draw_rect(view_main.scale.x,
 			GetScreenHeight() - view_main.scale.y,
 			view_main.scale.w, 1, col_info); /* horizontal */
-	ui_draw_rectangle(view_main.scale.x,
+	ui_draw_rect(view_main.scale.x,
 			GetScreenHeight() - view_main.scale.y - view_main.scale.h,
 			1, view_main.scale.h, col_info); /* left vertical */
-	ui_draw_rectangle(view_main.scale.x + view_main.scale.w,
+	ui_draw_rect(view_main.scale.x + view_main.scale.w,
 			GetScreenHeight() - view_main.scale.y - view_main.scale.h,
 			1, view_main.scale.h, col_info); /* right vertical */
 	dist = view_main.scale.w * view_main.kmperpx;
