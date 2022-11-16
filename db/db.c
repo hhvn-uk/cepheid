@@ -18,7 +18,6 @@ struct DB {
 	char *dir;
 	struct Group **tracked;
 	size_t tl;
-	size_t ti;
 	DB *next;
 };
 
@@ -104,8 +103,12 @@ dbdeclare(char *dir) {
 	if (!db) return -1;
 	db->dir = strdup(dir);
 	if (!db->dir) return -1;
-	db->tracked = calloc(db->tl = 10, sizeof(struct Group *));
-	db->ti = 0;
+
+	db->tl = 10;
+	db->tracked = malloc(db->tl * sizeof(Group *));
+	if (!db->tracked) return -1;
+	memset(db->tracked, 0, db->tl * sizeof(Group *));
+
 
 	if (!dbs) {
 		db->prev = db->next = NULL;
@@ -143,54 +146,33 @@ getdbfor(char *path) {
  * Tracking loaded groups
  */
 static int
-getnulltracked(DB *db) {
-	int ret = -1;
-	int ta, i;
-	void *r;
-
-	for (ta = i = 0; i < db->tl; i++) {
-		if (!db->tracked[i]) {
-			if (ret == -1)
-				ret = i;
-			else
-				ta++;
-		}
-	}
-
-	if ((db->ti == db->tl - 1 || ta < 5) && ta < 10) {
-		r = realloc(db->tracked, (db->tl + 10) * sizeof(struct Group *));
-		if (r) {
-			db->tl += 10;
-			db->tracked = r;
-			memset(db->tracked + db->tl - 10, 0, sizeof(struct Group *) * 10);
-		}
-	}
-
-	if (ret == -1) {
-		for (i = db->ti; i < db->tl; i++)
-			if (!db->tracked[i])
-				ret = i;
-	}
-
-	return ret;
-}
-
-static int
 track(Group *group) {
+	DB *db = group->db;
+	void *r;
 	int i;
+
 	if (!group) return -1;
-	if ((i = getnulltracked(group->db))) {
-		group->db->tracked[i] = group;
-		return 0;
+	for (i = 0; i < db->tl; i++) {
+		if (!db->tracked[i]) {
+			db->tracked[i] = group;
+			return 0;
+		}
 	}
-	return -1;
+
+	r = realloc(db->tracked, (db->tl + 10) * sizeof(Group *));
+	if (!r) return -1;
+	db->tl += 10;
+	db->tracked = r;
+	memset(db->tracked + i, 0, 10 * sizeof(Group *));
+	db->tracked[i] = group;
+	return 0;
 }
 
 static int
 untrack(Group *group) {
 	int i;
 	if (!group) return -1;
-	for (i = 0; i < group->db->ti; i++) {
+	for (i = 0; i < group->db->tl; i++) {
 		if (group->db->tracked[i] == group) {
 			group->db->tracked[i] = NULL;
 			return 0;
@@ -206,7 +188,7 @@ gettracked(char *dir, char *group) {
 
 	if (!(db = getdbfor(dir)))
 		return NULL;
-	for (i = 0; i < db->ti; i++)
+	for (i = 0; i < db->tl; i++)
 		if (db->tracked[i] &&
 				strcmp(dir, db->tracked[i]->dir) == 0 &&
 				strcmp(group, db->tracked[i]->name) == 0)
