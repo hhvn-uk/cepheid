@@ -146,8 +146,7 @@ sys_tree_getter(char *dir, char *group, char *name, int depth, Tree *t) {
 		s = sys_init(name);
 		s->t = t;
 
-		s->lypos.x = dbgetfloat(dir, group, "x");
-		s->lypos.y = dbgetfloat(dir, group, "y");
+		bdbget(dir, group, 'v', "lypos", &s->lypos);
 
 		t->type = SYSTREE_SYS;
 		t->data = s;
@@ -170,19 +169,21 @@ sys_tree_getter(char *dir, char *group, char *name, int depth, Tree *t) {
 		case BODY_LAST: /* shut up compiler */          break;
 		}
 
-		b->radius = dbgetfloat(dir, group, "radius");
-		b->mass = dbgetfloat(dir, group, "mass");
-		b->orbdays = dbgetfloat(dir, group, "orbdays");
+		bdbget(dir, group,
+		'f', "radius", &b->radius,
+		'f', "mass", &b->mass,
+		'f', "orbdays", &b->orbdays);
 		if (b->type == BODY_COMET) {
-			/* mindist is on opposite side of parent */
-			b->mindist = 0 - dbgetfloat(dir, group, "mindist");
-			b->maxdist = dbgetfloat(dir, group, "maxdist");
-			b->curdist = dbgetfloat(dir, group, "curdist");
-			b->theta = dbgetfloat(dir, group, "theta");
-			b->inward = dbgetfloat(dir, group, "inward");
+			bdbget(dir, group,
+			'f', "mindist", &b->mindist,
+			'f', "maxdist", &b->maxdist,
+			'f', "curdist", &b->curdist,
+			'f', "theta", &b->theta,
+			'i', "inward", &b->inward);
 		} else {
-			b->dist = dbgetfloat(dir, group, "dist");
-			b->curtheta = dbgetfloat(dir, group, "curtheta");
+			bdbget(dir, group,
+			'f', "dist", &b->dist,
+			'f', "curtheta", &b->curtheta);
 		}
 
 		t->type = SYSTREE_BODY;
@@ -199,27 +200,31 @@ sys_tree_setter(char *dir, char *group, char *name, int depth, Tree *t) {
 	switch (t->type) {
 	case SYSTREE_SYS:
 		s = t->data;
-		dbsetfloat(dir, group, "x", s->lypos.x);
-		dbsetfloat(dir, group, "y", s->lypos.y);
+		bdbset(dir, group, 'v', "lypos", s->lypos);
+		break;
 	case SYSTREE_BODY:
 		b = t->data;
 
 		if (b->parent)
 			dbset(save->db.systems, group, "parent", b->parent->name);
 
-		dbsetfloat(dir, group, "radius", b->radius);
-		dbsetfloat(dir, group, "mass", b->mass);
-		dbsetfloat(dir, group, "orbdays", b->orbdays);
+		bdbset(dir, group,
+		'f', "radius", b->radius,
+		'f', "mass", b->mass,
+		'f', "orbdays", b->orbdays);
 		if (b->type == BODY_COMET) {
-			dbsetfloat(dir, group, "mindist", b->mindist);
-			dbsetfloat(dir, group, "maxdist", b->maxdist);
-			dbsetfloat(dir, group, "curdist", b->curdist);
-			dbsetfloat(dir, group, "theta", b->theta);
-			dbsetfloat(dir, group, "inward", b->inward);
+			bdbset(dir, group,
+			'f', "mindist", b->mindist,
+			'f', "maxdist", b->maxdist,
+			'f', "curdist", b->curdist,
+			'f', "theta", b->theta,
+			'i', "inward", b->inward);
 		} else {
-			dbsetfloat(dir, group, "dist", b->dist);
-			dbsetfloat(dir, group, "curtheta", b->curtheta);
+			bdbset(dir, group,
+			'f', "dist", b->dist,
+			'f', "curtheta", b->curtheta);
 		}
+		break;
 	}
 }
 

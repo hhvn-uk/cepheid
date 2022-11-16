@@ -30,16 +30,6 @@ dbsetf(char *dir, char *group, char *key, char *fmt, ...) {
 }
 
 int
-dbsetint(char *dir, char *group, char *key, int val) {
-	return dbsetf(dir, group, key, "%d", val);
-}
-
-int
-dbsetfloat(char *dir, char *group, char *key, float val) {
-	return dbsetf(dir, group, key, "%f", val);
-}
-
-int
 vdbgetf(char *dir, char *group, char *key, char *fmt, va_list args) {
 	va_list ap;
 	char *str;
@@ -62,22 +52,6 @@ dbgetf(char *dir, char *group, char *key, char *fmt, ...) {
 	va_start(ap, fmt);
 	ret = vdbgetf(dir, group, key, fmt, ap);
 	va_end(ap);
-	return ret;
-}
-
-int
-dbgetint(char *dir, char *group, char *key) {
-	int ret;
-
-	dbgetf(dir, group, key, "%d", &ret);
-	return ret;
-}
-
-float
-dbgetfloat(char *dir, char *group, char *key) {
-	float ret;
-
-	dbgetf(dir, group, key, "%f", &ret);
 	return ret;
 }
 

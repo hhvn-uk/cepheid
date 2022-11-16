@@ -217,6 +217,37 @@ strsplit(char *str, char *sep, char **list, size_t len) {
 	return i;
 }
 
+void
+strjoinl(char *sep, char **ret, char *append) {
+	char *tmp;
+
+	if (*ret == NULL) {
+		*ret = nstrdup(append);
+		return;
+	}
+
+	tmp = smprintf("%s%s%s", *ret, sep, append);
+	free(*ret);
+	*ret = tmp;
+}
+
+char *
+strjoin(char *sep, char **list, size_t len) {
+	size_t i;
+	char *ret;
+
+	if (!len || !list)
+		return NULL;
+
+	if (len == 1)
+		return nstrdup(*list);
+
+	for (i = 0, ret = NULL; list && *list && i < len; i++)
+		strjoinl(sep, &ret, list[i]);
+
+	return ret;
+}
+
 #define TRUNCSTR "…"
 #define TRUNCLEN strlen(TRUNCSTR)
 

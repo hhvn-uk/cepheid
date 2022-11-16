@@ -41,6 +41,8 @@ int	strlistpos(char *str, char **list, size_t len);
 float	strnum(char *str);
 size_t	strlistcmp(char **l1, size_t s1, char **l2, size_t s2);
 size_t	strsplit(char *str, char *sep, char **list, size_t len);
+void	strjoinl(char *sep, char **ret, char *append);
+char *	strjoin(char *sep, char **list, size_t len);
 char *	strtrunc(char *str, int w);
 void	edittrunc(wchar_t *str, int *len, int *cur);
 void	editrm(wchar_t *str, int *len, int *cur);
@@ -191,20 +193,16 @@ void	data_load(void);
 void	data_unload(void);
 
 /* bdb.c */
-#define bdset(d, g, ...) _bdset(d, g, __VA_ARGS__, NULL)
-#define bdget(d, g, ...) _bdget(d, g, __VA_ARGS__, NULL)
-void	_bdset(char *dir, char *group, ...);
-void	_bdget(char *dir, char *group, ...);
+#define bdbset(d, g, ...) _bdbset(d, g, __VA_ARGS__, NULL)
+#define bdbget(d, g, ...) _bdbget(d, g, __VA_ARGS__, NULL)
+void	_bdbset(char *dir, char *group, ...);
+void	_bdbget(char *dir, char *group, ...);
 
 /* db.c */
 int	vdbsetf(char *dir, char *group, char *key, char *fmt, va_list args);
 int	dbsetf(char *dir, char *group, char *key, char *fmt, ...);
-int	dbsetint(char *dir, char *group, char *key, int val);
-int	dbsetfloat(char *dir, char *group, char *key, float val);
 int	vdbgetf(char *dir, char *group, char *key, char *fmt, va_list args);
 int	dbgetf(char *dir, char *group, char *key, char *fmt, ...);
-int	dbgetint(char *dir, char *group, char *key);
-float	dbgetfloat(char *dir, char *group, char *key);
 int	dbgettree(char *dir, Tree *t, Treegetter func);
 int	dbsettree(char *dir, Tree *t, Treesetter func);
 
