@@ -51,7 +51,6 @@ vdbgetf(char *dir, char *group, char *key, char *fmt, va_list args) {
 	va_copy(ap, args);
 	ret = vsscanf(str, fmt, ap);
 	va_end(ap);
-	free(str);
 	return ret;
 }
 
