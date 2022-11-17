@@ -54,16 +54,16 @@ View_main view_main = {
 Vector
 kmtopx(Vector km) {
 	return (Vector) {
-		(GetScreenWidth() / 2) + (km.x - view_main.kmx) / view_main.kmperpx,
-		(GetScreenHeight() / 2) + (km.y - view_main.kmy) / view_main.kmperpx
+		(screen.w / 2) + (km.x - view_main.kmx) / view_main.kmperpx,
+		(screen.h / 2) + (km.y - view_main.kmy) / view_main.kmperpx
 	};
 }
 
 Vector
 pxtokm(Vector vector) {
 	return (Vector) {
-		((vector.x - GetScreenWidth() / 2) * view_main.kmperpx) + view_main.kmx,
-		((vector.y - GetScreenHeight() / 2) * view_main.kmperpx) + view_main.kmy
+		((vector.x - screen.w / 2) * view_main.kmperpx) + view_main.kmx,
+		((vector.y - screen.h / 2) * view_main.kmperpx) + view_main.kmy
 	};
 }
 
@@ -80,11 +80,11 @@ ui_handle_view_main(int nowsel) {
 	if (!ui_collides(view_main.infobox.geom, mouse.vector)) {
 		if (wheel) {
 			diff = wheel * (view_main.kmperpx/SCROLL_DIVISOR);
-			if (diff > 0 || !furth || view_main.kmperpx * GetScreenHeight() <
+			if (diff > 0 || !furth || view_main.kmperpx * screen.h <
 					2 * (furth->type == BODY_COMET ? furth->maxdist : furth->dist)) {
 				view_main.kmperpx -= diff;
-				view_main.kmx += (mouse.x - GetScreenWidth() / 2) * diff;
-				view_main.kmy += (mouse.y - GetScreenHeight() / 2) * diff;
+				view_main.kmx += (mouse.x - screen.w / 2) * diff;
+				view_main.kmy += (mouse.y - screen.h / 2) * diff;
 			}
 		}
 
@@ -224,10 +224,10 @@ ui_draw_view_main(void) {
 	float x, y;
 
 #ifdef DEBUG
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD, col_fg, "W: %f | H: %f", (float)screen.w, (float)screen.h);
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD * 2, col_fg, "Xoff: %f | Yoff: %f | km/px: %f",
+	ui_print(screen.w / 2, VIEWS_HEIGHT + PAD, col_fg, "W: %f | H: %f", (float)screen.w, (float)screen.h);
+	ui_print(screen.w / 2, VIEWS_HEIGHT + PAD * 2, col_fg, "Xoff: %f | Yoff: %f | km/px: %f",
 			view_main.kmx, view_main.kmy, view_main.kmperpx);
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD * 3, col_fg, "X: %f | Y: %f",
+	ui_print(screen.w / 2, VIEWS_HEIGHT + PAD * 3, col_fg, "X: %f | Y: %f",
 			mousekm.x, mousekm.y);
 #endif /* DEBUG */
 
@@ -252,17 +252,17 @@ ui_draw_view_main(void) {
 
 	/* scale */
 	ui_draw_rect(view_main.scale.x,
-			GetScreenHeight() - view_main.scale.y,
+			screen.h - view_main.scale.y,
 			view_main.scale.w, 1, col_info); /* horizontal */
 	ui_draw_rect(view_main.scale.x,
-			GetScreenHeight() - view_main.scale.y - view_main.scale.h,
+			screen.h - view_main.scale.y - view_main.scale.h,
 			1, view_main.scale.h, col_info); /* left vertical */
 	ui_draw_rect(view_main.scale.x + view_main.scale.w,
-			GetScreenHeight() - view_main.scale.y - view_main.scale.h,
+			screen.h - view_main.scale.y - view_main.scale.h,
 			1, view_main.scale.h, col_info); /* right vertical */
 	dist = view_main.scale.w * view_main.kmperpx;
 	ui_print(view_main.scale.x + view_main.scale.w + FONT_SIZE / 3,
-			GetScreenHeight() - view_main.scale.y - FONT_SIZE / 2,
+			screen.h - view_main.scale.y - FONT_SIZE / 2,
 			col_info, "%s", strkm(dist));
 
 	/* infobox */
