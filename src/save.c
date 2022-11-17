@@ -82,7 +82,7 @@ save_create(char *name) {
 		return -1;
 
 	snprintf(path, sizeof(path), "%s/%s/Systems/Sol", SAVEDIR, name);
-	if (wdir_sol(path) == -1)
+	if (dirs_write("sol", path) == -1)
 		return -1;
 
 	snprintf(path, sizeof(path), "%s/%s/index", SAVEDIR, name);

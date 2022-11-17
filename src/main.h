@@ -176,8 +176,8 @@ void	save_write(void);
 int	save_exists(char *name);
 int	save_create(char *name);
 
-/* ../data/sol.c */
-int	wdir_sol(char *dir);
+/* ../data/dirs.c */
+int	dirs_write(char *dir, char *to);
 
 /* data.c */
 extern Font font;

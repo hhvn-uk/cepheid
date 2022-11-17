@@ -3,7 +3,7 @@ DBDIR	= db
 DBLIB	= $(DBDIR)/db.o
 DBTOOL	= $(DBDIR)/dbtool
 SRCDIR	= src
-SRC	= $(shell find $(SRCDIR) -name "*.c") styles/$(STYLE).c data/sol.c
+SRC	= $(shell find $(SRCDIR) -name "*.c") styles/$(STYLE).c data/dirs.c
 OBJ	= $(SRC:.c=.o)
 BIN	= cepheid
 RAYLIB	= -lraylib -lGL -lm -lpthread -ldl -lrt -lX11

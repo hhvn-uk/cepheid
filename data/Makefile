@@ -2,7 +2,7 @@ FONTS	= $(shell find . -name "*.ttf")
 ICONS	= $(shell find icons -name "*.png")
 HEADERS	= $(FONTS:.ttf=.h) $(ICONS:.png=.h)
 
-all: $(HEADERS) sol.c
+all: $(HEADERS) dirs.c
 
 sol: worlds.tsv worlds-parse.awk
 	rm -rf sol
@@ -11,8 +11,8 @@ sol: worlds.tsv worlds-parse.awk
 	printf "x\t0\n" >> sol/index
 	printf "y\t0\n" >> sol/index
 
-sol.c: sol
-	./dir2c.sh sol
+dirs.c: sol
+	./dir2h.sh sol
 
 # Thanks Jonathan
 worlds.tsv:
