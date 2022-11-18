@@ -59,7 +59,9 @@ typedef struct {
 		Geom geom;
 	} info;
 	int pan;
-	Vector off;
-	float lytopx;
+	struct {
+		float x, y;
+		float topx;
+	} ly;
 	System *sel;
 } View_sys;

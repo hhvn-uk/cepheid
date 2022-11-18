@@ -42,24 +42,6 @@ Tabs view_tabs = {
 		{&image_settings, "Settings", 0}}
 };
 
-View_sys view_sys = {
-	.info = {
-		.geom = {
-			.x = 0,
-			.y = VIEWS_HEIGHT,
-			.w = 300,
-			.h = 0, /* see ui_handle_view_sys() */
-		},
-	},
-	.pan = 0,
-	.off = {
-		.x = 0,
-		.y = 0,
-	},
-	.lytopx = 0.025,
-	.sel = NULL,
-};
-
 int charpx; /* thank god for monospaced fonts */
 
 void
@@ -384,15 +366,6 @@ ui_handle_view_design(int nowsel) {
 }
 
 void
-ui_handle_view_sys(int nowsel) {
-	if (nowsel)
-		ui_title("Systems");
-	view_sys.info.geom.h = GetScreenHeight() - VIEWS_HEIGHT;
-	if (!view_sys.sel)
-		view_sys.sel = sys_default();
-}
-
-void
 ui_handle_view_settings(int nowsel) {
 	if (nowsel)
 		ui_title("Settings");
@@ -419,37 +392,6 @@ ui_draw_view_design(void) {
 	ui_print(GetScreenWidth() / 4, VIEWS_HEIGHT + PAD, col_fg, "Selectable components here");
 	ui_print((GetScreenWidth() / 4) * 2, VIEWS_HEIGHT + PAD, col_fg, "Selected components");
 	ui_print((GetScreenWidth() / 4) * 3, VIEWS_HEIGHT + PAD, col_fg, "Class info");
-}
-
-void
-ui_draw_view_sys(void) {
-	int x, y;
-
-	x = view_sys.info.geom.x + view_sys.info.geom.w;
-	y = view_sys.info.geom.y;
-
-	/* draw map */
-
-	/* draw divider */
-	ui_draw_line(x, y, x, y + view_sys.info.geom.h, 1, col_border);
-
-	/* draw info */
-	x = view_sys.info.geom.x + PAD;
-	y += PAD;
-	if (view_sys.sel) {
-		ui_print(x, y, col_fg, "%s", view_sys.sel->name);
-		ui_draw_line(x, y + FONT_SIZE, x + view_sys.info.geom.w - 20,
-					y + FONT_SIZE, 1, col_border);
-		y += 30;
-		ui_print(x, y,      col_fg, "Stars:     %d", view_sys.sel->num.stars);
-		ui_print(x, y + 10, col_fg, "Planets:   %d", view_sys.sel->num.planets);
-		ui_print(x, y + 20, col_fg, "Dwarfs:    %d", view_sys.sel->num.dwarfs);
-		ui_print(x, y + 30, col_fg, "Asteroids: %d", view_sys.sel->num.asteroids);
-		ui_print(x, y + 40, col_fg, "Comets:    %d", view_sys.sel->num.comets);
-		ui_print(x, y + 50, col_fg, "Moons:     %d", view_sys.sel->num.moons);
-		ui_draw_line(x, y + 62, x + 85, y + 62, 1, col_fg);
-		/* ui_print(x, y + 65, col_fg, "Total:     %d", view_sys.sel->bodies_len); TODO: tree_count() */
-	}
 }
 
 void

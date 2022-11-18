@@ -86,7 +86,6 @@ extern void (*view_drawers[UI_VIEW_LAST])(void);
 extern Screen screen;
 extern Focus focus;
 extern Mouse mouse;
-extern View_sys view_sys;
 extern int charpx;
 void	ui_init(void);
 void	ui_update_screen(void);
@@ -120,12 +119,10 @@ float	ui_vectordist(Vector a, Vector b);
 void	ui_handle_view_colonies(int nowsel);
 void	ui_handle_view_fleets(int nowsel);
 void	ui_handle_view_design(int nowsel);
-void	ui_handle_view_sys(int nowsel);
 void	ui_handle_view_settings(int nowsel);
 void	ui_draw_view_colonies(void);
 void	ui_draw_view_fleets(void);
 void	ui_draw_view_design(void);
-void	ui_draw_view_sys(void);
 void	ui_draw_view_settings(void);
 
 /* gui.c */
@@ -137,15 +134,20 @@ void	gui_dropdown(int x, int y, int w, Dropdown *d);
 void	gui_input(int x, int y, int w, Input *in);
 void	gui_treeview(int x, int y, int w, int h, Treeview *tv);
 
-/* ui/main.c */
+/* views/main.c */
 extern View_main view_main;
 void	ui_handle_view_main(int nowsel);
 void	ui_draw_view_main(void);
 
-/* ui/bodies.c */
+/* views/bodies.c */
 extern View_bodies view_bodies;
 void	ui_handle_view_bodies(int nowsel);
 void	ui_draw_view_bodies(void);
+
+/* views/sys.c */
+extern View_sys view_sys;
+void	ui_handle_view_sys(int nowsel);
+void	ui_draw_view_sys(void);
 
 /* pane.c */
 void	pane_begin(Pane *f);
