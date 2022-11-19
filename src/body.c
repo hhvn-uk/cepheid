@@ -53,3 +53,9 @@ body_init(char *name) {
 
 	return ret;
 }
+
+void
+body_free(Body *b) {
+	free(b->name);
+	free(b);
+}

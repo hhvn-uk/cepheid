@@ -21,6 +21,7 @@ typedef struct Treeview Treeview;
 
 typedef char * (*Treegetter)(char *dir, char *group, char *name, int depth, Tree *t);
 typedef void (*Treesetter)(char *dir, char *group, char *name, int depth, Tree *t);
+typedef void (*Treefree)(Tree *t);
 typedef int (*Treefilter)(Tree *t, void *data);
 typedef void (*Treeprinter)(int x, int y, Treeview *tv, Tree *t);
 

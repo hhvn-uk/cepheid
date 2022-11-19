@@ -49,7 +49,7 @@ tree_add_child(Tree *t, char *name, int type, void *data, Tree **ptr) {
 
 /* Deletes a node in the tree and replaces it with its children. */
 int
-tree_delete(Tree **t, int freedata) {
+tree_delete(Tree **t, Treefree freedata) {
 	Tree *e;
 	Tree *p;
 	Tree *fc, *lc;
@@ -79,14 +79,14 @@ tree_delete(Tree **t, int freedata) {
 		e->n->p = lc ? lc : e->p;
 
 	if (freedata)
-		free(e->data);
+		freedata(e);
 	free(e);
 
 	return 0;
 }
 
 static Tree *
-tree_delete_r_sub(Tree *e, int freedata) {
+tree_delete_r_sub(Tree *e, Treefree freedata) {
 	Tree *c;
 	Tree *n;
 
@@ -94,7 +94,7 @@ tree_delete_r_sub(Tree *e, int freedata) {
 	n = e->n;
 
 	if (freedata)
-		free(e->data);
+		freedata(e);
 	free(e);
 
 	while (c)
@@ -105,7 +105,7 @@ tree_delete_r_sub(Tree *e, int freedata) {
 
 /* Deletes a node and its children. */
 int
-tree_delete_r(Tree **t, int freedata) {
+tree_delete_r(Tree **t, Treefree freedata) {
 	Tree *e;
 
 	if (!*t)
@@ -126,6 +126,11 @@ tree_delete_r(Tree **t, int freedata) {
 
 	tree_delete_r_sub(e, freedata);
 	return 0;
+}
+
+int
+tree_delete_root(Tree *t, Treefree freedata) {
+	return tree_delete_r(&t->d, freedata);
 }
 
 static int

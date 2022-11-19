@@ -57,8 +57,9 @@ Polar	polar_add(Polar abs, Polar rel);
 
 /* tree.c */
 Tree *	tree_add_child(Tree *t, char *name, int type, void *data, Tree **ptr);
-int	tree_delete(Tree **t, int freedata);
-int	tree_delete_r(Tree **t, int freedata);
+int	tree_delete(Tree **t, Treefree freedata);
+int	tree_delete_r(Tree **t, Treefree freedata);
+int	tree_delete_root(Tree *t, Treefree freedata);
 int	tree_iter_f(Tree *t, int maxdepth, Tree **p, int *depth, Treefilter filter, void *fdata);
 int	tree_iter(Tree *t, int maxdepth, Tree **p, int *depth);
 void	tree_sort_sideways(Tree *t, Treecompar compar, void *cdata);
@@ -165,13 +166,16 @@ System *sys_init(char *name);
 void	sys_tree_load(void);
 char *	sys_tree_getter(char *dir, char *group, char *name, int depth, Tree *t);
 void	sys_tree_setter(char *dir, char *group, char *name, int depth, Tree *t);
+void	sys_tree_free(Tree *t);
 System *sys_get(char *name);
 System *sys_default(void);
+void	sys_free(System *s);
 
 /* body.c */
 int	bodytype_enumify(char *name);
 char *	bodytype_strify(Body *body);
 Body *	body_init(char *name);
+void	body_free(Body *b);
 
 /* save.c */
 void 	save_read(char *dir);

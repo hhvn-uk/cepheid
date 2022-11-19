@@ -46,6 +46,12 @@ sys_init(char *name) {
 	return ret;
 }
 
+void
+sys_free(System *s) {
+	free(s->name);
+	free(s);
+}
+
 static int
 sys_tree_compar(Tree *a, Tree *b, void *data) {
 	System *sa, *sb;
@@ -225,6 +231,14 @@ sys_tree_setter(char *dir, char *group, char *name, int depth, Tree *t) {
 			'f', "curtheta", b->curtheta);
 		}
 		break;
+	}
+}
+
+void
+sys_tree_free(Tree *t) {
+	switch (t->type) {
+	case SYSTREE_SYS: sys_free(t->data);	break;
+	case SYSTREE_BODY: body_free(t->data);	break;
 	}
 }
 

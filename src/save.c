@@ -6,20 +6,13 @@
 #include <sys/stat.h>
 #include "main.h"
 
-/* Plan for dealing with multiple saves:
- * - saves: linked list with all saves that have been loaded (some data pruned)
- * - save: the current save
- * - save_get(name): get a save from saves/disk by name and load necessary data
- * - save_select(name): set save to save_get(name) + housekeeping
- */
-
 static void
 save_free(void) {
 	free(save->db.dir);
 	free(save->db.races);
 	free(save->db.systems);
 	free(save->db.fleets);
-	/* free systems? */
+	tree_delete_root(&save->systems, sys_tree_free);
 	free(save);
 }
 
