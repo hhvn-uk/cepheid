@@ -50,6 +50,13 @@ save_read(char *name) {
 	return;
 };
 
+int
+save_changed(void) {
+	if (!save)
+		return 0;
+	return dbchanges(save->db.dir) ? 1 : 0;
+}
+
 void
 save_write(void) {
 	if (view_main.sys)

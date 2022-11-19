@@ -18,6 +18,7 @@ struct DB {
 	char *dir;
 	struct Group **tracked;
 	size_t tl;
+	int changes;
 	DB *next;
 };
 
@@ -26,6 +27,7 @@ struct Group {
 	char *dir;
 	char *name;
 	char *path;
+	int changes;
 	Pair *pairs;
 };
 
@@ -108,7 +110,7 @@ dbdeclare(char *dir) {
 	db->tracked = malloc(db->tl * sizeof(Group *));
 	if (!db->tracked) return -1;
 	memset(db->tracked, 0, db->tl * sizeof(Group *));
-
+	db->changes = 0;
 
 	if (!dbs) {
 		db->prev = db->next = NULL;
@@ -319,6 +321,7 @@ initgroup(char *dir, char *group) {
 		return NULL;
 	}
 	sprintf(ret->path, "%s/%s", dir, group);
+	ret->changes = 0;
 	track(ret);
 	return ret;
 }
@@ -551,11 +554,20 @@ int
 dbset(char *dir, char *group, char *key, char *val) {
 	Group *gp;
 	Pair *pp;
+	int ret;
+
 	if (!(gp = getgroup(dir, group, 1)))
 		return -1;
 	if (!(pp = getpair(gp, key)))
-		return appendpair(&gp->pairs, key, val);
-	return dbset_p(pp, val);
+		ret = appendpair(&gp->pairs, key, val);
+	else
+		ret = dbset_p(pp, val);
+
+	if (ret != -1) {
+		gp->changes++;
+		gp->db->changes++;
+	}
+	return ret;
 }
 
 /*
@@ -651,6 +663,12 @@ dbwritegroup_p(Group *group) {
 		return -1;
 	}
 
+	if (!group->changes)
+		return 0;
+
+	group->db->changes -= group->changes;
+	group->changes = 0;
+
 	path = strdup(group->path);
 	if (!path) return -1;
 	dir = dirname(path);
@@ -699,6 +717,25 @@ dbwrite(char *db) {
 			if (dbwritegroup_p(p->tracked[i]) == -1)
 				ret = -1;
 	return ret;
+}
+
+/*
+ * Changes
+ */
+int
+dbchangesgroup(char *dir, char *group) {
+	Group *p;
+	if ((p = getgroup(dir, group, 0)))
+		return p->changes;
+	return 0;
+}
+
+int
+dbchanges(char *db) {
+	DB *p;
+	if ((p = getdb(db)))
+		return p->changes;
+	return 0;
 }
 
 /*

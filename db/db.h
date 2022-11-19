@@ -123,6 +123,22 @@ int dbwritegroup(char *dir, char *group);
 int dbwrite(char *db);
 
 /* -----
+ * Checking for changes
+ */
+
+/* Check for changes in a group.
+ * Returns the number of changes.
+ * On error, returns 0, but this can also be valid.
+ */
+int dbchangesgroup(char *dir, char *group);
+
+/* Check for changes in a DB.
+ * Returns the number of changes.
+ * On error, returns 0, but this can also be valid.
+ */
+int dbchanges(char *db);
+
+/* -----
  * Cleanup
  */
 

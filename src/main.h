@@ -174,8 +174,8 @@ char *	bodytype_strify(Body *body);
 Body *	body_init(char *name);
 
 /* save.c */
-#define SAVE_READ_STEPS 2
 void 	save_read(char *dir);
+int	save_changed(void);
 void	save_write(void);
 int	save_exists(char *name);
 int	save_create(char *name);
