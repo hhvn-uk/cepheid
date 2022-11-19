@@ -28,6 +28,7 @@
 
 /* colours */
 extern const Color col_fg;
+extern const Color col_altfg;
 extern const Color col_bg;
 extern const Color col_altbg;
 extern const Color col_border;

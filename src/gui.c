@@ -6,6 +6,7 @@ static int clickablei = 0;
 
 static void gui_click_tabs(MouseButton button, Geom *geom, void *elem);
 static void gui_click_checkbox(MouseButton button, Geom *geom, void *elem);
+static void gui_click_button(MouseButton button, Geom *geom, void *elem);
 static void gui_click_input(MouseButton button, Geom *geom, void *elem);
 static void gui_click_dropdown(MouseButton button, Geom *geom, void *elem);
 static void gui_click_treeview(MouseButton button, Geom *geom, void *elem);
@@ -17,7 +18,7 @@ static void (*click_handlers[GUI_ELEMS])(
 		Geom *geom, void *elem) = {
 	[GUI_TAB] = gui_click_tabs,
 	[GUI_CHECKBOX] = gui_click_checkbox,
-	[GUI_BUTTON] = NULL,
+	[GUI_BUTTON] = gui_click_button,
 	[GUI_INPUT] = gui_click_input,
 	[GUI_DROPDOWN] = gui_click_dropdown,
 	[GUI_TREEVIEW] = gui_click_treeview,
@@ -194,6 +195,27 @@ gui_click_checkbox(MouseButton button, Geom *geom, void *elem) {
 	if (button != MOUSE_BUTTON_LEFT)
 		return;
 	checkbox->val = !checkbox->val;
+}
+
+void
+gui_button(int x, int y, int w, Button *b) {
+	int h = BUTTON_HEIGHT;
+
+	ui_draw_border_around(x, y, w, h, 1);
+	ui_print(x + (w - ui_textsize(b->label)) / 2, y + PAD,
+			b->enabled ? col_fg : col_altfg,
+			"%s", b->label);
+
+	if (b->enabled)
+		gui_click_register(RECT(x, y, w, h), GUI_BUTTON, b);
+}
+
+static void
+gui_click_button(MouseButton button, Geom *geom, void *elem) {
+	Button *b = elem;
+
+	if (button == MOUSE_BUTTON_LEFT)
+		b->func(b->arg);
 }
 
 void

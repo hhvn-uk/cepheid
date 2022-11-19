@@ -178,6 +178,7 @@ typedef struct {
 } Checkbox;
 
 typedef struct {
+	int enabled;
 	char *label;
 	void (*func)(int);
 	int arg;

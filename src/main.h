@@ -126,10 +126,12 @@ void	ui_draw_view_design(void);
 void	ui_draw_view_settings(void);
 
 /* gui.c */
+#define BUTTON_HEIGHT (PAD * 2 + FONT_SIZE)
 extern void (*gui_key_handlers[GUI_ELEMS])(void *elem, int *fcount);
 int	gui_click_handle(void);
 void	gui_tabs(int x, int y, int w, int h, Tabs *tabs);
 int	gui_checkbox(int x, int y, Checkbox *checkbox); /* returns width */
+void	gui_button(int x, int y, int w, Button *b);
 void	gui_dropdown(int x, int y, int w, Dropdown *d);
 void	gui_input(int x, int y, int w, Input *in);
 void	gui_treeview(int x, int y, int w, int h, Treeview *tv);
