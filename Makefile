@@ -4,7 +4,7 @@ DBLIB	= $(DBDIR)/db.o
 DBTOOL	= $(DBDIR)/dbtool
 SRCDIR	= src
 SRC	= $(shell find $(SRCDIR) -name "*.c") styles/$(STYLE).c data/dirs.c
-OBJ	= $(SRC:.c=.o)
+OBJ	= $(SRC:.c=.o) $(shell find $(DATADIR) -name "*.o" | grep -v 'dirs\.o')
 BIN	= cepheid
 RAYLIB	= -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 LDFLAGS	= $(RAYLIB) $(DBLIB)
@@ -42,7 +42,7 @@ data-clean:
 	@cd $(DATADIR); make clean
 
 tags: $(SRC)
-	ctags -R .
+	ctags --exclude=data/*.h --exclude=data/icons/*.h -R .
 
 # ignore generated headers
 sloccount:

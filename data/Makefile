@@ -1,8 +1,9 @@
 FONTS	= $(shell find . -name "*.ttf")
 ICONS	= $(shell find icons -name "*.png")
-HEADERS	= $(FONTS:.ttf=.h) $(ICONS:.png=.h)
+OBJ	= $(FONTS:.ttf=.o) $(ICONS:.png=.o) splash.o
+HEADERS	= $(OBJ:.o=.h)
 
-all: $(HEADERS) dirs.c
+all: $(OBJ) $(HEADERS) dirs.c
 
 sol: worlds.tsv worlds-parse.awk
 	rm -rf sol
@@ -11,7 +12,8 @@ sol: worlds.tsv worlds-parse.awk
 	printf "x\t0\n" >> sol/index
 	printf "y\t0\n" >> sol/index
 
-dirs.c: sol
+dirs.c: dirs.h
+dirs.h: sol
 	./dir2h.sh sol
 
 # Thanks Jonathan
@@ -20,12 +22,22 @@ worlds.tsv:
 		sed 's/ *\t/\t/g' | \
 		./worlds-order.awk > $@
 
-.ttf.h:
-	xxd -i < $< > $@
-.png.h:
-	xxd -i < $< > $@
+VAR = `echo $< | sed 's~.*/~~;s/\./_/g'`
+SVAR = $(VAR)_size
+.ttf.c .png.c:
+	@echo "Creating $@ from $<"
+	@echo "#include <stddef.h>" > $@
+	@echo "unsigned char $(VAR)[] = {" >> $@
+	@xxd -i < $< >> $@
+	@echo "};" >> $@
+	@echo "size_t $(SVAR) = sizeof($(VAR));" >> $@
+
+.ttf.h .png.h:
+	@echo "Creating $@"
+	@echo "extern unsigned char $(VAR)[];" > $@
+	@echo "extern size_t $(SVAR);" >> $@
 
 clean:
-	rm -rf $(HEADERS) sol
+	rm -rf $(HEADERS) $(OBJ) sol
 
-.SUFFIXES: .h .ttf .png
+.SUFFIXES: .c .o .h .ttf .png

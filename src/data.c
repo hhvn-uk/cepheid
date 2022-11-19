@@ -1,6 +1,15 @@
 #include <raylib.h>
 #include "main.h"
 
+#include "../data/DejaVuSansMono.h"
+#include "../data/icons/tactical.h"
+#include "../data/icons/colonies.h"
+#include "../data/icons/bodies.h"
+#include "../data/icons/fleet.h"
+#include "../data/icons/design.h"
+#include "../data/icons/sys.h"
+#include "../data/icons/settings.h"
+
 #define IMAGE(name) \
 	static Image raw_image_##name; \
 	Texture image_##name
@@ -14,48 +23,16 @@ IMAGE(design);
 IMAGE(sys);
 IMAGE(settings);
 
-unsigned char DejaVuSansMono_ttf[] = {
-#include "../data/DejaVuSansMono.h"
-};
-
-unsigned char tactical_png[] = {
-#include "../data/icons/tactical.h"
-};
-
-unsigned char colonies_png[] = {
-#include "../data/icons/colonies.h"
-};
-
-unsigned char bodies_png[] = {
-#include "../data/icons/bodies.h"
-};
-
-unsigned char fleet_png[] = {
-#include "../data/icons/fleet.h"
-};
-
-unsigned char design_png[] = {
-#include "../data/icons/design.h"
-};
-
-unsigned char sys_png[] = {
-#include "../data/icons/sys.h"
-};
-
-unsigned char settings_png[] = {
-#include "../data/icons/settings.h"
-};
-
 #define IMAGE_LOAD(name) \
 	raw_image_##name = LoadImageFromMemory(".png", \
-			name##_png, sizeof(name##_png)); \
+			name##_png, name##_png_size); \
 	image_##name = LoadTextureFromImage(raw_image_##name); \
 	UnloadImage(raw_image_##name)
 
 void
 data_load(void) {
 	font = LoadFontFromMemory(".ttf", DejaVuSansMono_ttf,
-			sizeof(DejaVuSansMono_ttf), FONT_SIZE, NULL, 0);
+			DejaVuSansMono_ttf_size, FONT_SIZE, NULL, 0);
 	charpx = MeasureTextEx(font, ".", FONT_SIZE, FONT_SIZE/10).x + FONT_SIZE/10;
 	/* one step per IMAGE_LOAD() */
 	IMAGE_LOAD(tactical);
