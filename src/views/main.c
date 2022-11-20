@@ -107,10 +107,6 @@ ui_handle_view_main(int nowsel) {
 		}
 	}
 
-	if (!view_main.sys) {
-		view_main.sys = sys_default();
-	}
-
 	if (nowsel)
 		ui_title("Tactical: %s", view_main.sys->name);
 

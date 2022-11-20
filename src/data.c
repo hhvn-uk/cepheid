@@ -9,6 +9,8 @@
 #include "../data/icons/design.h"
 #include "../data/icons/sys.h"
 #include "../data/icons/settings.h"
+#include "../data/icons/burger.h"
+#include "../data/splash.h"
 
 #define IMAGE(name) \
 	static Image raw_image_##name; \
@@ -22,6 +24,8 @@ IMAGE(fleet);
 IMAGE(design);
 IMAGE(sys);
 IMAGE(settings);
+IMAGE(burger);
+IMAGE(splash);
 
 #define IMAGE_LOAD(name) \
 	raw_image_##name = LoadImageFromMemory(".png", \
@@ -42,6 +46,8 @@ data_load(void) {
 	IMAGE_LOAD(design);
 	IMAGE_LOAD(sys);
 	IMAGE_LOAD(settings);
+	IMAGE_LOAD(burger);
+	IMAGE_LOAD(splash);
 }
 
 #define IMAGE_UNLOAD(name) \
@@ -57,4 +63,6 @@ data_unload(void) {
 	IMAGE_UNLOAD(design);
 	IMAGE_UNLOAD(sys);
 	IMAGE_UNLOAD(settings);
+	IMAGE_UNLOAD(burger);
+	IMAGE_UNLOAD(splash);
 }

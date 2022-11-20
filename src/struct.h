@@ -24,6 +24,7 @@ typedef void (*Treesetter)(char *dir, char *group, char *name, int depth, Tree *
 typedef void (*Treefree)(Tree *t);
 typedef int (*Treefilter)(Tree *t, void *data);
 typedef void (*Treeprinter)(int x, int y, Treeview *tv, Tree *t);
+typedef void (*Treedclick)(Treeview *tv);
 
 typedef int (*Treecompar)(Tree *a, Tree *b, void *data);
 
@@ -219,6 +220,7 @@ struct Treeview {
 	void *fdata; /* data to pass to filter() */
 	Treefilter filter; /* hide nodes when 0 is returned */
 	Treeprinter print; /* prints data related to the node */
+	Treedclick dclick; /* runs on double click of selected node */
 	/* internal */
 	Geom rect;
 	Pane pane;
@@ -240,6 +242,7 @@ typedef struct {
 } Focus;
 
 enum UiViews {
+	UI_VIEW_SMENU,
 	UI_VIEW_MAIN,
 	UI_VIEW_COLONIES,
 	UI_VIEW_BODIES,

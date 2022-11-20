@@ -6,6 +6,7 @@
 #include <wchar.h>
 #include <errno.h>
 #include <math.h>
+#include <time.h>
 #include "main.h"
 
 #define TEXTBUF 2048
@@ -130,6 +131,18 @@ strly(float km) {
 		return sfprintf("%.2f lm", ls / MIN_LEN);
 	else
 		return sfprintf("%.2f ls", ls);
+}
+
+char *
+strdate(time_t time) {
+	struct tm *tm;
+	char *ret = falloc(256);
+
+	tm = localtime(&time);
+
+	strftime(ret, 256, "%c", tm);
+
+	return ret;
 }
 
 int

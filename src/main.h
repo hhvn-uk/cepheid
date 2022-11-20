@@ -20,6 +20,8 @@
 extern Save *save;
 extern int sigint;
 extern int sigterm;
+extern int quit;
+extern int view_before_smenu;
 void	error(int code, char *fmt, ...);
 void	warning(char *fmt, ...);
 
@@ -34,6 +36,7 @@ char *	smprintf(char *fmt, ...); /* return allocated string */
 char *	nstrdup(char *str); /* NULL-safe */
 char *	strkm(float km);
 char *	strly(float km);
+char *	strdate(time_t time);
 int	streq(char *s1, char *s2); /* NULL-safe, no `== 0` required */
 int	strprefix(char *str, char *prefix);
 char *	strsuffix(char *str, char *suffix);
@@ -111,6 +114,7 @@ void	ui_draw_border(int x, int y, int w, int h, int px);
 void	ui_draw_border_around(int x, int y, int w, int h, int px);
 void	ui_draw_ring(int x, int y, float r, Color col);
 void	ui_draw_texture(Texture2D texture, int x, int y);
+void	ui_draw_texture_part(Texture2D texture, int x, int y, int fx, int fy, int w, int h);
 void	ui_draw_circle(int x, int y, float r, Color col);
 void	ui_draw_line(int sx, int sy, int ex, int ey, float thick, Color col);
 void	ui_draw_line_v(Vector start, Vector end, float thick, Color col);
@@ -153,6 +157,12 @@ void	ui_draw_view_bodies(void);
 extern View_sys view_sys;
 void	ui_handle_view_sys(int nowsel);
 void	ui_draw_view_sys(void);
+
+/* views/smenu.c */
+extern View_smenu view_smenu;
+void	ui_handle_view_smenu(int nowsel);
+void	ui_draw_view_smenu(void);
+void	checkbeforequit(void);
 
 /* pane.c */
 void	pane_begin(Pane *f);
@@ -198,7 +208,8 @@ extern Texture image_fleet;
 extern Texture image_design;
 extern Texture image_sys;
 extern Texture image_settings;
-#define DATA_LOAD_STEPS (1 + 7)
+extern Texture image_burger;
+extern Texture image_splash;
 void	data_load(void);
 void	data_unload(void);
 

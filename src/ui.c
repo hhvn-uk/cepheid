@@ -7,6 +7,7 @@
 #include "main.h"
 
 void (*view_handlers[UI_VIEW_LAST])(int) = {
+	[UI_VIEW_SMENU] = ui_handle_view_smenu,
 	[UI_VIEW_MAIN] = ui_handle_view_main,
 	[UI_VIEW_COLONIES] = ui_handle_view_colonies,
 	[UI_VIEW_BODIES] = ui_handle_view_bodies,
@@ -17,6 +18,7 @@ void (*view_handlers[UI_VIEW_LAST])(int) = {
 };
 
 void (*view_drawers[UI_VIEW_LAST])(void) = {
+	[UI_VIEW_SMENU] = ui_draw_view_smenu,
 	[UI_VIEW_MAIN] = ui_draw_view_main,
 	[UI_VIEW_COLONIES] = ui_draw_view_colonies,
 	[UI_VIEW_BODIES] = ui_draw_view_bodies,
@@ -33,13 +35,16 @@ Mouse mouse = { 0 };
 Tabs view_tabs = {
 	/* Tactical is the terminology used in Aurora, so I decided to use it
 	 * in the ui; in the code it's just called 'main' for my fingers' sake */
-	UI_VIEW_LAST, 0, {{&image_tactical, "Tactical", 0},
+	UI_VIEW_LAST, 0, {
+		{&image_burger, NULL, VIEWS_HEIGHT},
+		{&image_tactical, "Tactical", 0},
 		{&image_colonies, "Colonies", 0},
 		{&image_bodies, "Bodies", 0},
 		{&image_fleet, "Fleets", 0},
 		{&image_design, "Design", 0},
 		{&image_sys, "Systems", 0},
-		{&image_settings, "Settings", 0}}
+		{&image_settings, "Settings", 0},
+	}
 };
 
 int charpx; /* thank god for monospaced fonts */
@@ -48,8 +53,8 @@ void
 ui_init(void) {
 	SetWindowState(FLAG_WINDOW_RESIZABLE|FLAG_WINDOW_HIDDEN);
 	SetTargetFPS(TARGET_FPS);
-	SetExitKey(KEY_NULL);
 	InitWindow(500, 500, "");
+	SetExitKey(KEY_NULL);
 }
 
 void
@@ -70,6 +75,9 @@ ui_focus(enum GuiElements type, void *p) {
 int
 ui_loop(void) {
 	if (WindowShouldClose() || sigint || sigterm)
+		checkbeforequit();
+
+	if (((sigint || sigterm) && view_smenu.save.check) || quit)
 		return 0;
 
 	ffree();
@@ -142,6 +150,7 @@ ui_title(char *fmt, ...) {
 
 int
 ui_textsize(char *text) {
+	if (!text) return 0;
 	return charpx * strlen(text);
 }
 
@@ -290,6 +299,13 @@ ui_draw_texture(Texture2D texture, int x, int y) {
 	if (!pane_visible(y, y + texture.height))
 		return;
 	DrawTexture(texture, x, pane_y(y), NO_TINT);
+}
+
+void
+ui_draw_texture_part(Texture2D texture, int x, int y, int fx, int fy, int w, int h) {
+	if (!pane_visible(y, y + h))
+		return;
+	DrawTextureRec(texture, (Rectangle){fx, fy, w, h}, (Vector){x, y}, NO_TINT);
 }
 
 void

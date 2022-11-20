@@ -266,5 +266,5 @@ sys_default(void) {
 	else if (save->systems.d && save->systems.d->data)
 		return save->systems.d->data;
 	else
-		exit(1);
+		error(1, "could not locate any systems\n");
 }

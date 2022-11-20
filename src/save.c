@@ -19,7 +19,7 @@ save_free(void) {
 void
 save_read(char *name) {
 	char dir[PATH_MAX];
-	/* char *str; */
+	char *str;
 
 	if (save)
 		save_free();
@@ -36,10 +36,13 @@ save_read(char *name) {
 	save->db.races = smprintf("%s/Races", dir);
 	save->db.systems = smprintf("%s/Systems", dir);
 	save->db.fleets = smprintf("%s/Fleets", dir);
-	/* if ((str = dbget(save->db.dir, "index", "homesystem"))) */
-	/* 	save->homesys = sys_get(str); */
-	save->homesys = NULL;
 	sys_tree_load();
+
+	if ((str = dbget(save->db.dir, "index", "homesystem")))
+		save->homesys = sys_get(str);
+
+	view_main.sys = NULL;
+	view_main.sys = sys_default();
 	return;
 };
 

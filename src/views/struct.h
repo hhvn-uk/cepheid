@@ -1,3 +1,6 @@
+/* vim: set syntax=c : */
+
+/* main/tactical */
 typedef struct {
 	struct {
 		Tabs tabs;
@@ -31,6 +34,7 @@ typedef struct {
 	System *sys;
 } View_main;
 
+/* bodies */
 typedef struct {
 	System *sys;
 	Body *selstar;
@@ -54,6 +58,7 @@ typedef struct {
 	} prevframe;
 } View_bodies;
 
+/* sys */
 typedef struct {
 	struct {
 		Geom geom;
@@ -65,3 +70,48 @@ typedef struct {
 	} ly;
 	System *sel;
 } View_sys;
+
+/* smenu */
+enum {
+	SMENU_NEW,
+	SMENU_SAVE,
+	SMENU_CONT,
+	SMENU_LOAD,
+	SMENU_QUIT,
+	SMENU_LAST
+};
+
+struct Loadable {
+	char *name;
+	time_t mod;
+};
+
+typedef struct {
+	Geom main;
+	Button b[SMENU_LAST];
+	struct {
+		int disp;
+		Input name;
+		Button create;
+		Button back;
+	} new;
+	struct {
+		struct Loadable *save;
+		char label[128];
+	} cont;
+	struct {
+		int check;
+		char *msg;
+		Button back;
+		Button save;
+		Button discard;
+		void (*func)(void);
+	} save;
+	struct {
+		int init;
+		int disp;
+		Tree saves;
+		Treeview savelist;
+		Button load;
+	} load;
+} View_smenu;

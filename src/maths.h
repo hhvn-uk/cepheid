@@ -6,6 +6,9 @@
 #define GIGA (MEGA * 1000)
 #define MEGA (KILO * 1000)
 #define KILO 1000
+#define MILLI (1.0 / 1000.0)
+#define MICRO (MILLI / 1000.0)
+#define NANO (MICRO / 1000.0)
 
 #define C_MS 299792458 /* c, in m/s */
 

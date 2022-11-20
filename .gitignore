@@ -1,4 +1,5 @@
 *.o
+data/*.o
 data/*.h
 data/*.c
 data/sol
