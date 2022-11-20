@@ -203,7 +203,7 @@ gui_button(int x, int y, int w, Button *b) {
 	int h = BUTTON_HEIGHT;
 
 	ui_draw_border_around(x, y, w, h, 1);
-	ui_print(x + (w - ui_textsize(b->label)) / 2, y + PAD,
+	ui_print(x + (w - ui_textsize(b->label)) / 2, y + PAD/2,
 			b->enabled ? col_fg : col_altfg,
 			"%s", b->label);
 
@@ -215,8 +215,12 @@ static void
 gui_click_button(MouseButton button, Geom *geom, void *elem) {
 	Button *b = elem;
 
-	if (button == MOUSE_BUTTON_LEFT)
-		b->func(b->arg);
+	if (button == MOUSE_BUTTON_LEFT) {
+		if (b->submit && b->submit->onenter)
+			b->submit->onenter(b->submit);
+		else if (b->func)
+			b->func(b->arg);
+	}
 }
 
 void
@@ -291,7 +295,7 @@ gui_input(int x, int y, int w, Input *in) {
 	else if (!focused && in->placeholder)
 		ui_print(x + TPX, y + TPY, col_info, "%s", in->placeholder);
 	if (focused) {
-		ui_draw_rect(x + TPX + charpx * in->cur, y + TPY, 1, FONT_SIZE, col_fg);
+		ui_draw_rect(x + TPX + charpx * in->cur, y + TPY, 1, FONT_SIZE - 2, col_fg);
 	}
 	gui_click_register(RECT(x, y, w, h), GUI_INPUT, in);
 }
@@ -329,9 +333,22 @@ gui_key_input(void *elem, int *fcount) {
 		in->cur--;
 	} else if (ui_keyboard_check(KEY_RIGHT, fcount) && in->cur != in->len) {
 		in->cur++;
-	} else if (c && in->len < INPUT_MAX) {
+	} else if (ui_keyboard_check(KEY_TAB, fcount) && in->onenter == gui_input_next) {
+		gui_input_next(in);
+	} else if (c && (!in->accept || in->accept(c)) && in->len < INPUT_MAX) {
 		editins(in->wstr, &in->len, &in->cur, INPUT_MAX, c);
 	}
+}
+
+int
+gui_input_next(Input *in) {
+	ui_focus(GUI_INPUT, in + sizeof(Input));
+	return 0;
+}
+
+void
+gui_input_clear(Input *in) {
+	edittrunc(in->wstr, &in->len, &in->cur);
 }
 
 /* This function is an intermediate filter that checks whether an item is

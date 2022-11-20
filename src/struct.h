@@ -178,13 +178,6 @@ typedef struct {
 	char *label;
 } Checkbox;
 
-typedef struct {
-	int enabled;
-	char *label;
-	void (*func)(int);
-	int arg;
-} Button;
-
 #define INPUT_MAX 512
 typedef struct Input Input;
 struct Input {
@@ -194,7 +187,16 @@ struct Input {
 	int len;
 	int cur;
 	int (*onenter)(Input *); /* return positive to clear */
+	int (*accept)(wchar_t);
 };
+
+typedef struct {
+	int enabled;
+	char *label;
+	void (*func)(int);
+	int arg;
+	Input *submit; /* run the onenter in an Input instead */
+} Button;
 
 #define DROPDOWN_MAX 64
 typedef struct {
