@@ -120,9 +120,10 @@ gui_tabs(int x, int y, int w, int h, Tabs *tabs) {
 			selx = cx;
 		else
 			ui_draw_rect(cx, y, tabw, h, col_altbg);
-		ui_print(cx + padx + iw, y + pady, col_fg, "%s", tabs->tabs[i].name);
+		if (tabs->tabs[i].name)
+			ui_print(cx + padx + iw, y + pady, col_fg, "%s", tabs->tabs[i].name);
 		if (tabs->tabs[i].icon)
-			ui_draw_texture(*tabs->tabs[i].icon, cx + padx / 2,
+			ui_draw_texture(*tabs->tabs[i].icon, cx + (tabs->tabs[i].name ? padx / 2 : padx),
 					y + (h - tabs->tabs[i].icon->width) / 2);
 		ui_draw_rect(cx + tabw - 1, y, 1, h, col_border);
 	}
