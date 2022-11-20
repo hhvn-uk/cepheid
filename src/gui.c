@@ -4,6 +4,7 @@
 static Clickable clickable[CLICKABLE_MAX];
 static int clickablei = 0;
 
+/* Click handlers */
 static void gui_click_tabs(MouseButton button, Geom *geom, void *elem);
 static void gui_click_checkbox(MouseButton button, Geom *geom, void *elem);
 static void gui_click_button(MouseButton button, Geom *geom, void *elem);
@@ -11,7 +12,11 @@ static void gui_click_input(MouseButton button, Geom *geom, void *elem);
 static void gui_click_dropdown(MouseButton button, Geom *geom, void *elem);
 static void gui_click_treeview(MouseButton button, Geom *geom, void *elem);
 
+/* Key handlers */
 static void gui_key_input(void *elem, int *fcount);
+
+/* Other */
+static void gui_enter_input(Input *in);
 
 static void (*click_handlers[GUI_ELEMS])(
 		MouseButton button,
@@ -217,7 +222,7 @@ gui_click_button(MouseButton button, Geom *geom, void *elem) {
 
 	if (button == MOUSE_BUTTON_LEFT) {
 		if (b->submit && b->submit->onenter)
-			b->submit->onenter(b->submit);
+			gui_enter_input(b->submit);
 		else if (b->func)
 			b->func(b->arg);
 	}
@@ -318,15 +323,21 @@ gui_click_input(MouseButton button, Geom *geom, void *elem) {
 	}
 }
 
+/* When enter is pressed in input, or when button submits the input. */
+static void
+gui_enter_input(Input *in) {
+	wcstombs(in->str, in->wstr, INPUT_MAX);
+	if (in->onenter(in))
+		edittrunc(in->wstr, &in->len, &in->cur);
+}
+
 static void
 gui_key_input(void *elem, int *fcount) {
 	wchar_t c = GetCharPressed();
 	Input *in = elem;
 
 	if (IsKeyPressed(KEY_ENTER) && in->onenter) {
-		wcstombs(in->str, in->wstr, INPUT_MAX);
-		if (in->onenter(in))
-			edittrunc(in->wstr, &in->len, &in->cur);
+		gui_enter_input(in);
 	} else if (ui_keyboard_check(KEY_BACKSPACE, fcount) && in->len && in->cur) {
 		editrm(in->wstr, &in->len, &in->cur);
 	} else if (ui_keyboard_check(KEY_LEFT, fcount) && in->cur) {
