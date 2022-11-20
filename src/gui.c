@@ -76,7 +76,7 @@ gui_click_handle(void) {
 
 	/* clicking outside the focused elememnt unfocuses */
 	if (button != -1 && !keepfocus)
-		ui_update_focus(0, NULL);
+		ui_focus(0, NULL);
 
 	return ret;
 }
@@ -259,12 +259,12 @@ gui_click_dropdown(MouseButton button, Geom *geom, void *elem) {
 	if (button != MOUSE_BUTTON_LEFT)
 		return;
 	if (focus.p != drop) {
-		ui_update_focus(GUI_DROPDOWN, drop);
+		ui_focus(GUI_DROPDOWN, drop);
 	} else {
 		i = (mouse.y - geom->y) / FONT_SIZE;
 		if (i != 0 && i <= drop->n)
 			drop->sel = i - 1;
-		ui_update_focus(0, NULL);
+		ui_focus(0, NULL);
 	}
 }
 
@@ -303,7 +303,7 @@ gui_click_input(MouseButton button, Geom *geom, void *elem) {
 	if (button != MOUSE_BUTTON_LEFT)
 		return;
 	if (focus.p != input) {
-		ui_update_focus(GUI_INPUT, input);
+		ui_focus(GUI_INPUT, input);
 	} else {
 		i = (mouse.x - TPX - geom->x + charpx / 2) / charpx;
 		if (i < input->len)

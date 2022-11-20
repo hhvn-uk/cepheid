@@ -90,7 +90,7 @@ extern Mouse mouse;
 extern int charpx;
 void	ui_init(void);
 void	ui_update_screen(void);
-void	ui_update_focus(enum GuiElements type, void *p);
+void	ui_focus(enum GuiElements type, void *p);
 int	ui_loop(void);
 void	ui_deinit(void);
 void	ui_print(int x, int y, Color col, char *format, ...);

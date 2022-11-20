@@ -62,7 +62,7 @@ ui_update_screen(void) {
 }
 
 void
-ui_update_focus(enum GuiElements type, void *p) {
+ui_focus(enum GuiElements type, void *p) {
 	focus.type = type;
 	focus.p = p;
 }
