@@ -1,8 +1,18 @@
 #include <stdlib.h>
+#include <time.h>
+#include "maths.h"
 #include "main.h"
+
+#define DOUBLE_CLICK (500.0 * MILLI / NANO)
 
 static Clickable clickable[CLICKABLE_MAX];
 static int clickablei = 0;
+
+static struct {
+	MouseButton button;
+	Vector pos;
+	struct timespec tv;
+} lastclick = {-1};
 
 /* Click handlers */
 static void gui_click_tabs(MouseButton button, Geom *geom, void *elem);
@@ -16,6 +26,7 @@ static void gui_click_treeview(MouseButton button, Geom *geom, void *elem);
 static void gui_key_input(void *elem, int *fcount);
 
 /* Other */
+static int gui_double_click(void);
 static void gui_enter_input(Input *in);
 
 static void (*click_handlers[GUI_ELEMS])(
@@ -83,7 +94,32 @@ gui_click_handle(void) {
 	if (button != -1 && !keepfocus)
 		ui_focus(0, NULL);
 
+	if (button != -1) {
+		lastclick.pos = mouse.vector;
+		lastclick.button = button;
+		clock_gettime(CLOCK_REALTIME, &lastclick.tv);
+	}
+
 	return ret;
+}
+
+static int
+gui_double_click(void) {
+	struct timespec ctv;
+	struct timespec diff;
+
+	if (lastclick.button != MOUSE_BUTTON_LEFT ||
+			lastclick.pos.x != mouse.x ||
+			lastclick.pos.y != mouse.y)
+		return 0;
+
+	clock_gettime(CLOCK_REALTIME, &ctv);
+	timespec_diff(&ctv, &lastclick.tv, &diff);
+
+	if (diff.tv_sec == 0 && diff.tv_nsec < DOUBLE_CLICK)
+		return 1;
+
+	return 0;
 }
 
 void
@@ -427,7 +463,7 @@ gui_click_treeview(MouseButton button, Geom *geom, void *elem) {
 	Tree *p;
 	int i, pos;
 
-	if (button == -1)
+	if (button != MOUSE_BUTTON_LEFT)
 		return;
 
 	pos = (mouse.y - geom->y - FONT_SIZE - (tv->print ? FONT_SIZE + PAD / 2 : 0) + tv->pane.off) / FONT_SIZE;
@@ -438,8 +474,12 @@ gui_click_treeview(MouseButton button, Geom *geom, void *elem) {
 						mouse.x < geom->x + PAD * (depth + 2)))
 				p->collapsed = !p->collapsed;
 			if (p->type & tv->selmask && (!(p->type & tv->colmask) ||
-						mouse.x > geom->x + PAD * (depth + 2)))
-				tv->sel = p;
+						mouse.x > geom->x + PAD * (depth + 2))) {
+				if (gui_double_click() && tv->dclick)
+					tv->dclick(tv);
+				else
+					tv->sel = p;
+			}
 		}
 	}
 }

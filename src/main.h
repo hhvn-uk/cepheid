@@ -225,3 +225,6 @@ void	loading_close(Loader *hand);
 float	cosf_d(float x);
 float	sinf_d(float x);
 float	atan2f_d(float y, float x);
+
+/* time.c */
+void	timespec_diff(struct timespec *t1, struct timespec *t2, struct timespec *diff);
