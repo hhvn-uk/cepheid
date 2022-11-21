@@ -7,7 +7,7 @@ View_sys view_sys = {
 			.x = 0,
 			.y = VIEWS_HEIGHT,
 			.w = 300,
-			.h = 0, /* see ui_handle_view_sys() */
+			.h = 0, /* see view_sys_handle() */
 		},
 	},
 	.pan = 0,
@@ -20,7 +20,7 @@ View_sys view_sys = {
 };
 
 void
-ui_handle_view_sys(int nowsel) {
+view_sys_handle(int nowsel) {
 	if (nowsel)
 		ui_title("Systems");
 	v->info.geom.h = screen.h - VIEWS_HEIGHT;
@@ -31,7 +31,7 @@ ui_handle_view_sys(int nowsel) {
 #define SYSDIAM (100 * v->ly.topx)
 
 void
-ui_draw_view_sys(void) {
+view_sys_draw(void) {
 	Tree *t;
 	System *s;
 	int x, y;

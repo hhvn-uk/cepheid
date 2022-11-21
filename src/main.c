@@ -11,7 +11,7 @@ Save *save = NULL;
 int sigint = 0;
 int sigterm = 0;
 int quit = 0;
-int view_before_smenu = UI_VIEW_MAIN;
+int view_before_smenu = VIEW_MAIN;
 
 void
 error(int code, char *fmt, ...) {
@@ -75,7 +75,7 @@ main(void) {
 
 	while (ui_loop()) {
 		if (IsKeyPressed(KEY_ESCAPE))
-			view_tabs.sel = UI_VIEW_SMENU;
+			view_tabs.sel = VIEW_SMENU;
 
 		if (save && (IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT))) {
 			/* AAAAAAAAAAHHHHHHHHHHHH. WHY NOT JUST USE KEY_1, KEY_2..! */
@@ -87,12 +87,12 @@ main(void) {
 			else if (IsKeyPressed(KEY_SIX)) view_tabs.sel = 6;
 		}
 
-		view_handlers[view_tabs.sel](view_prev != view_tabs.sel);
+		view_handle[view_tabs.sel](view_prev != view_tabs.sel);
 
 		BeginDrawing();
 		ClearBackground(col_bg);
-		view_drawers[view_tabs.sel]();
-		if (view_tabs.sel != UI_VIEW_SMENU) {
+		view_draw[view_tabs.sel]();
+		if (view_tabs.sel != VIEW_SMENU) {
 			ui_draw_views();
 			view_before_smenu = view_tabs.sel;
 		}

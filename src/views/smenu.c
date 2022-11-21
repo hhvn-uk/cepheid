@@ -144,7 +144,7 @@ newhandler_actual(Input *in) {
 	save_create(v->new.name.str);
 	save_read(v->new.name.str);
 	loadadd(v->new.name.str, time(NULL));
-	view_tabs.sel = UI_VIEW_MAIN;
+	view_tabs.sel = VIEW_MAIN;
 	v->new.disp = 0;
 	return 1;
 }
@@ -173,7 +173,7 @@ loadhandler_actual(void) {
 
 	l = v->load.savelist.sel->data;
 	save_read(l->name);
-	view_tabs.sel = UI_VIEW_MAIN;
+	view_tabs.sel = VIEW_MAIN;
 	v->load.disp = 0;
 	return;
 }
@@ -217,7 +217,7 @@ loadadd(char *dir, time_t mod) {
 void
 checkbeforequit(void) {
 	if (save_changed()) {
-		view_tabs.sel = UI_VIEW_SMENU;
+		view_tabs.sel = VIEW_SMENU;
 		savecheck("There are unsaved changes. Save before quitting?", quithandler);
 	} else {
 		quithandler();
@@ -245,7 +245,7 @@ loadinit(char *sdir) {
 }
 
 void
-ui_handle_view_smenu(int nowsel) {
+view_smenu_handle(int nowsel) {
 	Tree *t;
 	struct Loadable *cont, *l;
 
@@ -279,7 +279,7 @@ ui_handle_view_smenu(int nowsel) {
 }
 
 void
-ui_draw_view_smenu(void) {
+view_smenu_draw(void) {
 	Color bg = { col_bg.r, col_bg.g, col_bg.b, 0xcc };
 	int x, y, w, h;
 	int i;

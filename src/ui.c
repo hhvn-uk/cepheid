@@ -6,47 +6,9 @@
 #include <wchar.h>
 #include "main.h"
 
-void (*view_handlers[UI_VIEW_LAST])(int) = {
-	[UI_VIEW_SMENU] = ui_handle_view_smenu,
-	[UI_VIEW_MAIN] = ui_handle_view_main,
-	[UI_VIEW_COLONIES] = ui_handle_view_colonies,
-	[UI_VIEW_BODIES] = ui_handle_view_bodies,
-	[UI_VIEW_FLEETS] = ui_handle_view_fleets,
-	[UI_VIEW_DESIGN] = ui_handle_view_design,
-	[UI_VIEW_SYSTEMS] = ui_handle_view_sys,
-	[UI_VIEW_SETTINGS] = ui_handle_view_settings,
-};
-
-void (*view_drawers[UI_VIEW_LAST])(void) = {
-	[UI_VIEW_SMENU] = ui_draw_view_smenu,
-	[UI_VIEW_MAIN] = ui_draw_view_main,
-	[UI_VIEW_COLONIES] = ui_draw_view_colonies,
-	[UI_VIEW_BODIES] = ui_draw_view_bodies,
-	[UI_VIEW_FLEETS] = ui_draw_view_fleets,
-	[UI_VIEW_DESIGN] = ui_draw_view_design,
-	[UI_VIEW_SYSTEMS] = ui_draw_view_sys,
-	[UI_VIEW_SETTINGS] = ui_draw_view_settings,
-};
-
 Screen screen = { 0 };
 Focus focus = { 0 };
 Mouse mouse = { 0 };
-
-Tabs view_tabs = {
-	/* Tactical is the terminology used in Aurora, so I decided to use it
-	 * in the ui; in the code it's just called 'main' for my fingers' sake */
-	UI_VIEW_LAST, 0, {
-		{&image_burger, NULL, VIEWS_HEIGHT},
-		{&image_tactical, "Tactical", 0},
-		{&image_colonies, "Colonies", 0},
-		{&image_bodies, "Bodies", 0},
-		{&image_fleet, "Fleets", 0},
-		{&image_design, "Design", 0},
-		{&image_sys, "Systems", 0},
-		{&image_settings, "Settings", 0},
-	}
-};
-
 int charpx; /* thank god for monospaced fonts */
 
 void
@@ -361,56 +323,4 @@ ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs) {
 	ui_draw_rect(x, y, w, h, col_bg);
 	gui_tabs(x, y, w, WINDOW_TAB_HEIGHT, tabs);
 	ui_draw_border(x, y, w, h, WINDOW_BORDER);
-}
-
-void
-ui_handle_view_colonies(int nowsel) {
-	if (nowsel)
-		ui_title("Colonies");
-}
-
-void
-ui_handle_view_fleets(int nowsel) {
-	if (nowsel)
-		ui_title("Fleets");
-}
-
-void
-ui_handle_view_design(int nowsel) {
-	if (nowsel)
-		ui_title("Design");
-}
-
-void
-ui_handle_view_settings(int nowsel) {
-	if (nowsel)
-		ui_title("Settings");
-}
-
-void
-ui_draw_view_colonies(void) {
-	ui_print(PAD, VIEWS_HEIGHT + PAD, col_fg, "Stars/colonies here");
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD, col_fg, "Tabs here");
-	ui_print(GetScreenWidth() / 2, GetScreenHeight() / 2, col_fg, "Management stuff here");
-}
-
-
-void
-ui_draw_view_fleets(void) {
-	ui_print(PAD, VIEWS_HEIGHT + PAD, col_fg, "Groups/fleets/subfleets/ships here");
-	ui_print(GetScreenWidth() / 2, VIEWS_HEIGHT + PAD, col_fg, "Tabs here");
-	ui_print(GetScreenWidth() / 2, GetScreenHeight() / 2, col_fg, "Management stuff here");
-}
-
-void
-ui_draw_view_design(void) {
-	ui_print(PAD, VIEWS_HEIGHT + PAD, col_fg, "Designations/classes here");
-	ui_print(GetScreenWidth() / 4, VIEWS_HEIGHT + PAD, col_fg, "Selectable components here");
-	ui_print((GetScreenWidth() / 4) * 2, VIEWS_HEIGHT + PAD, col_fg, "Selected components");
-	ui_print((GetScreenWidth() / 4) * 3, VIEWS_HEIGHT + PAD, col_fg, "Class info");
-}
-
-void
-ui_draw_view_settings(void) {
-	ui_print(PAD, VIEWS_HEIGHT + PAD, col_fg, "Settings here");
 }

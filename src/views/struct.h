@@ -36,8 +36,6 @@ typedef struct {
 
 /* bodies */
 typedef struct {
-	System *sys;
-	Body *selstar;
 	Body *sel;
 	struct {
 		Checkbox planet;

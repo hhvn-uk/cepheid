@@ -11,8 +11,6 @@ static void tree_printer(int x, int y, Treeview *tv, Tree *t);
 
 static View_bodies *v = &view_bodies;
 View_bodies view_bodies = {
-	.sys = NULL,
-	.selstar = NULL,
 	.sel = NULL,
 	.show = {
 		.planet = {1, 1, "Show planets"},
@@ -31,6 +29,13 @@ View_bodies view_bodies = {
 		.print = tree_printer,
 	}
 };
+
+void
+view_bodies_init(void) {
+	v->sel = NULL;
+	v->tree.t = NULL;
+	v->tree.sel = NULL;
+}
 
 static int
 tree_filter(Tree *t, void *data) {
@@ -79,11 +84,8 @@ tree_printer(int x, int y, Treeview *tv, Tree *t) {
 }
 
 void
-ui_handle_view_bodies(int nowsel) {
+view_bodies_handle(int nowsel) {
 	v->prevframe.sel = v->sel;
-
-	if (!v->sys)
-		v->sys = sys_default();
 
 	if (!nowsel) {
 		if (v->tree.sel)
@@ -91,13 +93,12 @@ ui_handle_view_bodies(int nowsel) {
 		else
 			v->sel = NULL;
 	} else {
-		ui_title("Bodies in %s", v->sys->name);
 		v->tree.t = &save->systems;
 	}
 }
 
 void
-ui_draw_view_bodies(void) {
+view_bodies_draw(void) {
 	int x, y;
 
 	v->disp = RECT(PAD, VIEWS_HEIGHT + FONT_SIZE,

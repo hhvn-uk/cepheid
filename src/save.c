@@ -20,6 +20,7 @@ void
 save_read(char *name) {
 	char dir[PATH_MAX];
 	char *str;
+	int i;
 
 	if (save)
 		save_free();
@@ -41,8 +42,9 @@ save_read(char *name) {
 	if ((str = dbget(save->db.dir, "index", "homesystem")))
 		save->homesys = sys_get(str);
 
-	view_main.sys = NULL;
-	view_main.sys = sys_default();
+	for (i = 0; i < VIEW_LAST; i++)
+		if (view_init[i])
+			view_init[i]();
 	return;
 };
 

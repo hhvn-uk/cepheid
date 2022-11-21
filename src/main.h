@@ -69,8 +69,6 @@ void	tree_sort_sideways(Tree *t, Treecompar compar, void *cdata);
 void	tree_sort(Tree *t, Treecompar compar, void *cdata);
 
 /* ui.c */
-#define VIEWS_MAX_WIDTH (UI_VIEW_LAST*100)
-#define VIEWS_HEIGHT 25
 #define WINDOW_TAB_HEIGHT 20
 #define TARGET_FPS 60
 #define WINDOW_BORDER 2
@@ -84,9 +82,6 @@ void	tree_sort(Tree *t, Treecompar compar, void *cdata);
 #define EXPLODE_RECT(g) g.x, g.y, g.w, g.h
 #define EXPLODE_CIRCLE(g) g.centre.x, g.centre.y, g.r
 #define EXPLODE_CIRCLEV(g) g.centre, g.r
-extern Tabs view_tabs;
-extern void (*view_handlers[UI_VIEW_LAST])(int);
-extern void (*view_drawers[UI_VIEW_LAST])(void);
 extern Screen screen;
 extern Focus focus;
 extern Mouse mouse;
@@ -119,16 +114,8 @@ void	ui_draw_circle(int x, int y, float r, Color col);
 void	ui_draw_line(int sx, int sy, int ex, int ey, float thick, Color col);
 void	ui_draw_line_v(Vector start, Vector end, float thick, Color col);
 void	ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs);
-Vector ui_vectordiff(Vector a, Vector b);
+Vector	ui_vectordiff(Vector a, Vector b);
 float	ui_vectordist(Vector a, Vector b);
-void	ui_handle_view_colonies(int nowsel);
-void	ui_handle_view_fleets(int nowsel);
-void	ui_handle_view_design(int nowsel);
-void	ui_handle_view_settings(int nowsel);
-void	ui_draw_view_colonies(void);
-void	ui_draw_view_fleets(void);
-void	ui_draw_view_design(void);
-void	ui_draw_view_settings(void);
 
 /* gui.c */
 #define BUTTON_HEIGHT (PAD + FONT_SIZE)
@@ -143,25 +130,43 @@ int	gui_input_next(Input *in); /* if inputs are contained in an array, this .one
 void	gui_input_clear(Input *in);
 void	gui_treeview(int x, int y, int w, int h, Treeview *tv);
 
+/* views.c */
+#define VIEWS_MAX_WIDTH (VIEW_LAST*100)
+#define VIEWS_HEIGHT 25
+extern void (*view_init[VIEW_LAST])(void);
+extern void (*view_handle[VIEW_LAST])(int);
+extern void (*view_draw[VIEW_LAST])(void);
+extern Tabs view_tabs;
+void	view_colonies_handle(int nowsel);
+void	view_fleets_handle(int nowsel);
+void	view_design_handle(int nowsel);
+void	view_settings_handle(int nowsel);
+void	view_colonies_draw(void);
+void	view_fleets_draw(void);
+void	view_design_draw(void);
+void	view_settings_draw(void);
+
 /* views/main.c */
 extern View_main view_main;
-void	ui_handle_view_main(int nowsel);
-void	ui_draw_view_main(void);
+void	view_main_init(void);
+void	view_main_handle(int nowsel);
+void	view_main_draw(void);
 
 /* views/bodies.c */
 extern View_bodies view_bodies;
-void	ui_handle_view_bodies(int nowsel);
-void	ui_draw_view_bodies(void);
+void	view_bodies_init(void);
+void	view_bodies_handle(int nowsel);
+void	view_bodies_draw(void);
 
 /* views/sys.c */
 extern View_sys view_sys;
-void	ui_handle_view_sys(int nowsel);
-void	ui_draw_view_sys(void);
+void	view_sys_handle(int nowsel);
+void	view_sys_draw(void);
 
 /* views/smenu.c */
 extern View_smenu view_smenu;
-void	ui_handle_view_smenu(int nowsel);
-void	ui_draw_view_smenu(void);
+void	view_smenu_handle(int nowsel);
+void	view_smenu_draw(void);
 void	checkbeforequit(void);
 
 /* pane.c */
