@@ -41,11 +41,8 @@ data-clean:
 	@echo $(DATADIR): make clean
 	@cd $(DATADIR); make clean
 
-tags: $(SRC)
-	ctags --exclude=data/*.h --exclude=data/icons/*.h -R .
-
 # ignore generated headers
 sloccount:
 	sloccount $(SRC) $(DBDIR)
 
-.PHONY: all db db-clean dbtool data data-clean
+.PHONY: all clean db db-clean dbtool data data-clean

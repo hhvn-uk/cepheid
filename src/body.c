@@ -44,7 +44,7 @@ Body *
 body_init(char *name) {
 	Body *ret;
 
-	ret = malloc(sizeof(Body));
+	ret = emalloc(sizeof(Body));
 	if (!ret) return NULL;
 	ret->name = nstrdup(name);
 	ret->t = NULL;

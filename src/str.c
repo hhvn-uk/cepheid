@@ -10,46 +10,27 @@
 #include "main.h"
 
 #define TEXTBUF 2048
-#define FMEMMAX 1024
-
-static void *fmem[FMEMMAX] = {NULL};
-static int fmemi = 0;
-
-/* allocate for a frame */
-void *
-falloc(size_t size) {
-	if (fmemi + 1 == FMEMMAX) {
-		errno = ENOMEM;
-		return NULL;
-	}
-	return (fmem[fmemi++] = malloc(size));
-}
-
-void
-ffree(void) {
-	while (fmemi--) {
-		free(fmem[fmemi]);
-		fmem[fmemi] = NULL;
-	}
-	fmemi = 0;
-}
 
 char *
-fstrdup(char *str) {
+vsfprintf(char *fmt, va_list args) {
+	va_list ap;
+	int size;
 	char *ret;
 
-	ret = falloc(strlen(str) + 1);
-	strcpy(ret, str);
-	return ret;
-}
+	va_copy(ap, args);
+	size = vsnprintf(NULL, 0, fmt, ap) + 1;
+	va_end(ap);
 
-char *
-vsfprintf(char *fmt, va_list ap) {
-	if (fmemi + 1 == FMEMMAX) {
-		errno = ENOMEM;
+	if (size == 0) /* -1 */
 		return NULL;
-	}
-	return (fmem[fmemi++] = vsmprintf(fmt, ap));
+
+	ret = falloc(size);
+	if (!ret) return NULL;
+
+	va_copy(ap, args);
+	vsnprintf(ret, size, fmt, ap);
+	va_end(ap);
+	return ret;
 }
 
 char *
@@ -76,7 +57,7 @@ vsmprintf(char *fmt, va_list args) {
 	if (size == 0) /* -1 */
 		return NULL;
 
-	ret = malloc(size);
+	ret = emalloc(size);
 	if (!ret) return NULL;
 
 	va_copy(ap, args);
@@ -102,7 +83,7 @@ nstrdup(char *str) {
 		errno = EINVAL;
 		return NULL;
 	}
-	return strdup(str);
+	return estrdup(str);
 }
 
 char *

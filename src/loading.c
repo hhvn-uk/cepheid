@@ -39,7 +39,7 @@ loading_open(int steps, char *initstr) {
 	char curstr[LOAD_STR_MAX];
 	struct sigaction sa;
 
-	ret = malloc(sizeof(Loader));
+	ret = emalloc(sizeof(Loader));
 	if (!ret) return NULL;
 
 	snprintf(ret->path, sizeof(ret->path), "/%ld-loading", (long)getpid());

@@ -23,7 +23,7 @@ tree_add_child(Tree *t, char *name, int type, void *data, Tree **ptr) {
 
 	if (!t) return NULL;
 
-	e = malloc(sizeof(Tree));
+	e = emalloc(sizeof(Tree));
 	if (!e) return NULL;
 
 	e->p = e->n = e->d = NULL;
@@ -236,12 +236,12 @@ tree_sort(Tree *t, Treecompar compar, void *cdata) {
 
 	/* The tree can't be sorted (i,e, modified) whilst iterating through it. */
 	sl = 10;
-	s = malloc(sl * sizeof(Tree *));
+	s = emalloc(sl * sizeof(Tree *));
 
 	for (p = NULL, si = 0; tree_iter_f(t, TREEMAX, &p, &depth, tree_sort_filter, NULL) != -1; si++) {
 		if (si == sl - 1) {
 			sl += 10;
-			s = realloc(s, sl * sizeof(Tree *));
+			s = erealloc(s, sl * sizeof(Tree *));
 		}
 
 		s[si] = p;

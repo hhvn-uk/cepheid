@@ -159,21 +159,21 @@ _bdbget(char *dir, char *group, ...) {
 			break;
 		case 'S':
 			v.S = va_arg(ap, char ***);
-			*v.S = malloc(len * sizeof(char *));
+			*v.S = emalloc(len * sizeof(char *));
 			for (i = 0; i < len; i++)
 				(*v.S)[i] = nstrdup(list[i]);
 			*va_arg(ap, int *) = len;
 			break;
 		case 'I':
 			v.I = va_arg(ap, int **);
-			*v.I = malloc(len * sizeof(int));
+			*v.I = emalloc(len * sizeof(int));
 			for (i = 0; i < len; i++)
 				(*v.I)[i] = atoi(list[i]);
 			*va_arg(ap, int *) = len;
 			break;
 		case 'F':
 			v.F = va_arg(ap, float **);
-			*v.F = malloc(len * sizeof(float));
+			*v.F = emalloc(len * sizeof(float));
 			for (i = 0; i < len; i++)
 				(*v.F)[i] = strtol(list[i], NULL, 10);
 			*va_arg(ap, int *) = len;

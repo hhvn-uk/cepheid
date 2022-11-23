@@ -16,19 +16,38 @@
 		return func(*(type*)a, *(type*)b); \
 	}
 
+#ifdef CHECK_FRAME_MEM_FREE
+#define CUSTOM_FREE
+#endif /* CHECK_FRAME_MEM_FREE */
+
+#ifdef CUSTOM_FREE
+#define free(m) _free(m, __FILE__, __LINE__, __func__)
+#endif /* CUSTOM_FREE */
+
 /* main.c */
 extern Save *save;
 extern int sigint;
 extern int sigterm;
 extern int quit;
 extern int view_before_smenu;
-void	error(int code, char *fmt, ...);
-void	warning(char *fmt, ...);
 
-/* str.c */
+/* err.c */
+#define ERR(code, type, fmt, ...) _err(code, type, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#define error(code, fmt, ...) ERR(code, "error", fmt, ##__VA_ARGS__)
+#define warning(fmt, ...) ERR(-1, "warning", fmt, ##__VA_ARGS__)
+void	_err(int code, char *type, char *file, int line, const char *func, char *fmt, ...);
+
+/* mem.c */
 void *	falloc(size_t size);
 void	ffree(void);
 char *	fstrdup(char *str);
+void *	emalloc(size_t size);
+void *	estrdup(char *str);
+void *	ecalloc(size_t nmemb, size_t size);
+void *	erealloc(void *pt, size_t size);
+void	_free(void *mem, char *file, int line, const char *func);
+
+/* str.c */
 char *	vsfprintf(char *fmt, va_list args);
 char *	sfprintf(char *fmt, ...); /* return string allocated for current frame */
 char *	vsmprintf(char *fmt, va_list args);

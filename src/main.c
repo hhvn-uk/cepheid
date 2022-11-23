@@ -13,36 +13,6 @@ int sigterm = 0;
 int quit = 0;
 int view_before_smenu = VIEW_MAIN;
 
-void
-error(int code, char *fmt, ...) {
-	va_list ap;
-
-	fprintf(stderr, "error: ");
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-
-#ifdef DEBUG
-	raise(SIGTRAP);
-#else
-	exit(code);
-#endif /* DEBUG */
-}
-
-void
-warning(char *fmt, ...) {
-	va_list ap;
-
-	fprintf(stderr, "warning: ");
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-
-#ifdef DEBUG
-	raise(SIGTRAP);
-#endif /* DEBUG */
-}
-
 static void
 sighandler(int signal) {
 	switch (signal) {

@@ -25,7 +25,7 @@ save_read(char *name) {
 	if (save)
 		save_free();
 
-	if (!name || !(save = malloc(sizeof(Save))))
+	if (!name || !(save = emalloc(sizeof(Save))))
 		return;
 
 	snprintf(dir, sizeof(dir), "%s/%s", SAVEDIR, name);

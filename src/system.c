@@ -37,7 +37,7 @@ sys_get_polar(Body *body) {
 
 System *
 sys_init(char *name) {
-	System *ret = malloc(sizeof(System));
+	System *ret = emalloc(sizeof(System));
 	if (!ret) return NULL;
 	ret->name = nstrdup(name);
 	ret->t = NULL;
@@ -90,8 +90,8 @@ sys_tree_load(void) {
 
 	/* bn & bp are only free'd at the end to avoid excess (re)allocations */
 	bl = 10;
-	bn = malloc(bl * sizeof(char *));
-	bp = malloc(bl * sizeof(char *));
+	bn = emalloc(bl * sizeof(char *));
+	bp = emalloc(bl * sizeof(char *));
 
 	for (t = save->systems.d; t; t = t->n) {
 		s = t->data;
@@ -100,8 +100,8 @@ sys_tree_load(void) {
 		for (i = 0, bt = t->d; bt; bt = bt->n, i++) {
 			if (i == bl - 1) {
 				bl += 10;
-				bn = realloc(bn, bl * sizeof(char *));
-				bp = realloc(bp, bl * sizeof(char *));
+				bn = erealloc(bn, bl * sizeof(char *));
+				bp = erealloc(bp, bl * sizeof(char *));
 			}
 
 			bn[i] = bt->name;

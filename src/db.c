@@ -128,7 +128,7 @@ dbgettree(char *dir, Tree *r, Treegetter func) {
 	for (i = 0, ppath = path = NULL, t = r; i < glen; i++) {
 		free(ppath);
 		ppath = path;
-		path = strdup(groups[i]);
+		path = estrdup(groups[i]);
 
 		memcpy(&psplit, split, sizeof(split));
 		pslen = slen;
