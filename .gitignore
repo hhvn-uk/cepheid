@@ -1,7 +1,4 @@
 *.o
-data/*.o
-data/*.h
-data/*.c
 data/sol
 data/worlds.tsv
 db/dbtool
