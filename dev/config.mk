@@ -10,8 +10,14 @@ checks: $(SRC)
 	./dev/checkalloc.sh
 
 test: all
-	gdb ./$(BIN) -ex 'set confirm on' -ex run -ex bt -ex quit
+	gdb ./$(BIN) -ex 'set confirm on' -ex run -ex bt -ex quit --args $(ARGS)
 gdb: all
-	gdb ./$(BIN)
+	gdb ./$(BIN) --args $(ARGS)
 
-.PHONY: tags checks test gdb
+VALFILE = dev/valgrind.log
+VALSUPP = dev/valgrind-suppress
+memcheck: all
+	@echo Outputting to $(VALFILE)
+	valgrind --tool=memcheck --leak-check=full --suppressions=$(VALSUPP) --log-file=$(VALFILE) ./$(BIN) $(ARGS)
+
+.PHONY: tags checks test gdb valgrind
