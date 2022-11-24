@@ -147,6 +147,8 @@ getdbfor(char *path) {
 /*
  * Tracking loaded groups
  */
+#define TL_INCR 10
+
 static int
 track(Group *group) {
 	DB *db = group->db;
@@ -161,11 +163,11 @@ track(Group *group) {
 		}
 	}
 
-	r = realloc(db->tracked, (db->tl + 10) * sizeof(Group *));
+	r = realloc(db->tracked, (db->tl + TL_INCR) * sizeof(Group *));
 	if (!r) return -1;
-	db->tl += 10;
+	db->tl += TL_INCR;
 	db->tracked = r;
-	memset(db->tracked + i, 0, 10 * sizeof(Group *));
+	memset(db->tracked + i + 1, 0, TL_INCR - 1 * sizeof(Group *));
 	db->tracked[i] = group;
 	return 0;
 }
@@ -385,7 +387,11 @@ dirlist(struct Dirlist **list, char *dir, int (*filter)(void *data, char *path),
 				if (S_ISDIR(st.st_mode)) {
 					dirlist(list, path, filter, fdata);
 				} else if (!filter || filter(fdata, path)) {
-					if (!(p = malloc(sizeof(struct Dirlist))) || !(p->path = strdup(path))) {
+					p = malloc(sizeof(struct Dirlist));
+					if (p) p->path = strdup(path);
+					if (!p || !p->path) {
+						if (p)
+							free(p->path);
 						free(p);
 						for (prev = NULL; p; p = p->next) {
 							free(p->path);
@@ -414,7 +420,7 @@ dirlist(struct Dirlist **list, char *dir, int (*filter)(void *data, char *path),
 
 size_t
 dblistgroups_f(char ***ret, char *dir, int (*filter)(void *data, char *path), void *fdata) {
-	struct Dirlist *res = NULL, *p, *prev;
+	struct Dirlist *res = NULL, *p, *next;
 	size_t len, i;
 
 	if (!ret || !dir) {
@@ -433,11 +439,11 @@ dblistgroups_f(char ***ret, char *dir, int (*filter)(void *data, char *path), vo
 		*ret = NULL;
 		return 0; /* malloc sets errno */
 	}
-	for (i = 0, p = res, prev = NULL; p; p = p->next, i++) {
+	for (i = 0, p = res, next = NULL; p; p = next, i++) {
 		*((*ret) + i) = strdup(p->path + strlen(dir) + 1);
+		next = p->next;
 		free(p->path);
-		free(prev);
-		prev = p;
+		free(p);
 	}
 	return len;
 }
@@ -752,6 +758,7 @@ dbfree(char *db) {
 	for (i = 0; i < p->tl; i++)
 		if (p->tracked[i])
 			dbfreegroup_p(p->tracked[i]);
+	free(p->tracked[i]);
 	if (p == dbs)
 		dbs = p->next;
 	if (p->next)
