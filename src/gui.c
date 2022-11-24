@@ -260,7 +260,7 @@ gui_click_button(MouseButton button, Geom *geom, void *elem) {
 		if (b->submit && b->submit->onenter)
 			gui_enter_input(b->submit);
 		else if (b->func)
-			b->func(b->arg);
+			b->func(GUI_BUTTON, b);
 	}
 }
 
@@ -363,7 +363,7 @@ gui_click_input(MouseButton button, Geom *geom, void *elem) {
 static void
 gui_enter_input(Input *in) {
 	wcstombs(in->str, in->wstr, INPUT_MAX);
-	if (in->onenter(in))
+	if (in->onenter(GUI_INPUT, in))
 		edittrunc(in->wstr, &in->len, &in->cur);
 }
 
@@ -476,7 +476,7 @@ gui_click_treeview(MouseButton button, Geom *geom, void *elem) {
 			if (p->type & tv->selmask && (!(p->type & tv->colmask) ||
 						mouse.x > geom->x + PAD * (depth + 2))) {
 				if (gui_double_click() && tv->dclick)
-					tv->dclick(tv);
+					tv->dclick(GUI_TREEVIEW, tv);
 				else
 					tv->sel = p;
 			}

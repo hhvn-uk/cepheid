@@ -16,16 +16,14 @@
 #define BUTTON_W	50
 
 static void savecheck(char *msg, void (*action)(void));
-static void savecheck_callback(int arg);
-static void buttonhandler(int arg);
+static int savecheck_callback(int type, void *elem);
+static int buttonhandler(int type, void *elem);
 static void newhandler(void);
-static int newhandler_actual(Input *in);
-static void newhandler_back(int arg);
+static int newhandler_actual(int type, void *elem);
+static int newhandler_back(int type, void *elem);
 static void quithandler(void);
 static void loadhandler(void);
-static void loadhandler_actual(void);
-static void loadhandler_click(Treeview *tv);
-static void loadhandler_button(int arg);
+static int loadhandler_actual(int type, void *elem);
 static void loadprinter(int x, int y, Treeview *tv, Tree *t);
 static void loadadd(char *dir, time_t mod);
 static void loadinit(char *sdir);
@@ -76,9 +74,9 @@ View_smenu view_smenu = {
 			.colmask = 0x00,
 			.filter = NULL,
 			.print = loadprinter,
-			.dclick = loadhandler_click,
+			.dclick = loadhandler_actual,
 		},
-		.load = {0, "Load", loadhandler_button, 0 },
+		.load = {0, "Load", loadhandler_actual, 0 },
 	}
 };
 
@@ -92,18 +90,25 @@ savecheck(char *msg, void (*action)(void)) {
 	v->save.func = action;
 }
 
-static void
-savecheck_callback(int arg) {
+static int
+savecheck_callback(int type, void *elem) {
+	Button *b = elem;
+	int arg = b->arg;
+
 	v->save.check = 0;
 	if (arg)
 		save_write();
 	if (arg != -1)
 	v->save.func();
+	return 0;
 }
 
 
-static void
-buttonhandler(int arg) {
+static int
+buttonhandler(int type, void *elem) {
+	Button *b = elem;
+	int arg = b->arg;
+
 	switch (arg) {
 	case SMENU_NEW:
 		if (save && save_changed())
@@ -132,6 +137,7 @@ buttonhandler(int arg) {
 		checkbeforequit();
 		break;
 	}
+	return 0;
 }
 
 static void
@@ -140,7 +146,7 @@ newhandler(void) {
 }
 
 static int
-newhandler_actual(Input *in) {
+newhandler_actual(int type, void *elem) {
 	save_create(v->new.name.str);
 	save_read(v->new.name.str);
 	loadadd(v->new.name.str, time(NULL));
@@ -149,10 +155,11 @@ newhandler_actual(Input *in) {
 	return 1;
 }
 
-static void
-newhandler_back(int arg) {
+static int
+newhandler_back(int type, void *elem) {
 	gui_input_clear(&v->new.name);
 	v->new.disp = 0;
+	return 0;
 }
 
 static void
@@ -167,25 +174,15 @@ loadhandler(void) {
 	/* v->b[SMENU_CONT].enabled = 1; */
 }
 
-static void
-loadhandler_actual(void) {
+static int
+loadhandler_actual(int type, void *elem) {
 	struct Loadable *l;
 
 	l = v->load.savelist.sel->data;
 	save_read(l->name);
 	view_tabs.sel = VIEW_MAIN;
 	v->load.disp = 0;
-	return;
-}
-
-static void
-loadhandler_click(Treeview *tv) {
-	loadhandler_actual();
-}
-
-static void
-loadhandler_button(int arg) {
-	loadhandler_actual();
+	return 0;
 }
 
 static void

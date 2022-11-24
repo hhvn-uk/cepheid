@@ -24,7 +24,6 @@ typedef void (*Treesetter)(char *dir, char *group, char *name, int depth, Tree *
 typedef void (*Treefree)(Tree *t);
 typedef int (*Treefilter)(Tree *t, void *data);
 typedef void (*Treeprinter)(int x, int y, Treeview *tv, Tree *t);
-typedef void (*Treedclick)(Treeview *tv);
 
 typedef int (*Treecompar)(Tree *a, Tree *b, void *data);
 
@@ -162,6 +161,24 @@ typedef struct {
 	int scroll;
 } Mouse;
 
+/* gui.c */
+enum GuiElements {
+	GUI_TAB,
+	GUI_CHECKBOX,
+	GUI_BUTTON,
+	GUI_INPUT,
+	GUI_DROPDOWN,
+	GUI_TREEVIEW,
+	GUI_ELEMS,
+};
+
+typedef struct {
+	enum GuiElements type;
+	void *p;
+} Focus;
+
+typedef int (*Guicallback)(int type, void *elem);
+
 #define TABS_MAX 16
 typedef struct {
 	int n;
@@ -187,14 +204,14 @@ struct Input {
 	char *placeholder;
 	int len;
 	int cur;
-	int (*onenter)(Input *); /* return positive to clear */
+	Guicallback onenter; /* return non-zero to clear */
 	int (*accept)(wchar_t);
 };
 
 typedef struct {
 	int enabled;
 	char *label;
-	void (*func)(int);
+	Guicallback func;
 	int arg;
 	Input *submit; /* run the onenter in an Input instead */
 } Button;
@@ -220,26 +237,11 @@ struct Treeview {
 	void *fdata; /* data to pass to filter() */
 	Treefilter filter; /* hide nodes when 0 is returned */
 	Treeprinter print; /* prints data related to the node */
-	Treedclick dclick; /* runs on double click of selected node */
+	Guicallback dclick; /* runs on double click of selected node */
 	/* internal */
 	Geom rect;
 	Pane pane;
 };
-
-enum GuiElements {
-	GUI_TAB,
-	GUI_CHECKBOX,
-	GUI_BUTTON,
-	GUI_INPUT,
-	GUI_DROPDOWN,
-	GUI_TREEVIEW,
-	GUI_ELEMS,
-};
-
-typedef struct {
-	enum GuiElements type;
-	void *p;
-} Focus;
 
 enum UiViews {
 	VIEW_SMENU,
