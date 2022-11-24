@@ -6,6 +6,11 @@
 #define MCHECK(x) (x != NULL ? (void)0 : NOMEM())
 #define FMEMMAX 1024
 
+#ifdef CUSTOM_FREE
+#undef free
+#endif /* CUSTOM_FREE */
+
+
 static void *fmem[FMEMMAX] = {NULL};
 static int fmemi = 0;
 
@@ -65,15 +70,11 @@ erealloc(void *ptr, size_t size) {
 	return ret;
 }
 
-#ifdef CUSTOM_FREE
-#undef free
-#endif /* CUSTOM_FREE */
-
 void
 _free(void *mem, char *file, int line, const char *func) {
 #ifdef CHECK_FRAME_MEM_FREE
 	int i;
-	for (i = fmemi; i >= 0; i--)
+	for (i = fmemi - 1; i >= 0; i--)
 		if (fmem[i] == mem)
 			_err(2, "error", file, line, func,
 				"attempting to free memory allocated for a frame\n");
