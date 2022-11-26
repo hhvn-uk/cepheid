@@ -1,12 +1,10 @@
-Cepheid
-=======
+# Cepheid
 
-This is an ISC-licensed clone of the game Aurora 4x.
+This is an ISC-licensed "clone" of the game Aurora 4x.
 
 A cepheid is a radially pulsating star. It also isn't the name of another game.
 
-Concessions
-===========
+## Concessions
 
 Aurora and this game have both made many concessions when it comes to physics
 and astronomy in order to make something playable. Some of them are listed here
@@ -29,3 +27,85 @@ Astronomy:
 
 See the "lore" for trans-newtonian elements on the Aurora wiki:
 	https://aurorawiki.pentarch.org/index.php?title=Trans_Newtonian_Elements
+
+## Why are you making this?
+
+I've always been interested more in how video games work than actually playing
+them, hence I'm trying to build on from the ground up. An aurora 4x clone makes
+sense as it requires very minimal artistic ability, as most of the "graphics"
+can be done in code.
+
+### Raylib
+
+I selected raylib as I was hoping it would be a good enough abstraction layer
+between X11/opengl/etc and "draw a line here". My opinion so far is that it's
+alright.
+
+I can definitely say it's easy to use when you're using it as intended, as
+raylib handles most data structures itself, and doesn't require any allocation
+of data. There's no raylib_ctx_init(), and passing the same struct to every
+single function (when functions need to be aware of some context there is
+usually a BeginSomething() function that will tell raylib to be aware of that
+until the EndSomething() later on, which is a pretty sweet way of handling
+things).
+
+raygui, however, is an absolute piece of shit, IMO. I find the whole
+"modulization" thing pretty dumb: all components of raylib have the same
+dependencies - you save practically nothing from splitting it up into multiple
+parts. The .a/.so and .h model works fine for raylib itself, so why does raygui
+have to be implemented in a header when it could all be present in raylib.so? As
+far as I can tell, the only way to style the gui (that won't cause you to rip
+your hair out) is to use a styling program written by the author. As of the
+start of this project I couldn't find the source code anywhere, and the only
+place that it could be run was online. I'm sure I could've asked somewhere, but
+at that point I couldn't be bothered trying to deal with raygui and decided to
+implement my own.
+
+Honestly, I'm kind of happy that I didn't go with raygui, as writing my own gui
+has been fun.
+
+raylib has other issues though. I said earlier that it's good if you "use it as
+intended". That's because there are plenty of small features that could be very
+handy but the author decided shouldn't exist.
+
+One example of this is support for multiple windows, this is a feature that has
+been created (https://github.com/raysan5/raylib/wiki/Use-multiple-windows)
+before. I understand why this hasn't been merged with raylib itself - it
+wouldn't work with the web as a target - but still, I don't care about the web,
+and I don't care to maintain a fork of raylib for this project, why can't it
+just be there for the targets that do support it? The only visible change to
+anyone using raylib would be to BeginDrawing(), but there could instead be a
+BeginDrawingWindow() function that takes a context id, and produce a warning if
+both BeginDrawingWindow() and BeginDrawing() are used in the same program.
+
+Another issue is the handling of keyboard input. In order to get text input, the
+GetCharPressed() function exists, which returns a wchar_t. Great, right? No.
+Because it doesn't return backspaces. Even though they are ASCII characters.
+Okay, so I can just use IsKeyPressed() right? Nope, because that won't deal with
+they key being held down. So instead I have to implement a function that counts
+frames and every n frames says it's pressed. So I just have to find the delay
+that X11 uses between emitting key presses when a keys is held and hardcode
+that, right? Nope. Nope. Nope. Because X11 has settings which allow you to
+change that, and since raylib is meant to be dealing with X11 I can't query
+that, so what should be a setting that applies globally to all X11 applications
+doesn't apply to cepheid because I can't make it.
+
+raylib also isn't very good at drawing big shapes. For example, the orbits of
+planets. By default raylib only draws rings with 36 segments, which really isn't
+enough when less than 1° is shown on screen (ie, zoomed into a planet). Cranking
+up this number indiscriminately isn't a very good idea either, as the
+performance goes bye bye. So yet again, I'm having to fight with raylib to try
+to get it to work somewhat well. The solution at the time of writing (701a5de)
+is a function that calculates the number of segments to draw based on the
+radius, and estimates at what degrees the ring should start and end at (see
+ui_draw_ring). Along with that, draw_orbit() does various checks to prevent
+unecessary drawing in the first place. With this I'm able to get 60fps on a
+"Intel i5 M 520 (4) @ 2.400GHz"'s integrated GPU displaying all the planets in
+the solar system, but turn it on for all the dwarf planets and asteroids...
+
+I would have hoped that raylib with deal with this for me.
+
+After seeing this blog post,
+https://www.bit-101.com/blog/2022/11/coding-curves-03-arcs-circles-ellipses/
+I'm considering writing my own function for drawing orbits, but this will depend
+on the performance of drawing a lot of lines.
