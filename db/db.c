@@ -167,7 +167,7 @@ track(Group *group) {
 	if (!r) return -1;
 	db->tl += TL_INCR;
 	db->tracked = r;
-	memset(db->tracked + i + 1, 0, TL_INCR - 1 * sizeof(Group *));
+	memset(db->tracked + i, 0, TL_INCR * sizeof(Group *));
 	db->tracked[i] = group;
 	return 0;
 }
