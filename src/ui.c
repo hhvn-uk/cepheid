@@ -45,8 +45,8 @@ ui_loop(void) {
 	ffree();
 	if (IsWindowResized())
 		ui_update_screen();
-	ui_keyboard_handle();
-	gui_click_handle();
+	gui_key_handle();
+	gui_mouse_handle();
 
 	mouse.vector = GetMousePosition();
 	mouse.delta = GetMouseDelta();
@@ -116,6 +116,11 @@ ui_textsize(char *text) {
 	return charpx * strlen(text);
 }
 
+void
+ui_cursor(MouseCursor curs) {
+	SetMouseCursor(curs);
+}
+
 int
 ui_collides(Geom geom, Vector point) {
 	switch (geom.type) {
@@ -154,38 +159,6 @@ ui_onscreen_circle(Vector centre, float r) {
 		return 0;
 	centre.y = pane_y(centre.y);
 	return CheckCollisionCircleRec(centre, r, RLIFY_RECT(screen.rect));
-}
-
-int
-ui_keyboard_check(int key, int *fcount) {
-	if (IsKeyPressed(key)) {
-		*fcount = -10;
-		return 1;
-	} else if (IsKeyDown(key) && !*fcount) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-void
-ui_keyboard_handle(void) {
-	static int fcount = 0;
-
-	/* Register multiple backspaces when held. raylib does this with
-	 * "characters", but anything other than a "character" has completely
-	 * different handling. (Newlines and backspaces *ARE* ASCII characters.
-	 * So... eugh). ncurses's get_blah23_ch_fgfgj is somehow better.
-	 *
-	 * This also IS NOT ABLE TO respect the X11 settings for outputting
-	 * characters while held because... Fuck you, apparently. Thanks
-	 * raylib. */
-	fcount++;
-	if (fcount == (int)TARGET_FPS/15)
-		fcount = 0;
-
-	if (focus.p && gui_key_handlers[focus.type])
-		gui_key_handlers[focus.type](focus.p, &fcount);
 }
 
 void

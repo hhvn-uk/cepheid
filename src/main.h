@@ -114,13 +114,11 @@ void	ui_print(int x, int y, Color col, char *format, ...);
 void	ui_printw(int x, int y, int w, Color col, char *format, ...);
 void	ui_title(char *fmt, ...);
 int	ui_textsize(char *text);
-int	ui_checkbox_size(Checkbox *checkbox);
+void	ui_cursor(MouseCursor curs);
 int	ui_collides(Geom geom, Vector point);
 int	ui_onscreen(Vector point);
 int	ui_onscreen_ring(Vector centre, float r);
 int	ui_onscreen_circle(Vector centre, float r);
-int	ui_keyboard_check(int key, int *fcount);
-void	ui_keyboard_handle(void);
 void	ui_draw_views(void);
 void	ui_draw_rect(int x, int y, int w, int h, Color col);
 void	ui_draw_expander(int x, int y, int w, int expanded);
@@ -138,14 +136,14 @@ float	ui_vectordist(Vector a, Vector b);
 
 /* gui.c */
 #define BUTTON_HEIGHT (PAD + FONT_SIZE)
-extern void (*gui_key_handlers[GUI_ELEMS])(void *elem, int *fcount);
-int	gui_click_handle(void);
+int	gui_mouse_handle(void);
+void	gui_key_handle(void);
 void	gui_tabs(int x, int y, int w, int h, Tabs *tabs);
 int	gui_checkbox(int x, int y, Checkbox *checkbox); /* returns width */
 void	gui_button(int x, int y, int w, Button *b);
 void	gui_dropdown(int x, int y, int w, Dropdown *d);
 void	gui_input(int x, int y, int w, Input *in);
-int	gui_input_next(Input *in); /* if inputs are contained in an array, this .onenter advances to the next */
+int	gui_input_next(int type, void *elem); /* if inputs are contained in an array, this .onenter advances to the next */
 void	gui_input_clear(Input *in);
 void	gui_treeview(int x, int y, int w, int h, Treeview *tv);
 

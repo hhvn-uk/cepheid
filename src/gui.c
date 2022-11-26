@@ -14,13 +14,13 @@ static struct {
 	struct timespec tv;
 } lastclick = {-1};
 
-/* Click handlers */
-static void gui_click_tabs(MouseButton button, Geom *geom, void *elem);
-static void gui_click_checkbox(MouseButton button, Geom *geom, void *elem);
-static void gui_click_button(MouseButton button, Geom *geom, void *elem);
-static void gui_click_input(MouseButton button, Geom *geom, void *elem);
-static void gui_click_dropdown(MouseButton button, Geom *geom, void *elem);
-static void gui_click_treeview(MouseButton button, Geom *geom, void *elem);
+/* Mouse handlers */
+static void gui_mouse_tabs(MouseButton button, Geom *geom, void *elem);
+static void gui_mouse_checkbox(MouseButton button, Geom *geom, void *elem);
+static void gui_mouse_button(MouseButton button, Geom *geom, void *elem);
+static void gui_mouse_input(MouseButton button, Geom *geom, void *elem);
+static void gui_mouse_dropdown(MouseButton button, Geom *geom, void *elem);
+static void gui_mouse_treeview(MouseButton button, Geom *geom, void *elem);
 
 /* Key handlers */
 static void gui_key_input(void *elem, int *fcount);
@@ -29,28 +29,22 @@ static void gui_key_input(void *elem, int *fcount);
 static int gui_double_click(void);
 static void gui_enter_input(Input *in);
 
-static void (*click_handlers[GUI_ELEMS])(
-		MouseButton button,
-		Geom *geom, void *elem) = {
-	[GUI_TAB] = gui_click_tabs,
-	[GUI_CHECKBOX] = gui_click_checkbox,
-	[GUI_BUTTON] = gui_click_button,
-	[GUI_INPUT] = gui_click_input,
-	[GUI_DROPDOWN] = gui_click_dropdown,
-	[GUI_TREEVIEW] = gui_click_treeview,
-};
-
-void (*gui_key_handlers[GUI_ELEMS])(void *elem, int *fcount) = {
-	[GUI_TAB] = NULL,
-	[GUI_CHECKBOX] = NULL,
-	[GUI_BUTTON] = NULL,
-	[GUI_INPUT] = gui_key_input,
-	[GUI_DROPDOWN] = NULL,
-	[GUI_TREEVIEW] = NULL,
+static struct {
+	void (*mouse)(MouseButton button, Geom *geom, void *elem);
+	MouseCursor cursor; /* Set this before running the mouse handler, 
+			       as that can override it */
+	void (*key)(void *elem, int *fcount);
+} element[] = {
+	[GUI_TAB] 	= {gui_mouse_tabs,	MOUSE_CURSOR_POINTING_HAND,	NULL},
+	[GUI_CHECKBOX]	= {gui_mouse_checkbox,	MOUSE_CURSOR_POINTING_HAND,	NULL},
+	[GUI_BUTTON]	= {gui_mouse_button,	MOUSE_CURSOR_POINTING_HAND,	NULL},
+	[GUI_INPUT]	= {gui_mouse_input,	MOUSE_CURSOR_IBEAM, 		gui_key_input},
+	[GUI_DROPDOWN]	= {gui_mouse_dropdown,	MOUSE_CURSOR_POINTING_HAND,	NULL},
+	[GUI_TREEVIEW]	= {gui_mouse_treeview,	MOUSE_CURSOR_DEFAULT, 		NULL},
 };
 
 static void
-gui_click_register(Geom geom, enum GuiElements type, void *elem) {
+gui_mouse_register(Geom geom, enum GuiElements type, void *elem) {
 	if (clickablei >= CLICKABLE_MAX)
 		return; /* ran out */
 
@@ -61,7 +55,7 @@ gui_click_register(Geom geom, enum GuiElements type, void *elem) {
 }
 
 int
-gui_click_handle(void) {
+gui_mouse_handle(void) {
 	MouseButton button;
 	Geom *geom;
 	int i;
@@ -80,8 +74,9 @@ gui_click_handle(void) {
 
 	for (i = 0; i < clickablei; i++) {
 		if (clickable[i].elem && ui_collides(clickable[i].geom, mouse.vector)) {
+			ui_cursor(element[clickable[i].type].cursor);
 			geom = &clickable[i].geom;
-			click_handlers[clickable[i].type](button, geom, clickable[i].elem);
+			element[clickable[i].type].mouse(button, geom, clickable[i].elem);
 			if (clickable[i].elem == focus.p)
 				keepfocus = 1;
 			ret = 1;
@@ -99,6 +94,9 @@ gui_click_handle(void) {
 		lastclick.button = button;
 		clock_gettime(CLOCK_REALTIME, &lastclick.tv);
 	}
+
+	if (!ret)
+		ui_cursor(MOUSE_CURSOR_DEFAULT);
 
 	return ret;
 }
@@ -120,6 +118,38 @@ gui_double_click(void) {
 		return 1;
 
 	return 0;
+}
+
+static int
+gui_key_check(int key, int *fcount) {
+	if (IsKeyPressed(key)) {
+		*fcount = -10;
+		return 1;
+	} else if (IsKeyDown(key) && !*fcount) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+void
+gui_key_handle(void) {
+	static int fcount = 0;
+
+	/* Register multiple backspaces when held. raylib does this with
+	 * "characters", but anything other than a "character" has completely
+	 * different handling. (Newlines and backspaces *ARE* ASCII characters.
+	 * So... eugh). ncurses's get_blah23_ch_fgfgj is somehow better.
+	 *
+	 * This also IS NOT ABLE TO respect the X11 settings for outputting
+	 * characters while held because... Fuck you, apparently. Thanks
+	 * raylib. */
+	fcount++;
+	if (fcount == (int)TARGET_FPS/15)
+		fcount = 0;
+
+	if (focus.p && element[focus.type].key)
+		element[focus.type].key(focus.p, &fcount);
 }
 
 void
@@ -181,11 +211,11 @@ gui_tabs(int x, int y, int w, int h, Tabs *tabs) {
 	if (tabs->sel == 0) ui_draw_rect(x, y + 1, 1, h - 1, col_bg); /* undraw left border */
 	if (tabs->sel == tabs->n - 1) ui_draw_rect(x + w - 1, y + 1, 1, h - 1, col_bg); /* undraw right border */
 
-	gui_click_register(RECT(x, y, w, h), GUI_TAB, tabs);
+	gui_mouse_register(RECT(x, y, w, h), GUI_TAB, tabs);
 }
 
 static void
-gui_click_tabs(MouseButton button, Geom *geom, void *elem) {
+gui_mouse_tabs(MouseButton button, Geom *geom, void *elem) {
 	int ftabw, fw, fn;
 	int tabw, x, i;
 	Tabs *tabs = elem;
@@ -225,13 +255,13 @@ gui_checkbox(int x, int y, Checkbox *box) {
 	ui_print(x + w + (w / 2), y + (h / 6), col_fg, "%s", box->label);
 	rw = w + (w / 2) + ui_textsize(box->label);
 	if (box->enabled)
-		gui_click_register(RECT(x, y, rw, h),
+		gui_mouse_register(RECT(x, y, rw, h),
 				GUI_CHECKBOX, box);
 	return rw;
 }
 
 static void
-gui_click_checkbox(MouseButton button, Geom *geom, void *elem) {
+gui_mouse_checkbox(MouseButton button, Geom *geom, void *elem) {
 	Checkbox *checkbox = elem;
 
 	if (button != MOUSE_BUTTON_LEFT)
@@ -249,11 +279,11 @@ gui_button(int x, int y, int w, Button *b) {
 			"%s", b->label);
 
 	if (b->enabled)
-		gui_click_register(RECT(x, y, w, h), GUI_BUTTON, b);
+		gui_mouse_register(RECT(x, y, w, h), GUI_BUTTON, b);
 }
 
 static void
-gui_click_button(MouseButton button, Geom *geom, void *elem) {
+gui_mouse_button(MouseButton button, Geom *geom, void *elem) {
 	Button *b = elem;
 
 	if (button == MOUSE_BUTTON_LEFT) {
@@ -293,12 +323,12 @@ gui_dropdown(int x, int y, int w, Dropdown *d) {
 		}
 	}
 
-	gui_click_register(d->rect, GUI_DROPDOWN, d);
+	gui_mouse_register(d->rect, GUI_DROPDOWN, d);
 	pane_end();
 }
 
 static void
-gui_click_dropdown(MouseButton button, Geom *geom, void *elem) {
+gui_mouse_dropdown(MouseButton button, Geom *geom, void *elem) {
 	Dropdown *drop = elem;
 	int i;
 
@@ -338,11 +368,11 @@ gui_input(int x, int y, int w, Input *in) {
 	if (focused) {
 		ui_draw_rect(x + TPX + charpx * in->cur, y + TPY, 1, FONT_SIZE - 2, col_fg);
 	}
-	gui_click_register(RECT(x, y, w, h), GUI_INPUT, in);
+	gui_mouse_register(RECT(x, y, w, h), GUI_INPUT, in);
 }
 
 static void
-gui_click_input(MouseButton button, Geom *geom, void *elem) {
+gui_mouse_input(MouseButton button, Geom *geom, void *elem) {
 	Input *input = elem;
 	int i;
 
@@ -374,22 +404,22 @@ gui_key_input(void *elem, int *fcount) {
 
 	if (IsKeyPressed(KEY_ENTER) && in->onenter) {
 		gui_enter_input(in);
-	} else if (ui_keyboard_check(KEY_BACKSPACE, fcount) && in->len && in->cur) {
+	} else if (gui_key_check(KEY_BACKSPACE, fcount) && in->len && in->cur) {
 		editrm(in->wstr, &in->len, &in->cur);
-	} else if (ui_keyboard_check(KEY_LEFT, fcount) && in->cur) {
+	} else if (gui_key_check(KEY_LEFT, fcount) && in->cur) {
 		in->cur--;
-	} else if (ui_keyboard_check(KEY_RIGHT, fcount) && in->cur != in->len) {
+	} else if (gui_key_check(KEY_RIGHT, fcount) && in->cur != in->len) {
 		in->cur++;
-	} else if (ui_keyboard_check(KEY_TAB, fcount) && in->onenter == gui_input_next) {
-		gui_input_next(in);
+	} else if (gui_key_check(KEY_TAB, fcount) && in->onenter == gui_input_next) {
+		gui_input_next(GUI_INPUT, in);
 	} else if (c && (!in->accept || in->accept(c)) && in->len < INPUT_MAX) {
 		editins(in->wstr, &in->len, &in->cur, INPUT_MAX, c);
 	}
 }
 
 int
-gui_input_next(Input *in) {
-	ui_focus(GUI_INPUT, in + sizeof(Input));
+gui_input_next(int type, void *elem) {
+	ui_focus(GUI_INPUT, elem + sizeof(Input));
 	return 0;
 }
 
@@ -453,32 +483,36 @@ gui_treeview(int x, int y, int w, int h, Treeview *tv) {
 	}
 
 	pane_end();
-	gui_click_register(tv->rect, GUI_TREEVIEW, tv);
+	gui_mouse_register(tv->rect, GUI_TREEVIEW, tv);
 }
 
 static void
-gui_click_treeview(MouseButton button, Geom *geom, void *elem) {
+gui_mouse_treeview(MouseButton button, Geom *geom, void *elem) {
 	Treeview *tv = elem;
 	int depth;
 	Tree *p;
 	int i, pos;
-
-	if (button != MOUSE_BUTTON_LEFT)
-		return;
+	int click = button == MOUSE_BUTTON_LEFT;
 
 	pos = (mouse.y - geom->y - FONT_SIZE - (tv->print ? FONT_SIZE + PAD / 2 : 0) + tv->pane.off) / FONT_SIZE;
 
 	for (i = 0, p = 0; tree_iter_f(tv->t, TREEMAX, &p, &depth, gui_treeview_filter, tv) != -1 && i <= pos; i++) {
 		if (i == pos) {
 			if (p->type & tv->colmask && (!(p->type & tv->selmask) ||
-						mouse.x < geom->x + PAD * (depth + 2)))
-				p->collapsed = !p->collapsed;
+						mouse.x < geom->x + PAD * (depth + 2))) {
+				if (click)
+					p->collapsed = !p->collapsed;
+				ui_cursor(MOUSE_CURSOR_POINTING_HAND);
+			}
 			if (p->type & tv->selmask && (!(p->type & tv->colmask) ||
 						mouse.x > geom->x + PAD * (depth + 2))) {
-				if (gui_double_click() && tv->dclick)
-					tv->dclick(GUI_TREEVIEW, tv);
-				else
-					tv->sel = p;
+				if (click) {
+					if (gui_double_click() && tv->dclick)
+						tv->dclick(GUI_TREEVIEW, tv);
+					else
+						tv->sel = p;
+				}
+				ui_cursor(MOUSE_CURSOR_POINTING_HAND);
 			}
 		}
 	}
