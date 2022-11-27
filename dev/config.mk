@@ -17,9 +17,14 @@ checks: $(SRC)
 test:
 	touch .testing
 	cd tests && make
-	make test-run
+	make test-run RUNNER=run
 	rm -rf test.*
 	touch .testing
+
+test-gdb:
+	touch .testing
+	cd tests && make
+	CK_FORK=no make test-run RUNNER=gdb
 
 clean: test-clean
 test-clean:
@@ -29,7 +34,7 @@ test-clean:
 # to $(SRC), as shell macros are evaluated before the target is run. Hence,
 # this target is required.
 test-run:
-	make run CFLAGS="$(CFLAGS) -DTEST" LDFLAGS="$(LDFLAGS) -lcheck" SRC="$(SRC) $(shell find tests -type f -name "*.c")"
+	make $(RUNNER) CFLAGS="$(CFLAGS) -DTEST" LDFLAGS="$(LDFLAGS) -lcheck" SRC="$(SRC) $(shell find tests -type f -name "*.c")"
 
 run: all
 	gdb -ex 'set confirm on' -ex run -ex bt -ex quit --args $(BIN) $(ARGS)
