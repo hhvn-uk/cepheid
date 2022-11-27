@@ -41,6 +41,8 @@ save_read(char *name) {
 
 	if ((str = dbget(save->db.dir, "index", "homesystem")))
 		save->homesys = sys_get(str);
+	else
+		save->homesys = NULL;
 
 	for (i = 0; i < VIEW_LAST; i++)
 		if (view_init[i])
@@ -84,24 +86,20 @@ save_exists(char *name) {
 int
 save_create(char *name) {
 	char path[PATH_MAX];
-	FILE *f;
-
-	snprintf(path, sizeof(path), "%s/%s", SAVEDIR, name);
-	if (mkdir(path, 0755) == -1)
-		return -1;
 
 	snprintf(path, sizeof(path), "%s/%s/Systems", SAVEDIR, name);
-	if (mkdir(path, 0755) == -1)
+	if (mkdirp(path) == -1)
 		return -1;
 
 	snprintf(path, sizeof(path), "%s/%s/Systems/Sol", SAVEDIR, name);
 	if (dirs_write("sol", path) == -1)
 		return -1;
 
-	snprintf(path, sizeof(path), "%s/%s/index", SAVEDIR, name);
-	if (!(f = fopen(path, "w")))
-		return -1;
-	fprintf(f, "selsystem\tSol\n");
-	fclose(f);
+	/* Ideally this data should be set, so that it is in memory, not on
+	 * disk, but for now, write->read->delete->maybe save */
+	save_read(name);
+	save_delete(name);
+	dbset(save->db.dir, "index", "homesystem", "Sol");
+
 	return 0;
 }

@@ -149,8 +149,9 @@ newhandler(void) {
 
 static int
 newhandler_actual(int type, void *elem) {
-	save_create(v->new.name.str);
-	save_read(v->new.name.str);
+	if (save_create(v->new.name.str) == -1)
+		error(1, "failed to create new save\n");
+	/* TODO: error handling that doesn't just cause an exit? */
 	loadadd(v->new.name.str, time(NULL));
 	view_tabs.sel = VIEW_MAIN;
 	v->new.disp = 0;
