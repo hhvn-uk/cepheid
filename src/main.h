@@ -211,10 +211,15 @@ char *	bodytype_strify(Body *body);
 Body *	body_init(char *name);
 void	body_free(Body *b);
 
+/* file.c */
+int	mkdirp(char *path);
+int	rmdirp(char *dir);
+
 /* save.c */
 void 	save_read(char *dir);
 int	save_changed(void);
 void	save_write(void);
+int	save_delete(char *name);
 int	save_exists(char *name);
 int	save_create(char *name);
 
@@ -248,11 +253,6 @@ int	vdbgetf(char *dir, char *group, char *key, char *fmt, va_list args);
 int	dbgetf(char *dir, char *group, char *key, char *fmt, ...);
 int	dbgettree(char *dir, Tree *t, Treegetter func);
 int	dbsettree(char *dir, Tree *t, Treesetter func);
-
-/* loading.c */
-Loader *loading_open(int steps, char *initstr);
-void	loading_update(Loader *hand, char *str);
-void	loading_close(Loader *hand);
 
 /* maths.c */
 float	cosf_d(float x);

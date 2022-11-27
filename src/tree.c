@@ -82,6 +82,8 @@ tree_delete(Tree **t, Treefree freedata) {
 		freedata(e);
 	free(e);
 
+	*t = NULL;
+
 	return 0;
 }
 
@@ -125,6 +127,9 @@ tree_delete_r(Tree **t, Treefree freedata) {
 		e->n->p = e->p;
 
 	tree_delete_r_sub(e, freedata);
+
+	*t = NULL;
+
 	return 0;
 }
 

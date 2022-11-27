@@ -1,0 +1,24 @@
+/* vim: set filetype=c : */
+#include <unistd.h>
+#include <stdio.h>
+#include "../src/main.h"
+
+%{
+	FILE *f;
+	int ret;
+
+	mkdirp("a/b/c");
+	ck_assert(access("a", F_OK) == 0);
+	ck_assert(access("a/b", F_OK) == 0);
+	ck_assert(access("a/b/c", F_OK) == 0);
+
+	f = fopen("a/b/d", "w");
+	fclose(f);
+
+	ret = rmdirp("a");
+	ck_assert(access("a", F_OK) != 0);
+	ck_assert(access("a/b", F_OK) != 0);
+	ck_assert(access("a/b/c", F_OK) != 0);
+	ck_assert(access("a/b/d", F_OK) != 0);
+	ck_assert(ret == 0);
+}

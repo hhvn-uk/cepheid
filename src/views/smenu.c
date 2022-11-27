@@ -27,6 +27,7 @@ static int loadhandler_actual(int type, void *elem);
 static void loadprinter(int x, int y, Treeview *tv, Tree *t);
 static void loadadd(char *dir, time_t mod);
 static void loadinit(char *sdir);
+static void loadfree(Tree *t);
 
 static View_smenu *v = &view_smenu;
 View_smenu view_smenu = {
@@ -76,6 +77,7 @@ View_smenu view_smenu = {
 			.print = loadprinter,
 			.dclick = loadhandler_actual,
 		},
+		.delete = {0, "Delete", loadhandler_actual, 1 },
 		.load = {0, "Load", loadhandler_actual, 0 },
 	}
 };
@@ -170,18 +172,30 @@ quithandler(void) {
 static void
 loadhandler(void) {
 	v->load.disp = 1;
-	/* strcpy(v->cont.label, CONTCUR); */
-	/* v->b[SMENU_CONT].enabled = 1; */
 }
 
 static int
 loadhandler_actual(int type, void *elem) {
 	struct Loadable *l;
+	Button *b;
+	int delete;
+
+
+	if (type == GUI_BUTTON) {
+		b = elem;
+		delete = b->arg == 1;
+	} else delete = 0;
 
 	l = v->load.savelist.sel->data;
-	save_read(l->name);
-	view_tabs.sel = VIEW_MAIN;
-	v->load.disp = 0;
+
+	if (delete) {
+		save_delete(l->name);
+		tree_delete(&v->load.savelist.sel, loadfree);
+	} else {
+		save_read(l->name);
+		view_tabs.sel = VIEW_MAIN;
+		v->load.disp = 0;
+	}
 	return 0;
 }
 
@@ -209,6 +223,14 @@ loadadd(char *dir, time_t mod) {
 	p->mod = mod;
 
 	tree_add_child(&v->load.saves, p->name, 1, p, NULL);
+}
+
+static void
+loadfree(Tree *t) {
+	struct Loadable *p = t->data;
+
+	free(p->name);
+	free(p);
 }
 
 void
@@ -268,9 +290,9 @@ view_smenu_handle(int nowsel) {
 	}
 
 	if (v->load.disp && v->load.savelist.sel)
-		v->load.load.enabled = 1;
+		v->load.load.enabled = v->load.delete.enabled = 1;
 	else
-		v->load.load.enabled = 0;
+		v->load.load.enabled = v->load.delete.enabled = 0;
 
 	v->b[SMENU_SAVE].enabled = save ? 1 : 0;
 }
@@ -336,9 +358,13 @@ view_smenu_draw(void) {
 		y += PAD;
 
 		gui_treeview(x, y, LOAD_W, LOAD_H, &v->load.savelist);
-		gui_button(x + w - BUTTON_W - PAD * 2,
-				y + h - PAD * 2 - BUTTON_HEIGHT,
-				BUTTON_W, &v->load.load);
+
+		x += w - BUTTON_W - PAD * 2;
+		y += h - PAD * 2 - BUTTON_HEIGHT;
+		gui_button(x, y, BUTTON_W, &v->load.load);
+
+		x -= BUTTON_W + PAD;
+		gui_button(x, y, BUTTON_W, &v->load.delete);
 	} else {
 		ui_draw_rect(EXPLODE_RECT(v->main), bg);
 		ui_draw_border_around(EXPLODE_RECT(v->main), 1);

@@ -64,6 +64,14 @@ save_write(void) {
 }
 
 int
+save_delete(char *name) {
+	char dir[PATH_MAX];
+
+	snprintf(dir, sizeof(dir), "%s/%s", SAVEDIR, name);
+	return rmdirp(dir);
+}
+
+int
 save_exists(char *name) {
 	char dir[PATH_MAX];
 

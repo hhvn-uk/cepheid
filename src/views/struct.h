@@ -110,6 +110,7 @@ typedef struct {
 		int disp;
 		Tree saves;
 		Treeview savelist;
+		Button delete;
 		Button load;
 	} load;
 } View_smenu;
