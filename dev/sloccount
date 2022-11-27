@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Cepheid relies on a lot of code generation, so it can be difficult to count
+# sloc, this script counts only files tracked by git.
+#
+# It also counts the counts (but not the .c files generated with boilerplate).
+
+for f in tests/*.test; do
+	sed 's/%{/int func(void) {/' < $f > $f.tmp.c
+done
+
+sloccount "$@" $(git ls-files) tests/*.tmp.c
+rm tests/*.tmp.c
