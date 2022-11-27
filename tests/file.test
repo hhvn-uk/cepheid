@@ -7,18 +7,24 @@
 	FILE *f;
 	int ret;
 
-	mkdirp("a/b/c");
+	ret = mkdirp("a/b/c");
 	ck_assert(access("a", F_OK) == 0);
 	ck_assert(access("a/b", F_OK) == 0);
 	ck_assert(access("a/b/c", F_OK) == 0);
+	ck_assert(ret == 0);
 
-	f = fopen("a/b/d", "w");
+	ret = mkdirp("a/e");
+	ck_assert(access("a/e", F_OK) == 0);
+	ck_assert(ret == 0);
+
+	f = fopen("a/b/e", "w");
 	fclose(f);
 
 	ret = rmdirp("a");
-	ck_assert(access("a", F_OK) != 0);
-	ck_assert(access("a/b", F_OK) != 0);
+	ck_assert(access("a/b/e", F_OK) != 0);
 	ck_assert(access("a/b/c", F_OK) != 0);
-	ck_assert(access("a/b/d", F_OK) != 0);
+	ck_assert(access("a/b", F_OK) != 0);
+	ck_assert(access("a/d", F_OK) != 0);
+	ck_assert(access("a", F_OK) != 0);
 	ck_assert(ret == 0);
 }

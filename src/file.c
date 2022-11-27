@@ -19,7 +19,7 @@ mkdirp(char *path) {
 	max = strsplit(dup, "/", p, ELEMS(p));
 
 	for (i = 0, create = 0; i < max; i++) {
-		if (create || access(path, F_OK) == -1) {
+		if (create || access(dup, F_OK) == -1) {
 			if (mkdir(dup, 0777 & ~umask(0)) == -1) {
 				ret = -1;
 				goto end;
