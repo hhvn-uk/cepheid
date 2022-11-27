@@ -3,9 +3,12 @@ CFLAGS += -DDEBUG
 CFLAGS += -DCHECK_FRAME_MEM_FREE
 ARGS =
 
-all: tags checks
+all: tags checks .git/hooks/pre-commit
 tags: $(SRC)
 	ctags --exclude=data/*.h --exclude=data/icons/*.h -R .
+
+.git/hooks/pre-commit: dev/pre-commit
+	cp $< $@
 
 checks: $(SRC)
 	./dev/checkalloc.sh
