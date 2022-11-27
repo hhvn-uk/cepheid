@@ -669,8 +669,10 @@ dbwritegroup_p(Group *group) {
 		return -1;
 	}
 
-	if (!group->changes)
-		return 0;
+	/* This isn't a guarantee that the information is
+	 * actually there, so for now always write */
+	/* if (!group->changes) */
+	/* 	return 0; */
 
 	group->db->changes -= group->changes;
 	group->changes = 0;
