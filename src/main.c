@@ -7,6 +7,10 @@
 
 #define DEFSAVE	"default"
 
+#ifdef TEST
+int test_run(void);
+#endif /* TEST */
+
 Save *save = NULL;
 int sigint = 0;
 int sigterm = 0;
@@ -26,11 +30,16 @@ main(void) {
 	int view_prev;
 	struct sigaction sa;
 
+
 	sa.sa_handler = sighandler;
 	sa.sa_flags = SA_RESTART;
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
+
+#ifdef TEST
+	return test_run();
+#endif /* TEST */
 
 	ui_init();
 

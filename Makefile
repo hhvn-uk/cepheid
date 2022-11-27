@@ -12,7 +12,7 @@ LDFLAGS	= $(RAYLIB) $(DBLIB)
 include config.mk
 
 all: db data $(BIN)
-src/data.o: data/icons/*
+src/main.o: .testing
 
 .c.o:
 	$(CC) $(CFLAGS) -D"SAVEDIR=\"$(SAVEDIR)\"" -c $< -o $@

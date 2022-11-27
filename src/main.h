@@ -20,9 +20,9 @@
 #define CUSTOM_FREE
 #endif /* CHECK_FRAME_MEM_FREE */
 
-#ifdef CUSTOM_FREE
+#if defined(CUSTOM_FREE) && !defined(TEST)
 #define free(m) _free(m, __FILE__, __LINE__, __func__)
-#endif /* CUSTOM_FREE */
+#endif /* defined(CUSTOM_FREE) && !defined(TEST) */
 
 /* main.c */
 extern Save *save;

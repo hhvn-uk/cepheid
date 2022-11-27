@@ -1,0 +1,4 @@
+# except for main.c
+*.c
+*.o
+*.h
