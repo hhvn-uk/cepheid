@@ -11,14 +11,14 @@
  * Set: 'T', key, val[], n
  *
  * Get: 't', key, &val
- * Get: 'T', key, &val[], &n
+ * Get: 'T', key, val[], n
  *
  * Where 't'/'T' is:
- *  's' - string
+ *  's' - string (will allocate memory on get)
  *  'i' - int
  *  'f' - float
  *  'v' - vector
- *  'S' - array of strings
+ *  'S' - array of strings (will allocate memory for elements on get)
  *  'I' - array of ints
  *  'F' - array of floats
  *
@@ -121,11 +121,11 @@ _bdbget(char *dir, char *group, ...) {
 		int *i;
 		float *f;
 		Vector *v;
-		char ***S;
-		int **I;
-		float **F;
+		char **S;
+		int *I;
+		float *F;
 	} v;
-	int i;
+	int i, n;
 
 	va_start(ap, group);
 
@@ -142,7 +142,7 @@ _bdbget(char *dir, char *group, ...) {
 		switch (type) {
 		case 's':
 			v.s = va_arg(ap, char **);
-			dbgetf(dir, group, key, "%s", v.s);
+			*v.s = nstrdup(dbget(dir, group, key));
 			break;
 		case 'i':
 			v.i = va_arg(ap, int *);
@@ -158,25 +158,22 @@ _bdbget(char *dir, char *group, ...) {
 					&(*v.v).x, &(*v.v).y);
 			break;
 		case 'S':
-			v.S = va_arg(ap, char ***);
-			*v.S = emalloc(len * sizeof(char *));
-			for (i = 0; i < len; i++)
-				(*v.S)[i] = nstrdup(list[i]);
-			*va_arg(ap, int *) = len;
+			v.S = va_arg(ap, char **);
+			n = va_arg(ap, int);
+			for (i = 0; i < n; i++)
+				v.S[i] = i < len ? nstrdup(list[i]) : NULL;
 			break;
 		case 'I':
-			v.I = va_arg(ap, int **);
-			*v.I = emalloc(len * sizeof(int));
-			for (i = 0; i < len; i++)
-				(*v.I)[i] = atoi(list[i]);
-			*va_arg(ap, int *) = len;
+			v.I = va_arg(ap, int *);
+			n = va_arg(ap, int);
+			for (i = 0; i < n; i++)
+				v.I[i] = i < len ? atoi(list[i]) : 0;
 			break;
 		case 'F':
-			v.F = va_arg(ap, float **);
-			*v.F = emalloc(len * sizeof(float));
-			for (i = 0; i < len; i++)
-				(*v.F)[i] = strtol(list[i], NULL, 10);
-			*va_arg(ap, int *) = len;
+			v.F = va_arg(ap, float *);
+			n = va_arg(ap, int);
+			for (i = 0; i < n; i++)
+				v.F[i] = i < len ? strtof(list[i], NULL) : 0;
 			break;
 		default:
 			error(1, "invalid bdb type: '%c'\n", type);
