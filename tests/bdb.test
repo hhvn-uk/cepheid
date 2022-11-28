@@ -91,4 +91,6 @@ static unsigned char output[] = {
 	A(F[1], 12.0);
 	A(F[2], 0.0);
 	A(F[3], 0.0);
+
+	dbfree(dir);
 }
