@@ -267,4 +267,5 @@ sys_default(void) {
 		return save->systems.d->data;
 	else
 		error(1, "could not locate any systems\n");
+	return NULL; /* not actually reached due to error() */
 }
