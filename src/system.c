@@ -64,8 +64,8 @@ sys_tree_compar(Tree *a, Tree *b, void *data) {
 	case SYSTREE_SYS:
 		sa = a->data;
 		sb = b->data;
-		return (abs(sa->lypos.x) + abs(sa->lypos.y)) -
-			(abs(sb->lypos.x) + abs(sb->lypos.y));
+		return (fabsf(sa->lypos.x) + fabsf(sa->lypos.y)) -
+			(fabsf(sb->lypos.x) + fabsf(sb->lypos.y));
 	case SYSTREE_BODY:
 		for (p = a->data, v1 = 0; p->parent; p = p->parent)
 			v1 += (p->type == BODY_COMET ? p->maxdist : p->dist);
