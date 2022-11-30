@@ -18,6 +18,7 @@
  *  'i' - int
  *  'f' - float
  *  'v' - vector
+ *  'p' - polar coordinate
  *  'S' - array of strings (will allocate memory for elements on get)
  *  'I' - array of ints
  *  'F' - array of floats
@@ -39,6 +40,7 @@ _bdbset(char *dir, char *group, ...) {
 		int i;
 		float f;
 		Vector v;
+		Polar p;
 		char **S;
 		int *I;
 		float *F;
@@ -70,6 +72,10 @@ _bdbset(char *dir, char *group, ...) {
 		case 'v':
 			v.v = va_arg(ap, Vector);
 			dbsetf(dir, group, key, "%f\t%f", v.v.x, v.v.y);
+			break;
+		case 'p':
+			v.p = va_arg(ap, Polar);
+			dbsetf(dir, group, key, "%f\t%f", v.p.r, v.p.theta);
 			break;
 		case 'S':
 			v.S = va_arg(ap, char **);
@@ -121,6 +127,7 @@ _bdbget(char *dir, char *group, ...) {
 		int *i;
 		float *f;
 		Vector *v;
+		Polar *p;
 		char **S;
 		int *I;
 		float *F;
@@ -156,6 +163,11 @@ _bdbget(char *dir, char *group, ...) {
 			v.v = va_arg(ap, Vector *);
 			dbgetf(dir, group, key, "%f\t%f",
 					&(*v.v).x, &(*v.v).y);
+			break;
+		case 'p':
+			v.p = va_arg(ap, Polar *);
+			dbgetf(dir, group, key, "%f\t%f",
+					&(*v.p).r, &(*v.p).theta);
 			break;
 		case 'S':
 			v.S = va_arg(ap, char **);
