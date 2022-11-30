@@ -20,7 +20,6 @@ static int savecheck_callback(int type, void *elem);
 static int buttonhandler(int type, void *elem);
 static void newhandler(void);
 static int newhandler_actual(int type, void *elem);
-static int newhandler_back(int type, void *elem);
 static void quithandler(void);
 static void loadhandler(void);
 static int loadhandler_actual(int type, void *elem);
@@ -51,7 +50,7 @@ View_smenu view_smenu = {
 			.onenter = newhandler_actual,
 		},
 		.create = {1, "Create", NULL, 0, .submit = &view_smenu.new.name},
-		.back = {1, "Back", newhandler_back, 0},
+		.back = {1, "Back", newhandler_actual, SMENU_BACK},
 	},
 	.cont = {
 		.save = NULL,
@@ -60,7 +59,7 @@ View_smenu view_smenu = {
 	.save = {
 		.check = 0,
 		.msg = NULL,
-		.back = {1, "Back", NULL, -1},
+		.back = {1, "Back", NULL, SMENU_BACK},
 		.save = {1, "Save", NULL, 1},
 		.discard = {1, "Discard", NULL, 0},
 	},
@@ -77,6 +76,7 @@ View_smenu view_smenu = {
 			.print = loadprinter,
 			.dclick = loadhandler_actual,
 		},
+		.back = {1, "Back", loadhandler_actual, SMENU_BACK },
 		.delete = {0, "Delete", loadhandler_actual, 1 },
 		.load = {0, "Load", loadhandler_actual, 0 },
 	}
@@ -90,6 +90,7 @@ savecheck(char *msg, void (*action)(void)) {
 		v->save.discard.func = savecheck_callback;
 	v->save.msg = msg;
 	v->save.func = action;
+	v->back = &v->save.back;
 }
 
 static int
@@ -98,9 +99,10 @@ savecheck_callback(int type, void *elem) {
 	int arg = b->arg;
 
 	v->save.check = 0;
-	if (arg)
+	if (arg == SMENU_BACK)
+		return 0;
+	if (arg == 1)
 		save_write();
-	if (arg != -1)
 	v->save.func();
 	return 0;
 }
@@ -145,10 +147,22 @@ buttonhandler(int type, void *elem) {
 static void
 newhandler(void) {
 	v->new.disp = 1;
+	v->back = &v->new.back;
 }
 
 static int
 newhandler_actual(int type, void *elem) {
+	Button *b;
+
+	if (type == GUI_BUTTON) {
+		b = elem;
+		if (b->arg == SMENU_BACK) {
+			gui_input_clear(&v->new.name);
+			v->new.disp = 0;
+			return 1;
+		}
+	}
+
 	if (save_create(v->new.name.str) == -1)
 		error(1, "failed to create new save\n");
 	/* TODO: error handling that doesn't just cause an exit? */
@@ -156,13 +170,6 @@ newhandler_actual(int type, void *elem) {
 	view_tabs.sel = VIEW_MAIN;
 	v->new.disp = 0;
 	return 1;
-}
-
-static int
-newhandler_back(int type, void *elem) {
-	gui_input_clear(&v->new.name);
-	v->new.disp = 0;
-	return 0;
 }
 
 static void
@@ -173,30 +180,35 @@ quithandler(void) {
 static void
 loadhandler(void) {
 	v->load.disp = 1;
+	v->back = &v->load.back;
 }
 
 static int
 loadhandler_actual(int type, void *elem) {
 	struct Loadable *l;
 	Button *b;
-	int delete;
-
+	int action;
 
 	if (type == GUI_BUTTON) {
 		b = elem;
-		delete = b->arg == 1;
-	} else delete = 0;
+		action = b->arg;
+	} else action = 0;
 
 	l = v->load.savelist.sel->data;
 
-	if (delete) {
+	switch (action) {
+	case 1:
 		save_delete(l->name);
 		tree_delete(&v->load.savelist.sel, loadfree);
-	} else {
+		break;
+	case 0:
 		save_read(l->name);
 		view_tabs.sel = VIEW_MAIN;
+		/* fallthrough */
+	case SMENU_BACK:
 		v->load.disp = 0;
 	}
+
 	return 0;
 }
 
@@ -322,6 +334,9 @@ view_smenu_draw(void) {
 		y += PAD;
 		gui_input(x, y, 300, &v->new.name);
 
+		v->new.create.enabled =
+			v->new.name.str[0] ? 1 : 0;
+
 		x += w - 50 - PAD * 2,
 		gui_button(x, y + PAD * 2, 50, &v->new.create);
 
@@ -366,6 +381,9 @@ view_smenu_draw(void) {
 
 		x -= BUTTON_W + PAD;
 		gui_button(x, y, BUTTON_W, &v->load.delete);
+
+		x -= BUTTON_W + PAD;
+		gui_button(x, y, BUTTON_W, &v->load.back);
 	} else {
 		ui_draw_rect(EXPLODE_RECT(v->main), bg);
 		ui_draw_border_around(EXPLODE_RECT(v->main), 1);
@@ -379,5 +397,7 @@ view_smenu_draw(void) {
 			gui_button(x, y, w, &v->b[i]);
 			y += BUTTON_HEIGHT + PAD;
 		}
+
+		v->back = NULL;
 	}
 }

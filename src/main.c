@@ -53,8 +53,12 @@ main(void) {
 	ui_update_screen();
 
 	while (ui_loop()) {
-		if (IsKeyPressed(KEY_ESCAPE))
-			view_tabs.sel = VIEW_SMENU;
+		if (IsKeyPressed(KEY_ESCAPE)) {
+			if (view_tabs.sel == VIEW_SMENU)
+				view_smenu.back->func(GUI_BUTTON, view_smenu.back);
+			else
+				view_tabs.sel = VIEW_SMENU;
+		}
 
 		if (save && (IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT))) {
 			/* AAAAAAAAAAHHHHHHHHHHHH. WHY NOT JUST USE KEY_1, KEY_2..! */

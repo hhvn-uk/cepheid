@@ -392,7 +392,6 @@ gui_mouse_input(MouseButton button, Geom *geom, void *elem) {
 /* When enter is pressed in input, or when button submits the input. */
 static void
 gui_enter_input(Input *in) {
-	wcstombs(in->str, in->wstr, INPUT_MAX);
 	if (in->onenter(GUI_INPUT, in))
 		edittrunc(in->wstr, &in->len, &in->cur);
 }
@@ -406,6 +405,7 @@ gui_key_input(void *elem, int *fcount) {
 		gui_enter_input(in);
 	} else if (gui_key_check(KEY_BACKSPACE, fcount) && in->len && in->cur) {
 		editrm(in->wstr, &in->len, &in->cur);
+		wcstombs(in->str, in->wstr, INPUT_MAX);
 	} else if (gui_key_check(KEY_LEFT, fcount) && in->cur) {
 		in->cur--;
 	} else if (gui_key_check(KEY_RIGHT, fcount) && in->cur != in->len) {
@@ -414,6 +414,7 @@ gui_key_input(void *elem, int *fcount) {
 		gui_input_next(GUI_INPUT, in);
 	} else if (c && (!in->accept || in->accept(c)) && in->len < INPUT_MAX) {
 		editins(in->wstr, &in->len, &in->cur, INPUT_MAX, c);
+		wcstombs(in->str, in->wstr, INPUT_MAX);
 	}
 }
 

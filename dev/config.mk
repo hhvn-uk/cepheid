@@ -1,4 +1,4 @@
-CFLAGS += -Wall -g3 -O0
+CFLAGS += -Wall -g3 -Og
 CFLAGS += -DDEBUG
 CFLAGS += -DCHECK_FRAME_MEM_FREE
 ARGS =

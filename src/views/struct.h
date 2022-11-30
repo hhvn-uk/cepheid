@@ -76,7 +76,8 @@ enum {
 	SMENU_CONT,
 	SMENU_LOAD,
 	SMENU_QUIT,
-	SMENU_LAST
+	SMENU_LAST,
+	SMENU_BACK = -1,
 };
 
 struct Loadable {
@@ -110,7 +111,9 @@ typedef struct {
 		int disp;
 		Tree saves;
 		Treeview savelist;
+		Button back;
 		Button delete;
 		Button load;
 	} load;
+	Button *back;
 } View_smenu;
