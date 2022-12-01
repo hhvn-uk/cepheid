@@ -8,9 +8,11 @@
 /* Bulk db interface
  *
  * Set: 't', key, val
+ * Set: 'e', key, val, char *(*func)(int)
  * Set: 'T', key, val[], n
  *
  * Get: 't', key, &val
+ * Get: 'e', key, &val, int (*func)(char *)
  * Get: 'T', key, val[], n
  *
  * Where 't'/'T' is:
@@ -19,6 +21,7 @@
  *  'f' - float
  *  'v' - vector
  *  'p' - polar coordinate
+ *  'e' - enumeration (uses func to convert between str/int)
  *  'S' - array of strings (will allocate memory for elements on get)
  *  'I' - array of ints
  *  'F' - array of floats
@@ -41,10 +44,12 @@ _bdbset(char *dir, char *group, ...) {
 		float f;
 		Vector v;
 		Polar p;
+		int e;
 		char **S;
 		int *I;
 		float *F;
 	} v;
+	char *(*func)(int);
 	int n, i;
 
 	va_start(ap, group);
@@ -76,6 +81,11 @@ _bdbset(char *dir, char *group, ...) {
 		case 'p':
 			v.p = va_arg(ap, Polar);
 			dbsetf(dir, group, key, "%f\t%f", v.p.r, v.p.theta);
+			break;
+		case 'e':
+			v.e = va_arg(ap, int);
+			func = va_arg(ap, char *(*)(int));
+			dbset(dir, group, key, func(v.e));
 			break;
 		case 'S':
 			v.S = va_arg(ap, char **);
@@ -128,10 +138,12 @@ _bdbget(char *dir, char *group, ...) {
 		float *f;
 		Vector *v;
 		Polar *p;
+		int *e;
 		char **S;
 		int *I;
 		float *F;
 	} v;
+	int (*func)(char *);
 	int i, n;
 
 	va_start(ap, group);
@@ -168,6 +180,12 @@ _bdbget(char *dir, char *group, ...) {
 			v.p = va_arg(ap, Polar *);
 			dbgetf(dir, group, key, "%f\t%f",
 					&(*v.p).r, &(*v.p).theta);
+			break;
+		case 'e':
+			v.e = va_arg(ap, int *);
+			func = va_arg(ap, int (*)(char *));
+			str = dbget(dir, group, key);
+			*v.e = func(str);
 			break;
 		case 'S':
 			v.S = va_arg(ap, char **);

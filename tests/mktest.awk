@@ -3,20 +3,22 @@
 BEGIN {
 	print "#include <check.h>"
 	done = 0
+	intest = 0
 }
 
 /^%{$/ {
+	intest = 1
 	print "START_TEST(ck_"test") {"
 }
 
-!/^%{$/ && !/^}$/ {
+!/^%{$/ && (!intest || !/^}$/) {
 	if (done)
 		print "error: excess lines" > "/dev/stderr"
 	else
 		print
 }
 
-/^}$/ {
+/^}$/ && intest {
 	print "}"
 	print "END_TEST"
 	print ""
