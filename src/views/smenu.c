@@ -15,6 +15,16 @@
 #define LOAD_NAMEW	100
 #define BUTTON_W	50
 
+enum {
+	SMENU_LOAD_LOAD,
+	SMENU_LOAD_DELETE
+};
+
+enum {
+	SMENU_SAVE_SAVE,
+	SMENU_SAVE_DISCARD
+};
+
 static void savecheck(char *msg, void (*action)(void));
 static int savecheck_callback(int type, void *elem);
 static int buttonhandler(int type, void *elem);
@@ -60,8 +70,8 @@ View_smenu view_smenu = {
 		.check = 0,
 		.msg = NULL,
 		.back = {1, "Back", NULL, SMENU_BACK},
-		.save = {1, "Save", NULL, 1},
-		.discard = {1, "Discard", NULL, 0},
+		.save = {1, "Save", NULL, SMENU_SAVE_SAVE},
+		.discard = {1, "Discard", NULL, SMENU_SAVE_DISCARD},
 	},
 	.load = {
 		.init = 1,
@@ -77,8 +87,8 @@ View_smenu view_smenu = {
 			.dclick = loadhandler_actual,
 		},
 		.back = {1, "Back", loadhandler_actual, SMENU_BACK },
-		.delete = {0, "Delete", loadhandler_actual, 1 },
-		.load = {0, "Load", loadhandler_actual, 0 },
+		.delete = {0, "Delete", loadhandler_actual, SMENU_LOAD_DELETE },
+		.load = {0, "Load", loadhandler_actual, SMENU_LOAD_LOAD },
 	}
 };
 
@@ -99,11 +109,15 @@ savecheck_callback(int type, void *elem) {
 	int arg = b->arg;
 
 	v->save.check = 0;
-	if (arg == SMENU_BACK)
+	switch (arg) {
+	case SMENU_BACK:
 		return 0;
-	if (arg == 1)
+	case SMENU_SAVE_SAVE:
 		save_write();
-	v->save.func();
+		/* fallthrough */
+	case SMENU_SAVE_DISCARD:
+		v->save.func();
+	}
 	return 0;
 }
 
@@ -197,11 +211,11 @@ loadhandler_actual(int type, void *elem) {
 	l = v->load.savelist.sel->data;
 
 	switch (action) {
-	case 1:
+	case SMENU_LOAD_DELETE:
 		save_delete(l->name);
 		tree_delete(&v->load.savelist.sel, loadfree);
 		break;
-	case 0:
+	case SMENU_LOAD_LOAD:
 		save_read(l->name);
 		view_tabs.sel = VIEW_MAIN;
 		/* fallthrough */
