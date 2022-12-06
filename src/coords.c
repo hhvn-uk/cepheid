@@ -18,6 +18,20 @@ vectorize_at(Vector at, Polar p) {
 	};
 }
 
+Vector
+vector_diff(Vector a, Vector b) {
+	return (Vector){
+		fabsf(a.x - b.x),
+		fabsf(a.y - b.y)
+	};
+}
+
+float
+vector_dist(Vector a, Vector b) {
+	Vector d = vector_diff(a, b);
+	return hypotf(d.x, d.y);
+}
+
 Polar
 polarize(Vector v) {
 	return (Polar) {

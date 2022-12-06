@@ -73,6 +73,8 @@ void	editins(wchar_t *str, int *len, int *cur, int size, wchar_t c);
 /* coords.c */
 Vector	vectorize(Polar p);
 Vector	vectorize_at(Vector at, Polar p);
+Vector	vector_diff(Vector a, Vector b);
+float	vector_dist(Vector a, Vector b);
 Polar	polarize(Vector v);
 Polar	polarize_at(Vector at, Vector vector);
 Polar	polar_add(Polar abs, Polar rel);
@@ -131,8 +133,6 @@ void	ui_draw_circle(int x, int y, float r, Color col);
 void	ui_draw_line(int sx, int sy, int ex, int ey, float thick, Color col);
 void	ui_draw_line_v(Vector start, Vector end, float thick, Color col);
 void	ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs);
-Vector	ui_vectordiff(Vector a, Vector b);
-float	ui_vectordist(Vector a, Vector b);
 
 /* gui.c */
 #define BUTTON_HEIGHT (PAD + FONT_SIZE)

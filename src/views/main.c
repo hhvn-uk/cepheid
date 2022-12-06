@@ -152,7 +152,7 @@ draw_orbit(Body *body) {
 		return;
 
 	parent = kmtopx(body->parent->vector);
-	pxrad = ui_vectordist(parent, body->pxloc);
+	pxrad = vector_dist(parent, body->pxloc);
 
 	if (pxrad < min_body_rad[body->parent->type])
 		return;
@@ -195,7 +195,7 @@ draw_body(Body *body) {
 			/ v->kmperpx < ui_textsize(body->name))
 		return;
 	if (body->parent && body->type != BODY_STAR &&
-			ui_vectordist(body->vector, body->parent->vector) <
+			vector_dist(body->vector, body->parent->vector) <
 			min_body_rad[body->type] * v->kmperpx)
 		return;
 	if (isdigit(*body->name) || *body->name == '(') {
@@ -253,7 +253,7 @@ view_main_draw(void) {
 	if (v->ruler.held) {
 		ruler = kmtopx(v->ruler.origin);
 		ui_draw_line_v(ruler, mouse.vector, 1, col_info);
-		dist = ui_vectordist(v->ruler.origin, mousekm);
+		dist = vector_dist(v->ruler.origin, mousekm);
 		ui_print(mouse.x + PAD, mouse.y - PAD, col_info, "%s (%s)", strkm(dist), strly(dist));
 	}
 

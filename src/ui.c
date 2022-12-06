@@ -142,7 +142,7 @@ ui_onscreen(Vector point) {
 
 int
 ui_onscreen_ring(Vector centre, float r) {
-	float d = ui_vectordist(centre, screen.centre);
+	float d = vector_dist(centre, screen.centre);
 
 	if (!pane_visible(centre.y - r, centre.y + r))
 		return 0;
@@ -272,23 +272,6 @@ ui_draw_border(int x, int y, int w, int h, int px) {
 void
 ui_draw_border_around(int x, int y, int w, int h, int px) {
 	ui_draw_border(x - px, y - px, w + px * 2, h + px * 2, px);
-}
-
-Vector
-ui_vectordiff(Vector a, Vector b) {
-	float x = a.x - b.x;
-	float y = a.y - b.y;
-	if (x < 0)
-		x *= -1;
-	if (y < 0)
-		y *= -1;
-	return (Vector) {x, y};
-}
-
-float
-ui_vectordist(Vector a, Vector b) {
-	Vector diff = ui_vectordiff(a, b);
-	return sqrtf(diff.x * diff.x + diff.y * diff.y);
 }
 
 void
