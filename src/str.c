@@ -270,6 +270,49 @@ end:
 	return fstrdup(buf);
 }
 
+/* Yeah, they're called 'mem' and there is a mem.c,
+ * but mem* functions in libc are in string.h */
+int
+memeq(void *m1, void *m2, size_t size) {
+	if (m1 == m2)
+		return 1;
+	else if (!m1 || !m2)
+		return 0;
+	else if (memcmp(m1, m2, size) == 0)
+		return 1;
+	return 0;
+}
+
+void *
+memval(void *mem, void *val, size_t nmemb, size_t size) {
+	int i;
+	size_t pos;
+
+	for (i = 0; i < size; i++) {
+		pos = i * size;
+
+		if (memeq(mem + pos, val, size))
+			return mem + pos;
+	}
+
+	return NULL;
+}
+
+void *
+memcval(void *mem, void *val, size_t nmemb, size_t size) {
+	int i;
+	size_t pos;
+
+	for (i = 0; i < size; i++) {
+		pos = i * size;
+
+		if (!memeq(mem + pos, val, size))
+			return mem + pos;
+	}
+
+	return NULL;
+}
+
 void
 edittrunc(wchar_t *str, int *len, int *cur) {
 	*len = *cur = 0;

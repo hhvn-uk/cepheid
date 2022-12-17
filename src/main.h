@@ -66,6 +66,9 @@ size_t	strsplit(char *str, char *sep, char **list, size_t len);
 void	strjoinl(char *sep, char **ret, char *append);
 char *	strjoin(char *sep, char **list, size_t len);
 char *	strtrunc(char *str, int w);
+int	memeq(void *m1, void *m2, size_t size);
+void *	memval(void *mem, void *val, size_t nmemb, size_t size); /* search for value in array */
+void *	memcval(void *mem, void *val, size_t nmemb, size_t size); /* search for complement of value */
 void	edittrunc(wchar_t *str, int *len, int *cur);
 void	editrm(wchar_t *str, int *len, int *cur);
 void	editins(wchar_t *str, int *len, int *cur, int size, wchar_t c);
