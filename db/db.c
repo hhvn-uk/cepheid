@@ -16,14 +16,14 @@ typedef struct Pair Pair;
 struct DB {
 	DB *prev;
 	char *dir;
-	struct Group **tracked;
+	Group **tracked;
 	size_t tl;
 	int changes;
 	DB *next;
 };
 
 struct Group {
-	struct DB *db;
+	DB *db;
 	char *dir;
 	char *name;
 	char *path;
