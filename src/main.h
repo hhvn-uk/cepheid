@@ -118,8 +118,9 @@ void	ui_update_screen(void);
 void	ui_focus(enum GuiElements type, void *p);
 int	ui_loop(void);
 void	ui_deinit(void);
-void	ui_print(int x, int y, Color col, char *format, ...);
-void	ui_printw(int x, int y, int w, Color col, char *format, ...);
+int	ui_print(int x, int y, Color col, char *fmt, ...);
+int	ui_printw(int x, int y, int w, Color col, char *fmt, ...);
+void	ui_printc(int x, int y, int w, Color col, char *fmt, ...);
 void	ui_title(char *fmt, ...);
 int	ui_textsize(char *text);
 void	ui_cursor(MouseCursor curs);
@@ -142,6 +143,7 @@ void	ui_draw_tabbed_window(int x, int y, int w, int h, Tabs *tabs);
 
 /* gui.c */
 #define BUTTON_HEIGHT (PAD + FONT_SIZE)
+#define BUTTON_DEFW	50
 int	gui_mouse_handle(void);
 void	gui_key_handle(void);
 void	gui_tabs(int x, int y, int w, int h, Tabs *tabs);
@@ -152,6 +154,9 @@ void	gui_input(int x, int y, int w, Input *in);
 int	gui_input_next(int type, void *elem); /* if inputs are contained in an array, this .onenter advances to the next */
 void	gui_input_clear(Input *in);
 void	gui_treeview(int x, int y, int w, int h, Treeview *tv);
+void	gui_form(int x, int y, int w, int h, Form *form);
+int	gui_form_filled(Form *form);
+void	gui_form_clear(Form *form);
 
 /* views.c */
 #define VIEWS_MAX_WIDTH (VIEW_LAST*100)

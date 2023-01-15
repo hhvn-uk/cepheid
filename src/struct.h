@@ -167,6 +167,7 @@ enum GuiElements {
 	GUI_CHECKBOX,
 	GUI_BUTTON,
 	GUI_INPUT,
+	GUI_FORM,
 	GUI_DROPDOWN,
 	GUI_TREEVIEW,
 	GUI_ELEMS,
@@ -190,10 +191,13 @@ typedef struct {
 	} tabs[TABS_MAX];
 } Tabs;
 
+#define CHECKBOX_DEFAULT_OFF 10
 typedef struct {
 	int enabled;
 	int val;
 	char *label;
+	/* internal */
+	int def;
 } Checkbox;
 
 #define INPUT_MAX 512
@@ -208,15 +212,51 @@ struct Input {
 	int (*accept)(wchar_t);
 };
 
+typedef struct Button Button;
+
+#define FORM_MAX 64
 typedef struct {
+	char *label;
+	enum GuiElements type;
+	struct {
+		int required;
+		void *elem;
+	};
+} FormElem;
+
+#define FORM_SUBFORM_TYPE -1
+#define FORM_SUBFORM(l) (FormElem){.label = l, .type = FORM_SUBFORM_TYPE}
+#define FORM_NEWLINE_TYPE -2
+#define FORM_NEWLINE() (FormElem){.type = FORM_NEWLINE_TYPE}
+#define FORM_END_TYPE -3
+#define FORM_END() (FormElem){.type = FORM_END_TYPE}
+#define FORM_INPUT(r, l, input) (FormElem){.label = l, .type = GUI_INPUT, \
+	.required = r, .elem = input}
+#define FORM_CHECKBOX(checkbox) (FormElem){.label = NULL, .type = GUI_CHECKBOX, \
+	.elem = checkbox}
+#define FORM_DROPDOWN(dropdown) (FormElem){.label = NULL, .type = GUI_DROPDOWN, \
+	.required = 1, .elem = dropdown}
+/* Treeview form elements would need a height parameter to be implemented. */
+/* #define FORM_TREEVIEW(treeview) (FormElem){.label = NULL, .type = GUI_TREEVIEW, \ */
+/* 	.required = 1, .elem = treeview} */
+
+#define FORM_BUTTON_MAX 16
+typedef struct {
+	Geom rect;
+	FormElem elems[64];
+	Button *buttons[16];
+} Form;
+
+struct Button {
 	int enabled;
 	char *label;
 	Guicallback func;
 	int arg;
-	Input *submit; /* run the onenter in an Input instead */
-} Button;
+	Form *submit; /* if set, passed as arg to func */
+};
 
 #define DROPDOWN_MAX 64
+#define DROPDOWN_DEFAULT_OFF (DROPDOWN_MAX * 2)
 typedef struct {
 	int n;
 	int sel; /* -1 for none */
@@ -226,6 +266,7 @@ typedef struct {
 	/* internal */
 	Geom rect;
 	Pane pane;
+	int def;
 } Dropdown;
 
 /* typedef'd earlier */

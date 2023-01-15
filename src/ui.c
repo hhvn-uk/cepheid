@@ -63,25 +63,53 @@ ui_deinit(void) {
 	CloseWindow();
 }
 
-void
+int
 ui_print(int x, int y, Color col, char *fmt, ...) {
 	va_list ap;
 	Vector pos = {x, pane_y(y)};
 	char *text;
 
 	if (!pane_visible(y, y + FONT_SIZE))
-		return;
+		return 0;
+	/* Surely returning 1 is safe.. Right? I hope so, but this does seem
+	 * like a potential bug in the making.
+	 *
+	 * Justification: if it's not on the screen anything that uses the
+	 * value should also not be on screen and hence not drawn.
+	 */
 
-	pos.x = x;
 	va_start(ap, fmt);
 	text = vsmprintf(fmt, ap);
 	va_end(ap);
-	DrawTextEx(font, text, pos, (float)FONT_SIZE, FONT_SIZE/10, col);
+	DrawTextEx(font, text, pos, FONT_SIZE, FONT_SIZE/10, col);
 	free(text);
+
+	return ui_textsize(text);
+}
+
+int
+ui_printw(int x, int y, int w, Color col, char *fmt, ...) {
+	va_list ap;
+	Vector pos = {x, pane_y(y)};
+	char *t1, *t2;
+	int ret;
+
+	if (!pane_visible(y, y + FONT_SIZE))
+		return 0; /* See ui_print() */
+
+	va_start(ap, fmt);
+	t1 = vsmprintf(fmt, ap);
+	va_end(ap);
+	t2 = strtrunc(t1, w / charpx);
+	ret = ui_textsize(t2);
+	DrawTextEx(font, t2, pos, FONT_SIZE, FONT_SIZE/10, col);
+	free(t1);
+
+	return ret;
 }
 
 void
-ui_printw(int x, int y, int w, Color col, char *fmt, ...) {
+ui_printc(int x, int y, int w, Color col, char *fmt, ...) {
 	va_list ap;
 	Vector pos = {x, pane_y(y)};
 	char *t1, *t2;
@@ -89,13 +117,12 @@ ui_printw(int x, int y, int w, Color col, char *fmt, ...) {
 	if (!pane_visible(y, y + FONT_SIZE))
 		return;
 
-	pos.x = x;
 	va_start(ap, fmt);
 	t1 = vsmprintf(fmt, ap);
 	va_end(ap);
 	t2 = strtrunc(t1, w / charpx);
-	DrawTextEx(font, t2, pos, (float)FONT_SIZE, FONT_SIZE/10, col);
-	free(t1);
+	pos.x += (w - ui_textsize(t2)) / 2;
+	DrawTextEx(font, t2, pos, FONT_SIZE, FONT_SIZE/10, col);
 }
 
 void

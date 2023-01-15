@@ -28,6 +28,7 @@ static void gui_key_input(void *elem, int *fcount);
 /* Other */
 static int gui_double_click(void);
 static void gui_enter_input(Input *in);
+static int gui_form_sub_end(int x, int y, int w);
 
 static struct {
 	void (*mouse)(MouseButton button, Geom *geom, void *elem);
@@ -39,6 +40,7 @@ static struct {
 	[GUI_CHECKBOX]	= {gui_mouse_checkbox,	MOUSE_CURSOR_POINTING_HAND,	NULL},
 	[GUI_BUTTON]	= {gui_mouse_button,	MOUSE_CURSOR_POINTING_HAND,	NULL},
 	[GUI_INPUT]	= {gui_mouse_input,	MOUSE_CURSOR_IBEAM, 		gui_key_input},
+	[GUI_FORM]	= {NULL,		MOUSE_CURSOR_DEFAULT,		NULL}, /* Not registered */
 	[GUI_DROPDOWN]	= {gui_mouse_dropdown,	MOUSE_CURSOR_POINTING_HAND,	NULL},
 	[GUI_TREEVIEW]	= {gui_mouse_treeview,	MOUSE_CURSOR_DEFAULT, 		NULL},
 };
@@ -266,6 +268,8 @@ gui_mouse_checkbox(MouseButton button, Geom *geom, void *elem) {
 
 	if (button != MOUSE_BUTTON_LEFT)
 		return;
+	if (!checkbox->def)
+		checkbox->def = CHECKBOX_DEFAULT_OFF + checkbox->val;
 	checkbox->val = !checkbox->val;
 }
 
@@ -287,9 +291,9 @@ gui_mouse_button(MouseButton button, Geom *geom, void *elem) {
 	Button *b = elem;
 
 	if (button == MOUSE_BUTTON_LEFT) {
-		if (b->submit && b->submit->onenter)
-			gui_enter_input(b->submit);
-		else if (b->func)
+		if (b->submit)
+			b->func(GUI_FORM, b->submit);
+		else
 			b->func(GUI_BUTTON, b);
 	}
 }
@@ -334,6 +338,8 @@ gui_mouse_dropdown(MouseButton button, Geom *geom, void *elem) {
 
 	if (button != MOUSE_BUTTON_LEFT)
 		return;
+	if (!drop->def)
+		drop->def = DROPDOWN_DEFAULT_OFF + drop->sel;
 	if (focus.p != drop) {
 		ui_focus(GUI_DROPDOWN, drop);
 	} else {
@@ -515,6 +521,185 @@ gui_mouse_treeview(MouseButton button, Geom *geom, void *elem) {
 				}
 				ui_cursor(MOUSE_CURSOR_POINTING_HAND);
 			}
+		}
+	}
+}
+
+static int
+gui_form_sub_end(int x, int y, int w) {
+	ui_draw_line(x,     y,           x,         y + PAD * 2, 1, col_border);
+	ui_draw_line(x + w, y,           x + w,     y + PAD * 2, 1, col_border);
+	ui_draw_line(x,     y + PAD * 2, x + w - 1, y + PAD * 2, 1, col_border);
+
+	return PAD;
+}
+
+/*
+ * TODO: quite a lot, tbh.
+ *
+ * You know the nicely layed out game creation window from aurora?
+ * Some day this should be able to do that.
+ *
+ */
+void
+gui_form(int x, int y, int w, int h, Form *form) {
+	FormElem *elem;
+	FormElem *sub;
+	int bn, bx, bw;
+	int lx, lw;
+	int lpad;
+	int cy;
+	int tw;
+	int i, j;
+	int n;
+
+	for (bn = 0, i = 0; i < FORM_BUTTON_MAX; i++)
+		if (form->buttons[i])
+			bn++;
+
+	if (bn) {
+		h -= BUTTON_HEIGHT + PAD;
+		bx = x + h + PAD;
+
+		if (h / bn < BUTTON_DEFW + PAD)
+			bw = h / bn - PAD;
+		else
+			bw = BUTTON_DEFW;
+	}
+
+	for (i = 0, lx = lw = -1, cy = y, sub = NULL; form->elems[i].type != FORM_END_TYPE && i < FORM_MAX; i++) {
+		elem = &form->elems[i];
+
+		switch (elem->type) {
+		case FORM_SUBFORM_TYPE:
+			if (sub)
+				cy += gui_form_sub_end(x, cy, w);
+
+			sub = elem;
+			cy += PAD * 2;
+			ui_draw_line(x, cy + FONT_SIZE/2, x + PAD - 2, cy + FONT_SIZE/2, 1, col_border);
+			tw = ui_print(x + PAD, cy, col_fg, "%s", elem->label) + PAD + 2;
+			ui_draw_line(x + tw, cy + FONT_SIZE/2, x + w - 1, cy + FONT_SIZE/2, 1, col_border);
+			ui_draw_line(x,     cy + FONT_SIZE/2, x,     cy + PAD * 1.5, 1, col_border);
+			ui_draw_line(x + w, cy + FONT_SIZE/2, x + w, cy + PAD * 1.5, 1, col_border);
+			cy += PAD * 0.5;
+			/* fallthrough */
+		case FORM_NEWLINE_TYPE:
+			cy += PAD;
+			lx = lw = -1;
+			continue;
+		}
+
+		if (lx == -1 || lw == -1) {
+			for (
+				j = i, n = 0;
+				form->elems[j].type != FORM_END_TYPE &&
+				form->elems[j].type != FORM_SUBFORM_TYPE &&
+				form->elems[j].type != FORM_NEWLINE_TYPE;
+				j++, n++);
+
+			if (sub) {
+				lx = x + PAD;
+				lw = (w - PAD * 2 - PAD * (n - 1)) / n;
+			} else {
+				lx = x;
+				lw = w - PAD * (n - 1) / n;
+			}
+		}
+
+		if (elem->required)
+			ui_printw(lx, cy, lw, col_altfg, "*");
+
+		if (elem->label)
+			tw = ui_printw(lx + 5, cy, lw, col_fg, "%s:  ", elem->label);
+		else
+			tw = 0;
+
+		switch (elem->type) {
+		case GUI_INPUT:
+			gui_input(lx + tw, cy, lw - tw, elem->elem);
+			break;
+		case GUI_CHECKBOX:
+			gui_checkbox(lx + tw, cy, elem->elem);
+			break;
+		case GUI_DROPDOWN:
+			gui_dropdown(lx + tw, cy, lw - tw, elem->elem);
+			break;
+		}
+
+		if (sub) {
+			ui_draw_line(x,     cy, x,     cy + PAD, 1, col_border);
+			ui_draw_line(x + w, cy, x + w, cy + PAD, 1, col_border);
+		}
+
+		lx += lw + PAD;
+	}
+
+	if (sub)
+		gui_form_sub_end(x, cy, w);
+
+	for (i = 0; i < bn; i++)
+		gui_button(x + w - BUTTON_DEFW * (i + 1) - PAD * i, y + h + PAD, bw, form->buttons[i]);
+}
+
+int
+gui_form_filled(Form *form) {
+	FormElem *elem;
+	Input *in;
+	Dropdown *drop;
+	int i;
+
+	for (i = 0; i < FORM_MAX && form->elems[i].type != FORM_END_TYPE; i++) {
+		elem = &form->elems[i];
+
+		if (!elem->required)
+			continue;
+
+		switch (elem->type) {
+		case GUI_INPUT:
+			in = elem->elem;
+			if (!in->str[0])
+				return 0;
+			break;
+		case GUI_DROPDOWN:
+			drop = elem->elem;
+			if (drop->sel == -1)
+				return 0;
+			break;
+		}
+	}
+
+	return 1;
+}
+
+void
+gui_form_clear(Form *form) {
+	FormElem *elem;
+	Input *in;
+	Checkbox *ch;
+	Dropdown *drop;
+	int i;
+
+	for (i = 0; i < FORM_MAX && form->elems[i].type != FORM_END_TYPE; i++) {
+		elem = &form->elems[i];
+
+		switch (elem->type) {
+		case GUI_INPUT:
+			in = elem->elem;
+			gui_input_clear(in);
+			break;
+		case GUI_CHECKBOX:
+			ch = elem->elem;
+			if (!ch->def)
+				continue;
+			ch->val = ch->def - CHECKBOX_DEFAULT_OFF;
+			break;
+		case GUI_DROPDOWN:
+			drop = elem->elem;
+			if (!drop->def)
+				continue;
+			drop->sel = drop->def - DROPDOWN_DEFAULT_OFF;
+			break;
 		}
 	}
 }
