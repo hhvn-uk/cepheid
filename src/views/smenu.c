@@ -13,7 +13,6 @@
 #define LOAD_W		300
 #define LOAD_H		350
 #define LOAD_NAMEW	100
-#define BUTTON_W	50
 
 enum {
 	SMENU_LOAD_LOAD,
@@ -55,11 +54,26 @@ View_smenu view_smenu = {
 	},
 	.new = {
 		.disp = 0,
-		.name = {
-			.placeholder = "Save name",
-			.onenter = newhandler_actual,
+		.form = {
+			.elems = {
+				FORM_INPUT(1, "Name", &view_smenu.new.name),
+				FORM_SUBFORM("Empire"),
+				FORM_INPUT(1, "Empire name", &view_smenu.new.emp.name),
+				FORM_NEWLINE(),
+				FORM_INPUT(1, "Empire ID", &view_smenu.new.emp.id),
+				FORM_END()
+			},
+			.buttons = {
+				&view_smenu.new.create,
+				&view_smenu.new.back,
+			},
 		},
-		.create = {1, "Create", NULL, 0, .submit = &view_smenu.new.name},
+		.name = { .onenter = gui_input_next, },
+		.emp = {
+			.name = { .onenter = gui_input_next, },
+			.id = { .onenter = gui_input_next, },
+		},
+		.create = {1, "Create", newhandler_actual, 0, .submit = &view_smenu.new.form},
 		.back = {1, "Back", newhandler_actual, SMENU_BACK},
 	},
 	.cont = {
@@ -171,13 +185,13 @@ newhandler_actual(int type, void *elem) {
 	if (type == GUI_BUTTON) {
 		b = elem;
 		if (b->arg == SMENU_BACK) {
-			gui_input_clear(&v->new.name);
+			gui_form_clear(&v->new.form);
 			v->new.disp = 0;
 			return 1;
 		}
 	}
 
-	if (save_create(v->new.name.str) == -1)
+	if (save_create(v->new.name.str, v->new.emp.name.str, v->new.emp.id.str) == -1)
 		error(1, "failed to create new save\n");
 	/* TODO: error handling that doesn't just cause an exit? */
 	loadadd(v->new.name.str, time(NULL));
@@ -337,7 +351,7 @@ view_smenu_draw(void) {
 
 	if (v->new.disp) {
 		w = PAD * 2 + 300;
-		h = PAD * 3 + FONT_SIZE + BUTTON_HEIGHT;
+		h = 500;
 		x = (screen.w - w) / 2;
 		y = (screen.h - h) / 2;
 
@@ -346,16 +360,10 @@ view_smenu_draw(void) {
 
 		x += PAD;
 		y += PAD;
-		gui_input(x, y, 300, &v->new.name);
 
-		v->new.create.enabled =
-			v->new.name.str[0] ? 1 : 0;
+		v->new.create.enabled = gui_form_filled(&v->new.form);
 
-		x += w - 50 - PAD * 2,
-		gui_button(x, y + PAD * 2, 50, &v->new.create);
-
-		x -= 50 + PAD;
-		gui_button(x, y + PAD * 2, 50, &v->new.back);
+		gui_form(x, y, w - PAD * 2, h - PAD * 2, &v->new.form);
 	} else if (v->save.check) {
 		w = PAD * 2 + ui_textsize(v->save.msg);
 		h = PAD * 3 + FONT_SIZE + BUTTON_HEIGHT;
@@ -389,15 +397,15 @@ view_smenu_draw(void) {
 
 		gui_treeview(x, y, LOAD_W, LOAD_H, &v->load.savelist);
 
-		x += w - BUTTON_W - PAD * 2;
+		x += w - BUTTON_DEFW - PAD * 2;
 		y += h - PAD * 2 - BUTTON_HEIGHT;
-		gui_button(x, y, BUTTON_W, &v->load.load);
+		gui_button(x, y, BUTTON_DEFW, &v->load.load);
 
-		x -= BUTTON_W + PAD;
-		gui_button(x, y, BUTTON_W, &v->load.delete);
+		x -= BUTTON_DEFW + PAD;
+		gui_button(x, y, BUTTON_DEFW, &v->load.delete);
 
-		x -= BUTTON_W + PAD;
-		gui_button(x, y, BUTTON_W, &v->load.back);
+		x -= BUTTON_DEFW + PAD;
+		gui_button(x, y, BUTTON_DEFW, &v->load.back);
 	} else {
 		ui_draw_rect(EXPLODE_RECT(v->main), bg);
 		ui_draw_border_around(EXPLODE_RECT(v->main), 1);

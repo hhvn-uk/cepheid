@@ -90,7 +90,12 @@ typedef struct {
 	Button b[SMENU_LAST];
 	struct {
 		int disp;
+		Form form;
 		Input name;
+		struct {
+			Input name;
+			Input id;
+		} emp;
 		Button create;
 		Button back;
 	} new;

@@ -232,7 +232,17 @@ int	save_changed(void);
 void	save_write(void);
 int	save_delete(char *name);
 int	save_exists(char *name);
-int	save_create(char *name);
+int	save_create(char *name, char *emp, char *eid);
+
+/* empires.c */
+extern Empire *emp[EMP_MAX];
+void	emp_free(Empire *e);
+Empire *emp_byid(Save *s, char *id);
+Empire *emp_byname(Save *s, char *name);
+Empire *emp_init(Save *s, int player, char *id, char *name);
+void	emp_gen(Save *s, int n);
+void	emp_read(Save *s);
+void	emp_write(Save *s);
 
 /* ../data/dirs.c */
 int	dirs_write(char *dir, char *to);

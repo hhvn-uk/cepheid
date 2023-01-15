@@ -105,14 +105,32 @@ typedef struct {
 	Vector lypos;
 } System;
 
+/* empires.c */
+#define EMP_MAX 10 /* including EMP_NONE and EMP_PLAYER */
+enum EID {
+	EMP_PLAYER,
+	EMP_FIRST = EMP_PLAYER,
+	EMP_LAST = EMP_MAX,
+};
+
+typedef struct {
+	int player;
+	char *db;
+	/* AI *ai */
+	int eid;
+	char id[4];
+	char *name;
+} Empire;
+
 /* save.c */
 typedef struct {
 	struct {
 		char *dir;
-		char *races;
+		char *emp;
 		char *systems;
 		char *fleets;
 	} db;
+	Empire *emp[EMP_MAX];
 	Tree systems;
 	System *homesys;
 } Save;

@@ -8,11 +8,15 @@
 
 static void
 save_free(void) {
+	int i;
+
 	free(save->db.dir);
-	free(save->db.races);
+	free(save->db.emp);
 	free(save->db.systems);
 	free(save->db.fleets);
 	tree_delete_root(&save->systems, sys_tree_free);
+	for (i = 0; i < EMP_MAX; i++)
+		emp_free(save->emp[i]);
 	free(save);
 }
 
@@ -31,13 +35,16 @@ save_read(char *name) {
 	snprintf(dir, sizeof(dir), "%s/%s", SAVEDIR, name);
 
 	memset(&save->systems, 0, sizeof(save->systems));
+	memset(&save->emp, 0, sizeof(save->emp));
 
 	dbdeclare(dir);
 	save->db.dir = nstrdup(dir);
-	save->db.races = smprintf("%s/Races", dir);
+	save->db.emp = smprintf("%s/Empires", dir);
 	save->db.systems = smprintf("%s/Systems", dir);
 	save->db.fleets = smprintf("%s/Fleets", dir);
 	sys_tree_load();
+
+	emp_read(save);
 
 	if ((str = dbget(save->db.dir, "index", "homesystem")))
 		save->homesys = sys_get(str);
@@ -47,6 +54,7 @@ save_read(char *name) {
 	for (i = 0; i < VIEW_LAST; i++)
 		if (view_init[i])
 			view_init[i]();
+
 	return;
 };
 
@@ -62,6 +70,7 @@ save_write(void) {
 	if (view_main.sys)
 		dbset(save->db.dir, "index", "selsystem", view_main.sys->name);
 	dbsettree(save->db.systems, &save->systems, sys_tree_setter);
+	emp_write(save);
 	dbwrite(save->db.dir);
 }
 
@@ -83,8 +92,9 @@ save_exists(char *name) {
 	return 0;
 }
 
+/* TODO: struct SaveConfig */
 int
-save_create(char *name) {
+save_create(char *name, char *emp, char *eid) {
 	char path[PATH_MAX];
 
 	snprintf(path, sizeof(path), "%s/%s/Systems", SAVEDIR, name);
@@ -100,6 +110,9 @@ save_create(char *name) {
 	save_read(name);
 	save_delete(name);
 	dbset(save->db.dir, "index", "homesystem", "Sol");
+
+	emp_init(save, 1, eid, emp);
+	emp_gen(save, EMP_MAX - 1);
 
 	return 0;
 }

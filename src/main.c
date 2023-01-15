@@ -30,7 +30,6 @@ main(void) {
 	int view_prev;
 	struct sigaction sa;
 
-
 	sa.sa_handler = sighandler;
 	sa.sa_flags = SA_RESTART;
 	sigemptyset(&sa.sa_mask);
