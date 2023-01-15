@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <raylib.h>
-#include <assert.h>
 #include "main.h"
 
 static Polar
