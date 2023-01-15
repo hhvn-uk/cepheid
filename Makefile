@@ -12,6 +12,8 @@ LDFLAGS	= $(RAYLIB) $(DBLIB)
 include config.mk
 
 all: db data $(BIN)
+.testing:
+	touch .testing
 src/main.o: .testing
 
 .c.o:
