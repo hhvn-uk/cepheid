@@ -9,6 +9,7 @@ static Pane *pane = NULL;
 void
 pane_begin(Pane *p) {
 	p->max = 0;
+	assert(p->geom->type == UI_RECT);
 	BeginScissorMode(p->geom->x, p->geom->y,
 			p->geom->w, p->geom->h);
 	pane = p;
