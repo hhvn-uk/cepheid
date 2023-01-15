@@ -14,7 +14,7 @@
 void
 _err(int code, char *type, char *file, int line, const char *func, char *fmt, ...) {
 	va_list ap;
-	int col = (code >= 0 ? 160 : 166);
+	int col = (code != CODE_WARN ? 160 : 166);
 
 	fprintf(stderr, STANDOUT ">>>" NORMAL " At %s:%d in %s\n"
 			STANDOUT ">>>" NORMAL " %s: ", col, file, line, func, col, type);
@@ -25,11 +25,9 @@ _err(int code, char *type, char *file, int line, const char *func, char *fmt, ..
 #ifdef DEBUG
 	raise(SIGTRAP);
 #else
-	if (code >= 1024)
-		raise(code - RAISE);
+	if (code == CODE_ASSERT)
+		raise(SIGABRT);
 	if (code >= 0)
 		exit(code);
 #endif /* DEBUG */
 }
-
-

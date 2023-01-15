@@ -32,9 +32,12 @@ extern int quit;
 extern int view_before_smenu;
 
 /* err.c */
+#define CODE_WARN -1
+#define CODE_ASSERT -2
 #define ERR(code, type, fmt, ...) _err(code, type, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
 #define error(code, fmt, ...) ERR(code, "error", fmt, ##__VA_ARGS__)
-#define warning(fmt, ...) ERR(-1, "warning", fmt, ##__VA_ARGS__)
+#define warning(fmt, ...) ERR(CODE_WARN, "warning", fmt, ##__VA_ARGS__)
+#define assert(x) ((void)((x) || (ERR(CODE_ASSERT, "assertion failed", "%s\n", #x),0)))
 void	_err(int code, char *type, char *file, int line, const char *func, char *fmt, ...);
 
 /* mem.c */
