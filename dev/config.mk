@@ -20,7 +20,7 @@ checks: $(SRC)
 test:
 	touch .testing
 	cd tests && make
-	make test-run RUNNER=run
+	make test-run RUNNER=run-basic
 	rm -rf test.*
 	touch .testing
 
@@ -40,7 +40,9 @@ test-run:
 	make $(RUNNER) CFLAGS="$(CFLAGS) -DTEST" LDFLAGS="$(LDFLAGS) -lcheck" SRC="$(SRC) $(shell find tests -type f -name "*.c")"
 
 run: all
-	gdb -ex 'set confirm on' -ex run -ex bt -ex quit --args $(BIN) $(ARGS)
+	gdb -ex 'set confirm on' -ex run -ex bt -ex quit --args ./$(BIN) $(ARGS)
+run-basic: all
+	./$(BIN) $(ARGS)
 gdb: all
 	gdb --args ./$(BIN) $(ARGS)
 
