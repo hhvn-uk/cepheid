@@ -760,7 +760,7 @@ dbfree(char *db) {
 	for (i = 0; i < p->tl; i++)
 		if (p->tracked[i])
 			dbfreegroup_p(p->tracked[i]);
-	free(p->tracked[i]);
+	free(p->tracked);
 	if (p == dbs)
 		dbs = p->next;
 	if (p->next)
