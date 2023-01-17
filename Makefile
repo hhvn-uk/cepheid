@@ -11,10 +11,11 @@ LDFLAGS	= $(RAYLIB) $(DBLIB)
 
 include config.mk
 
-all: db data $(BIN)
+all: db $(BIN)
 .testing:
 	touch .testing
 src/main.o: .testing
+src/data.o: data
 
 .c.o:
 	$(CC) $(CFLAGS) -D"SAVEDIR=\"$(SAVEDIR)\"" -c $< -o $@
@@ -28,20 +29,20 @@ clean: db-clean
 
 db:
 	@echo $(DBDIR): make $(DBLIB)
-	@cd $(DBDIR); make CFLAGS="$(CFLAGS)" `basename $(DBLIB)`
+	+@cd $(DBDIR); make CFLAGS="$(CFLAGS)" `basename $(DBLIB)`
 db-clean:
 	@echo $(DBDIR): make clean
-	@cd $(DBDIR); make clean
+	+@cd $(DBDIR); make clean
 dbtool:
 	@echo $(DBDIR): make $(DBTOOL)
-	@cd $(DBDIR); make CFLAGS="$(CFLAGS)" dbtool
+	+@cd $(DBDIR); make CFLAGS="$(CFLAGS)" dbtool
 
 data:
 	@echo $(DATADIR): make
-	@cd $(DATADIR); make
+	+@cd $(DATADIR); make
 data-clean:
 	@echo $(DATADIR): make clean
-	@cd $(DATADIR); make clean
+	+@cd $(DATADIR); make clean
 
 # ignore generated headers
 sloccount:
