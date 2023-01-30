@@ -547,7 +547,6 @@ gui_form(int x, int y, int w, int h, Form *form) {
 	FormElem *sub;
 	int bn, bx, bw;
 	int lx, lw;
-	int lpad;
 	int cy;
 	int tw;
 	int i, j;
@@ -570,7 +569,7 @@ gui_form(int x, int y, int w, int h, Form *form) {
 	for (i = 0, lx = lw = -1, cy = y, sub = NULL; form->elems[i].type != FORM_END_TYPE && i < FORM_MAX; i++) {
 		elem = &form->elems[i];
 
-		switch (elem->type) {
+		switch ((int)elem->type) {
 		case FORM_SUBFORM_TYPE:
 			if (sub)
 				cy += gui_form_sub_end(x, cy, w);
@@ -625,6 +624,8 @@ gui_form(int x, int y, int w, int h, Form *form) {
 		case GUI_DROPDOWN:
 			gui_dropdown(lx + tw, cy, lw - tw, elem->elem);
 			break;
+		default:
+			error(1, "unexpected GUI element type");
 		}
 
 		if (sub) {
@@ -661,11 +662,15 @@ gui_form_filled(Form *form) {
 			if (!in->str[0])
 				return 0;
 			break;
+		case GUI_CHECKBOX:
+			break;
 		case GUI_DROPDOWN:
 			drop = elem->elem;
 			if (drop->sel == -1)
 				return 0;
 			break;
+		default:
+			error(1, "unexpected GUI element type");
 		}
 	}
 
@@ -700,6 +705,8 @@ gui_form_clear(Form *form) {
 				continue;
 			drop->sel = drop->def - DROPDOWN_DEFAULT_OFF;
 			break;
+		default:
+			error(1, "unexpected GUI element type");
 		}
 	}
 }
