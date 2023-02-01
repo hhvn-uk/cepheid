@@ -569,7 +569,7 @@ gui_form(int x, int y, int w, int h, Form *form) {
 	for (i = 0, lx = lw = -1, cy = y, sub = NULL; form->elems[i].type != FORM_END_TYPE && i < FORM_MAX; i++) {
 		elem = &form->elems[i];
 
-		switch ((int)elem->type) {
+		switch (elem->type) {
 		case FORM_SUBFORM_TYPE:
 			if (sub)
 				cy += gui_form_sub_end(x, cy, w);
@@ -614,7 +614,7 @@ gui_form(int x, int y, int w, int h, Form *form) {
 		else
 			tw = 0;
 
-		switch (elem->type) {
+		switch ((enum GuiElements)elem->type) {
 		case GUI_INPUT:
 			gui_input(lx + tw, cy, lw - tw, elem->elem);
 			break;
@@ -625,7 +625,7 @@ gui_form(int x, int y, int w, int h, Form *form) {
 			gui_dropdown(lx + tw, cy, lw - tw, elem->elem);
 			break;
 		default:
-			error(1, "unexpected GUI element type");
+			error(1, "unexpected GUI element type: %d\n", elem->type);
 		}
 
 		if (sub) {
@@ -653,10 +653,10 @@ gui_form_filled(Form *form) {
 	for (i = 0; i < FORM_MAX && form->elems[i].type != FORM_END_TYPE; i++) {
 		elem = &form->elems[i];
 
-		if (!elem->required)
+		if (!elem->required || elem->type < 0)
 			continue;
 
-		switch (elem->type) {
+		switch ((enum GuiElements)elem->type) {
 		case GUI_INPUT:
 			in = elem->elem;
 			if (!in->str[0])
@@ -670,7 +670,7 @@ gui_form_filled(Form *form) {
 				return 0;
 			break;
 		default:
-			error(1, "unexpected GUI element type");
+			error(1, "unexpected GUI element type: %d\n", elem->type);
 		}
 	}
 
@@ -688,7 +688,10 @@ gui_form_clear(Form *form) {
 	for (i = 0; i < FORM_MAX && form->elems[i].type != FORM_END_TYPE; i++) {
 		elem = &form->elems[i];
 
-		switch (elem->type) {
+		if (elem->type < 0)
+			continue;
+
+		switch ((enum GuiElements)elem->type) {
 		case GUI_INPUT:
 			in = elem->elem;
 			gui_input_clear(in);
@@ -706,7 +709,7 @@ gui_form_clear(Form *form) {
 			drop->sel = drop->def - DROPDOWN_DEFAULT_OFF;
 			break;
 		default:
-			error(1, "unexpected GUI element type");
+			error(1, "unexpected GUI element type: %d\n", elem->type);
 		}
 	}
 }
